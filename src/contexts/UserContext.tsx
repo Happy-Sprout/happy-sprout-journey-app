@@ -153,40 +153,48 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const profiles: ChildProfile[] = [];
       
       for (const child of childrenData) {
-        const { data: preferencesData } = await supabase
+        if (!child || !child.id) continue;
+
+        const { data: preferencesData, error: preferencesError } = await supabase
           .from('child_preferences')
           .select('*')
           .eq('child_id', child.id)
           .maybeSingle();
+
+        if (preferencesError) {
+          console.error("Error fetching preferences:", preferencesError);
+        }
           
-        const { data: progressData } = await supabase
+        const { data: progressData, error: progressError } = await supabase
           .from('child_progress')
           .select('*')
           .eq('child_id', child.id)
           .maybeSingle();
           
-        if (child.id) {
-          profiles.push({
-            id: child.id,
-            nickname: child.nickname || '',
-            age: child.age || 0,
-            dateOfBirth: child.date_of_birth || '',
-            gender: child.gender,
-            grade: child.grade || '',
-            avatar: child.avatar,
-            creationStatus: (child.creation_status as 'completed' | 'pending') || 'pending',
-            relationshipToParent: child.relationship_to_parent,
-            learningStyles: preferencesData?.learning_styles || [],
-            selStrengths: preferencesData?.strengths || [],
-            interests: preferencesData?.interests || [],
-            storyPreferences: preferencesData?.story_preferences || [],
-            selChallenges: preferencesData?.challenges || [],
-            streakCount: progressData?.streak_count || 0,
-            xpPoints: progressData?.xp_points || 0,
-            badges: progressData?.badges || [],
-            dailyCheckInCompleted: progressData?.daily_check_in_completed || false
-          });
+        if (progressError) {
+          console.error("Error fetching progress:", progressError);
         }
+
+        profiles.push({
+          id: child.id,
+          nickname: child.nickname || '',
+          age: child.age || 0,
+          dateOfBirth: child.date_of_birth || '',
+          gender: child.gender,
+          grade: child.grade || '',
+          avatar: child.avatar,
+          creationStatus: (child.creation_status as 'completed' | 'pending') || 'pending',
+          relationshipToParent: child.relationship_to_parent,
+          learningStyles: preferencesData?.learning_styles || [],
+          selStrengths: preferencesData?.strengths || [],
+          interests: preferencesData?.interests || [],
+          storyPreferences: preferencesData?.story_preferences || [],
+          selChallenges: preferencesData?.challenges || [],
+          streakCount: progressData?.streak_count || 0,
+          xpPoints: progressData?.xp_points || 0,
+          badges: progressData?.badges || [],
+          dailyCheckInCompleted: progressData?.daily_check_in_completed || false
+        });
       }
       
       setChildProfiles(profiles);
@@ -201,11 +209,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const fetchUserData = async (userId: string) => {
     try {
+      // Try to fetch parent data, but don't error if it doesn't exist yet
       const { data: parentData, error: parentError } = await supabase
         .from('parents')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
         
       if (parentError) {
         console.error("Error fetching parent data:", parentError);
@@ -229,7 +238,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addChildProfile = async (profile: ChildProfile) => {
-    if (!parentInfo) return;
+    if (!parentInfo || !user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add a child profile",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       // First, generate UUID if not provided
@@ -244,11 +260,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           nickname: profile.nickname,
           age: profile.age,
           date_of_birth: profile.dateOfBirth,
-          gender: profile.gender,
+          gender: profile.gender || null,
           grade: profile.grade,
-          avatar: profile.avatar,
-          creation_status: profile.creationStatus,
-          relationship_to_parent: profile.relationshipToParent
+          avatar: profile.avatar || null,
+          creation_status: profile.creationStatus || 'pending',
+          relationship_to_parent: profile.relationshipToParent || null
         });
         
       if (childError) {
@@ -266,11 +282,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         .from('child_preferences')
         .insert({
           child_id: childId,
-          learning_styles: profile.learningStyles,
-          strengths: profile.selStrengths,
-          interests: profile.interests,
-          story_preferences: profile.storyPreferences,
-          challenges: profile.selChallenges
+          learning_styles: profile.learningStyles || [],
+          strengths: profile.selStrengths || [],
+          interests: profile.interests || [],
+          story_preferences: profile.storyPreferences || [],
+          challenges: profile.selChallenges || []
         });
         
       if (prefError) {
@@ -282,10 +298,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         .from('child_progress')
         .insert({
           child_id: childId,
-          streak_count: profile.streakCount,
-          xp_points: profile.xpPoints,
-          badges: profile.badges,
-          daily_check_in_completed: profile.dailyCheckInCompleted
+          streak_count: profile.streakCount || 0,
+          xp_points: profile.xpPoints || 0,
+          badges: profile.badges || [],
+          daily_check_in_completed: profile.dailyCheckInCompleted || false
         });
       
       if (progressError) {
