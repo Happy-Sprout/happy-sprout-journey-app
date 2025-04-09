@@ -64,7 +64,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password
       });
       
-      if (error) {
+      // Always attempt to sign in, ignore the "Email not confirmed" error
+      if (error && error.message !== "Email not confirmed") {
         throw error;
       }
       
@@ -79,38 +80,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
         
         return;
+      } else if (error && error.message === "Email not confirmed") {
+        // For development, directly try to sign in despite the error
+        console.log("Email not confirmed, but proceeding with login anyway");
+        
+        // This will work if email confirmation is disabled in Supabase settings
+        const { data: secondAttemptData, error: secondAttemptError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (secondAttemptError) {
+          throw secondAttemptError;
+        }
+        
+        if (secondAttemptData?.session) {
+          setSession(secondAttemptData.session);
+          setUser(secondAttemptData.user);
+          setIsLoggedIn(true);
+          
+          toast({
+            title: "Login successful",
+            description: "Welcome back to Happy Sprout!"
+          });
+          
+          return;
+        }
       } else {
         throw new Error("No session returned after login");
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      
-      // Handle "Email not confirmed" error specifically
-      if (error.message === "Email not confirmed") {
-        // For development, allow login even if email is not confirmed
-        try {
-          // Try to sign in anyway (only works if email confirmation is disabled in Supabase)
-          const { data } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-          
-          if (data?.session) {
-            setSession(data.session);
-            setUser(data.user);
-            setIsLoggedIn(true);
-            
-            toast({
-              title: "Login successful",
-              description: "Welcome back to Happy Sprout!"
-            });
-            
-            return;
-          }
-        } catch (innerError) {
-          console.error("Second login attempt failed:", innerError);
-        }
-      }
       
       toast({
         title: "Login failed",
