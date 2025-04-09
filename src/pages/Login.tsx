@@ -1,20 +1,22 @@
 
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useUser } from "@/contexts/UserContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { loginWithEmail, isLoggedIn } = useUser();
+  const { loginWithEmail, isLoggedIn } = useAuth();
   const { checkAdminStatus } = useAdmin();
   const { toast } = useToast();
 
@@ -52,6 +54,14 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-sprout-purple">Happy Sprout</h1>
           <p className="text-gray-600">Nurturing Social-Emotional Growth</p>
         </div>
+        
+        <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <InfoIcon className="h-4 w-4 text-blue-500" />
+          <AlertTitle>Admin Access</AlertTitle>
+          <AlertDescription>
+            To access the admin panel, register a normal user account, and then use the Supabase dashboard to set them as an admin.
+          </AlertDescription>
+        </Alert>
         
         <Card>
           <CardHeader>

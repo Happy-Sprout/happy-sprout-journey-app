@@ -5,8 +5,8 @@ export type JournalFlag = {
   entry_id: string;
   child_id: string | null;
   flag_reason: string;
-  severity: 'high' | 'medium' | 'low';
-  status: 'pending' | 'reviewed' | 'dismissed';
+  severity: 'high' | 'medium' | 'low' | string; // Add string to handle any string values from DB
+  status: 'pending' | 'reviewed' | 'dismissed' | string; // Add string to handle any string values from DB
   created_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
