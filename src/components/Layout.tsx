@@ -7,6 +7,7 @@ import { Home, User, Calendar, BookOpen, LogOut, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type LayoutProps = {
   children: ReactNode;
@@ -19,6 +20,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   // Check if the user is logged in when required
   if (requireAuth && !isLoggedIn) {
@@ -71,7 +73,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
       {isLoggedIn && !hideNav && (
         <>
           {/* Mobile navigation */}
-          <div className="md:hidden flex items-center justify-between p-4 bg-white shadow-sm">
+          <div className="md:hidden flex items-center justify-between p-4 bg-white shadow-sm sticky top-0 z-10">
             <div className="flex items-center">
               <img 
                 src="/lovable-uploads/c1e8ccec-8b46-4a25-853f-255a861762d1.png" 

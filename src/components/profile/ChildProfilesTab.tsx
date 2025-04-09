@@ -9,11 +9,13 @@ import { Plus, UserCircle } from "lucide-react";
 import ChildProfilesList from "./ChildProfilesList";
 import ChildRelationshipDialog from "./ChildRelationshipDialog";
 import DeleteProfileDialog from "./DeleteProfileDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ChildProfilesTab = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { childProfiles, deleteChildProfile, currentChildId } = useUser();
+  const { childProfiles, deleteChildProfile, currentChildId, setRelationshipToParent } = useUser();
+  const isMobile = useIsMobile();
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
@@ -39,10 +41,10 @@ const ChildProfilesTab = () => {
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h2 className="text-xl font-semibold">Child Profiles</h2>
         <Button
-          className="sprout-button"
+          className="sprout-button w-full sm:w-auto"
           onClick={() => navigate("/create-profile")}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -90,7 +92,6 @@ const ChildProfilesTab = () => {
         setRelationshipValue={setRelationshipValue}
         onSave={() => {
           if (editChildRelationship && relationshipValue) {
-            const { setRelationshipToParent } = useUser();
             setRelationshipToParent(editChildRelationship, relationshipValue);
             
             toast({

@@ -1,20 +1,22 @@
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Layout from "@/components/Layout";
 import ChildProfilesTab from "./ChildProfilesTab";
 import ParentInfoTab from "./ParentInfoTab";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ProfileLayout = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <Layout requireAuth>
-      <div className="container mx-auto px-4 max-w-5xl">
-        <h1 className="text-3xl font-bold mb-2">Profiles</h1>
-        <p className="text-gray-600 mb-8">
+      <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-left">Profiles</h1>
+        <p className="text-gray-600 mb-6 sm:mb-8 text-left">
           Manage child profiles and parent information
         </p>
 
-        <Tabs defaultValue="children" className="space-y-8">
+        <Tabs defaultValue="children" className="space-y-6 sm:space-y-8">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="children">Child Profiles</TabsTrigger>
             <TabsTrigger value="parent">Parent Information</TabsTrigger>

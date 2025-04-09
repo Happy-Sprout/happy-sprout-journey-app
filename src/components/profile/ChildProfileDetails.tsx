@@ -53,7 +53,7 @@ const ChildProfileDetails = ({ profile, onEditRelationship }: ChildProfileDetail
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <h4 className="text-sm font-medium text-gray-500 mb-1">Learning Styles</h4>
-          <p>
+          <p className="text-left">
             {profile.learningStyles && profile.learningStyles.length > 0 
               ? profile.learningStyles.map(style => getLearningStyleLabel(style)).join(", ")
               : "Not specified"}
@@ -61,7 +61,7 @@ const ChildProfileDetails = ({ profile, onEditRelationship }: ChildProfileDetail
         </div>
         <div>
           <h4 className="text-sm font-medium text-gray-500 mb-1">SEL Strengths</h4>
-          <p>
+          <p className="text-left">
             {profile.selStrengths && profile.selStrengths.length > 0 
               ? profile.selStrengths.map(strength => getSELStrengthLabel(strength)).join(", ")
               : "Not specified"}
@@ -71,18 +71,18 @@ const ChildProfileDetails = ({ profile, onEditRelationship }: ChildProfileDetail
 
       <div>
         <h4 className="text-sm font-medium text-gray-500 mb-1">Interests</h4>
-        <p>{formatArrayToString(profile.interests)}</p>
+        <p className="text-left">{formatArrayToString(profile.interests)}</p>
       </div>
 
       <div>
         <h4 className="text-sm font-medium text-gray-500 mb-1">Story Preferences</h4>
-        <p>{formatArrayToString(profile.storyPreferences)}</p>
+        <p className="text-left">{formatArrayToString(profile.storyPreferences)}</p>
       </div>
 
       {profile.selChallenges && profile.selChallenges.length > 0 && (
         <div>
           <h4 className="text-sm font-medium text-gray-500 mb-1">SEL Challenges</h4>
-          <p>{formatArrayToString(profile.selChallenges)}</p>
+          <p className="text-left">{formatArrayToString(profile.selChallenges)}</p>
         </div>
       )}
       
@@ -98,7 +98,7 @@ const ChildProfileDetails = ({ profile, onEditRelationship }: ChildProfileDetail
             <Edit className="h-3 w-3 mr-1" /> Edit
           </Button>
         </div>
-        <p>{profile.relationshipToParent || "Not specified"}</p>
+        <p className="text-left">{profile.relationshipToParent || "Not specified"}</p>
       </div>
     </div>
   );

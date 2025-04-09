@@ -18,22 +18,22 @@ const ParentInfoView = ({ parentInfo, onEdit }: ParentInfoViewProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <h3 className="text-sm font-medium text-gray-500">Name</h3>
-          <p className="text-lg">{parentInfo.name}</p>
+          <p className="text-lg text-left">{parentInfo.name}</p>
         </div>
         <div>
           <h3 className="text-sm font-medium text-gray-500">Relationship to Child</h3>
-          <p className="text-lg">{parentInfo.relationship || "Parent"}</p>
+          <p className="text-lg text-left">{parentInfo.relationship || "Parent"}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <h3 className="text-sm font-medium text-gray-500">Email</h3>
-          <p className="text-lg">{parentInfo.email}</p>
+          <p className="text-lg text-left">{parentInfo.email}</p>
         </div>
         <div>
           <h3 className="text-sm font-medium text-gray-500">Emergency Contact</h3>
-          <p className="text-lg">
+          <p className="text-lg text-left">
             {parentInfo.emergencyContact || "Not provided"}
           </p>
         </div>

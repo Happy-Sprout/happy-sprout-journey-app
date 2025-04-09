@@ -54,7 +54,7 @@ const MultipleCheckboxGroup = ({
                 {option.label}
               </Label>
               {option.description && (
-                <p className="text-sm text-gray-500">{option.description}</p>
+                <p className="text-sm text-gray-500 text-left">{option.description}</p>
               )}
             </div>
           </div>

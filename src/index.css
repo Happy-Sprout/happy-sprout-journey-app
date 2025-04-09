@@ -48,7 +48,11 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-nunito text-sprout-purple;
+    @apply font-nunito text-sprout-purple text-left;
+  }
+
+  p {
+    @apply text-left;
   }
 
   .sprout-card {
@@ -100,5 +104,28 @@
   .dialog-description,
   .alert-description {
     @apply text-center;
+  }
+
+  /* Mobile responsiveness improvements */
+  @media (max-width: 640px) {
+    .container {
+      @apply px-4;
+    }
+    
+    .sprout-button {
+      @apply py-2 px-4 text-sm;
+    }
+    
+    h1 {
+      @apply text-2xl;
+    }
+    
+    h2 {
+      @apply text-xl;
+    }
+    
+    .card-content {
+      @apply p-4;
+    }
   }
 }

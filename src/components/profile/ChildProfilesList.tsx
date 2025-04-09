@@ -33,7 +33,7 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
             : ""
         }>
           <CardHeader className="pb-3">
-            <div className="flex justify-between">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <CardTitle className="flex items-center">
                 <Avatar className="h-8 w-8 mr-2">
                   <AvatarImage src={getAvatarImage(profile.avatar)} alt={profile.nickname} />
@@ -41,7 +41,7 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
                 </Avatar>
                 {profile.nickname}
               </CardTitle>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {profile.id === currentChildId && (
                   <Badge variant="outline" className="bg-sprout-purple text-white">
                     Active Profile
@@ -54,7 +54,7 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
                 )}
               </div>
             </div>
-            <CardDescription>
+            <CardDescription className="text-left">
               Age: {profile.age} • Grade: {profile.grade}
               {profile.gender && ` • Gender: ${profile.gender}`}
             </CardDescription>
@@ -65,7 +65,7 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
               onEditRelationship={() => onEditRelationship(profile.id, profile.relationshipToParent)}
             />
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 mt-2">
               {profile.id !== currentChildId && (
                 <Button
                   variant="outline"
