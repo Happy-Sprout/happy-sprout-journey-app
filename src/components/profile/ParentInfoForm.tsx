@@ -22,8 +22,8 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
             control={parentForm.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="block">Full Name</FormLabel>
+              <FormItem className="text-left">
+                <FormLabel className="text-left">Full Name</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter your full name" {...field} />
                 </FormControl>
@@ -36,8 +36,8 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
             control={parentForm.control}
             name="email"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="block">Email</FormLabel>
+              <FormItem className="text-left">
+                <FormLabel className="text-left">Email</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter your email" type="email" {...field} />
                 </FormControl>
@@ -50,8 +50,8 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
             control={parentForm.control}
             name="relationship"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="block">Relationship to Child</FormLabel>
+              <FormItem className="text-left">
+                <FormLabel className="text-left">Relationship to Child</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -77,12 +77,12 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
             control={parentForm.control}
             name="emergencyContact"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="block">Emergency Contact</FormLabel>
+              <FormItem className="text-left">
+                <FormLabel className="text-left">Emergency Contact</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter emergency contact" {...field} />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-left">
                   Optional: Phone number or email of an emergency contact
                 </FormDescription>
                 <FormMessage />

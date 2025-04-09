@@ -75,9 +75,20 @@
     @apply font-sprout;
   }
   
-  /* Updated form styles for consistent alignment */
-  label {
-    @apply block;
+  /* Updated form styles for consistent left alignment */
+  label, 
+  .form-label {
+    @apply block text-left;
+  }
+  
+  form .text-center {
+    @apply text-left;
+  }
+  
+  /* Form descriptions and messages */
+  .form-description,
+  .form-message {
+    @apply text-left;
   }
   
   /* Dialog and alert content */

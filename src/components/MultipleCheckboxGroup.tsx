@@ -29,7 +29,7 @@ const MultipleCheckboxGroup = ({
 
   return (
     <div className="space-y-3">
-      <Label className="text-base font-medium block">
+      <Label className="text-base font-medium block text-left">
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
       <div className="space-y-3">
@@ -49,8 +49,8 @@ const MultipleCheckboxGroup = ({
               onCheckedChange={() => toggleOption(option.value)}
               className="mt-1"
             />
-            <div>
-              <Label htmlFor={`option-${option.value}`} className="font-medium cursor-pointer">
+            <div className="text-left">
+              <Label htmlFor={`option-${option.value}`} className="font-medium cursor-pointer text-left">
                 {option.label}
               </Label>
               {option.description && (

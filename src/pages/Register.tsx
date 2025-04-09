@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -49,16 +48,13 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      // Create the account
       await signUpWithEmail(email, password, name);
       
-      // Notify the user that they need to log in
       toast({
         title: "Account created",
         description: "Your account was created successfully. Please log in now.",
       });
       
-      // Redirect to login
       navigate("/login");
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -105,7 +101,7 @@ const Register = () => {
           <div className="bg-white rounded-lg shadow-md overflow-hidden p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="block">Full Name</Label>
+                <Label htmlFor="name" className="text-left block">Full Name</Label>
                 <Input
                   id="name"
                   type="text"
@@ -118,7 +114,7 @@ const Register = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="email" className="block">Email</Label>
+                <Label htmlFor="email" className="text-left block">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -131,7 +127,7 @@ const Register = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password" className="block">Password</Label>
+                <Label htmlFor="password" className="text-left block">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -144,7 +140,7 @@ const Register = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="block">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-left block">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
