@@ -230,10 +230,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!parentInfo) return;
     
     try {
+      // First, generate UUID if not provided
+      const childId = profile.id || uuidv4();
+      
       // Create child record
       const { error: childError } = await supabase
         .from('children')
-        .insert({
+        .insert([{
+          id: childId,
           parent_id: parentInfo.id,
           nickname: profile.nickname,
           age: profile.age,
@@ -242,9 +246,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           grade: profile.grade,
           avatar: profile.avatar,
           creation_status: profile.creationStatus,
-          relationship_to_parent: profile.relationshipToParent,
-          id: profile.id
-        });
+          relationship_to_parent: profile.relationshipToParent
+        }]);
         
       if (childError) {
         console.error("Error adding child:", childError);
@@ -259,27 +262,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // Create preferences
       await supabase
         .from('child_preferences')
-        .insert({
-          child_id: profile.id,
+        .insert([{
+          child_id: childId,
           learning_styles: profile.learningStyles,
           strengths: profile.selStrengths,
           interests: profile.interests,
           story_preferences: profile.storyPreferences,
           challenges: profile.selChallenges
-        });
+        }]);
         
       // Create progress record
       await supabase
         .from('child_progress')
-        .insert({
-          child_id: profile.id,
+        .insert([{
+          child_id: childId,
           streak_count: profile.streakCount,
           xp_points: profile.xpPoints,
           badges: profile.badges,
           daily_check_in_completed: profile.dailyCheckInCompleted
-        });
+        }]);
       
-      setChildProfiles((prev) => [...prev, profile]);
+      // Update local state
+      const newProfile = {...profile, id: childId};
+      setChildProfiles((prev) => [...prev, newProfile]);
       
       toast({
         title: "Success",
@@ -287,7 +292,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (childProfiles.length === 0) {
-        setCurrentChildId(profile.id);
+        setCurrentChildId(childId);
       }
     } catch (error) {
       console.error("Error in addChildProfile:", error);
@@ -415,7 +420,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateParentInfo = async (updatedInfo: Partial<ParentInfo>) => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || !parentInfo) return;
     
     try {
       const update: any = {};
@@ -428,7 +433,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase
         .from('parents')
         .update(update)
-        .eq('id', parentInfo?.id || '');
+        .eq('id', parentInfo.id);
         
       if (error) {
         console.error("Error updating parent info:", error);
@@ -452,6 +457,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             console.error("Missing required fields for parent info");
             return null;
           }
+          
           return updatedInfo as ParentInfo;
         }
         
@@ -591,15 +597,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("User creation failed");
       }
       
+      // Create parent record in database
       const { error: parentError } = await supabase
         .from('parents')
-        .insert({
+        .insert([{
           id: data.user.id,
           name: name,
           relationship: "Parent",
           email: email,
           emergency_contact: ""
-        });
+        }]);
         
       if (parentError) {
         console.error("Error creating parent record:", parentError);

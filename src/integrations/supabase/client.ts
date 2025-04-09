@@ -21,17 +21,18 @@ export const supabase = createClient<Database>(
       detectSessionInUrl: true, // Important for handling email confirmations
     },
     realtime: {
-      postgres_changes: {
-        enabled: true,
-        schema: 'public',
-        tables: [
-          'journal_entries',
-          'emotional_trends',
-          'child_progress',
-          'children',
-          'child_preferences',
-          'parents'
-        ]
+      channels: {
+        postgres_changes: {
+          schema: 'public',
+          tables: [
+            'journal_entries',
+            'emotional_trends',
+            'child_progress',
+            'children',
+            'child_preferences',
+            'parents'
+          ]
+        }
       }
     }
   }
