@@ -98,7 +98,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
@@ -165,26 +165,28 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           .eq('child_id', child.id)
           .maybeSingle();
           
-        profiles.push({
-          id: child.id,
-          nickname: child.nickname,
-          age: child.age,
-          dateOfBirth: child.date_of_birth,
-          gender: child.gender,
-          grade: child.grade,
-          avatar: child.avatar,
-          creationStatus: (child.creation_status as 'completed' | 'pending') || 'pending',
-          relationshipToParent: child.relationship_to_parent,
-          learningStyles: preferencesData?.learning_styles || [],
-          selStrengths: preferencesData?.strengths || [],
-          interests: preferencesData?.interests || [],
-          storyPreferences: preferencesData?.story_preferences || [],
-          selChallenges: preferencesData?.challenges || [],
-          streakCount: progressData?.streak_count || 0,
-          xpPoints: progressData?.xp_points || 0,
-          badges: progressData?.badges || [],
-          dailyCheckInCompleted: progressData?.daily_check_in_completed || false
-        });
+        if (child.id) {
+          profiles.push({
+            id: child.id,
+            nickname: child.nickname || '',
+            age: child.age || 0,
+            dateOfBirth: child.date_of_birth || '',
+            gender: child.gender,
+            grade: child.grade || '',
+            avatar: child.avatar,
+            creationStatus: (child.creation_status as 'completed' | 'pending') || 'pending',
+            relationshipToParent: child.relationship_to_parent,
+            learningStyles: preferencesData?.learning_styles || [],
+            selStrengths: preferencesData?.strengths || [],
+            interests: preferencesData?.interests || [],
+            storyPreferences: preferencesData?.story_preferences || [],
+            selChallenges: preferencesData?.challenges || [],
+            streakCount: progressData?.streak_count || 0,
+            xpPoints: progressData?.xp_points || 0,
+            badges: progressData?.badges || [],
+            dailyCheckInCompleted: progressData?.daily_check_in_completed || false
+          });
+        }
       }
       
       setChildProfiles(profiles);
@@ -203,7 +205,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         .from('parents')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
         
       if (parentError) {
         console.error("Error fetching parent data:", parentError);
@@ -236,7 +238,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // Create child record
       const { error: childError } = await supabase
         .from('children')
-        .insert([{
+        .insert({
           id: childId,
           parent_id: parentInfo.id,
           nickname: profile.nickname,
@@ -247,7 +249,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           avatar: profile.avatar,
           creation_status: profile.creationStatus,
           relationship_to_parent: profile.relationshipToParent
-        }]);
+        });
         
       if (childError) {
         console.error("Error adding child:", childError);
@@ -260,27 +262,35 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Create preferences
-      await supabase
+      const { error: prefError } = await supabase
         .from('child_preferences')
-        .insert([{
+        .insert({
           child_id: childId,
           learning_styles: profile.learningStyles,
           strengths: profile.selStrengths,
           interests: profile.interests,
           story_preferences: profile.storyPreferences,
           challenges: profile.selChallenges
-        }]);
+        });
+        
+      if (prefError) {
+        console.error("Error adding preferences:", prefError);
+      }
         
       // Create progress record
-      await supabase
+      const { error: progressError } = await supabase
         .from('child_progress')
-        .insert([{
+        .insert({
           child_id: childId,
           streak_count: profile.streakCount,
           xp_points: profile.xpPoints,
           badges: profile.badges,
           daily_check_in_completed: profile.dailyCheckInCompleted
-        }]);
+        });
+      
+      if (progressError) {
+        console.error("Error adding progress:", progressError);
+      }
       
       // Update local state
       const newProfile = {...profile, id: childId};
@@ -600,13 +610,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // Create parent record in database
       const { error: parentError } = await supabase
         .from('parents')
-        .insert([{
+        .insert({
           id: data.user.id,
           name: name,
           relationship: "Parent",
           email: email,
           emergency_contact: ""
-        }]);
+        });
         
       if (parentError) {
         console.error("Error creating parent record:", parentError);
