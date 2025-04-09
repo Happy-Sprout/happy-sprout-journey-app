@@ -77,12 +77,31 @@ const JournalMonitoring = () => {
       if (error) throw error;
       
       if (data) {
-        const formattedData: JournalFlag[] = data.map(item => ({
-          ...item,
-          parent: item.parent?.parents,
-          journal_entry: item.journal_entry || null,
-          child: item.child || null
-        }));
+        // Transform the data into the expected format
+        const formattedData: JournalFlag[] = data.map(item => {
+          // Handle possible errors in the joined data
+          let journalEntry = null;
+          if (item.journal_entry && !('error' in item.journal_entry)) {
+            journalEntry = item.journal_entry;
+          }
+
+          let child = null;
+          if (item.child && !('error' in item.child)) {
+            child = item.child;
+          }
+
+          let parent = null;
+          if (item.parent && !('error' in item.parent) && item.parent.parents) {
+            parent = item.parent.parents;
+          }
+
+          return {
+            ...item,
+            journal_entry: journalEntry,
+            child: child,
+            parent: parent
+          };
+        });
         
         setFlags(formattedData);
       }
@@ -168,9 +187,9 @@ const JournalMonitoring = () => {
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       return (
-        flag.child?.nickname.toLowerCase().includes(searchLower) ||
-        flag.journal_entry?.title?.toLowerCase().includes(searchLower) ||
-        flag.journal_entry?.content.toLowerCase().includes(searchLower) ||
+        (flag.child?.nickname?.toLowerCase().includes(searchLower) || false) ||
+        (flag.journal_entry?.title?.toLowerCase().includes(searchLower) || false) ||
+        (flag.journal_entry?.content?.toLowerCase().includes(searchLower) || false) ||
         flag.flag_reason.toLowerCase().includes(searchLower)
       );
     }
