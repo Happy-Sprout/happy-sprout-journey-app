@@ -105,7 +105,7 @@ const Register = () => {
           <div className="bg-white rounded-lg shadow-md overflow-hidden p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name" className="block">Full Name</Label>
                 <Input
                   id="name"
                   type="text"
@@ -118,7 +118,7 @@ const Register = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="block">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -131,7 +131,7 @@ const Register = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="block">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -144,7 +144,7 @@ const Register = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="block">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"

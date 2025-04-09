@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, User, Calendar, BookOpen, LogOut, Menu, X } from "lucide-react";
+import { Home, User, Calendar, BookOpen, LogOut, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -113,7 +113,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
               </div>
               <NavContent />
               <div className="mt-auto p-4 bg-sprout-cream rounded-xl">
-                <div className="text-sm font-medium">
+                <div className="text-sm font-medium text-center">
                   {getCurrentChild() ? (
                     <>
                       <div className="font-bold text-sprout-purple">{getCurrentChild()?.nickname}</div>
@@ -145,4 +145,3 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
 };
 
 export default Layout;
-

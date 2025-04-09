@@ -74,4 +74,20 @@
   .font-comic {
     @apply font-sprout;
   }
+  
+  /* Updated form styles for consistent alignment */
+  label {
+    @apply block;
+  }
+  
+  /* Dialog and alert content */
+  .dialog-title,
+  .alert-title {
+    @apply text-center;
+  }
+  
+  .dialog-description,
+  .alert-description {
+    @apply text-center;
+  }
 }

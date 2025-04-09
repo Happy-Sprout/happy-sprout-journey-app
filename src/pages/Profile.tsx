@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,6 @@ const Profile = () => {
   const [editChildRelationship, setEditChildRelationship] = useState<string | null>(null);
   const [relationshipValue, setRelationshipValue] = useState("");
 
-  // Parent profile form schema
   const parentProfileSchema = z.object({
     name: z.string().min(2, "Name must have at least 2 characters"),
     email: z.string().email("Please enter a valid email"),
@@ -90,7 +88,6 @@ const Profile = () => {
     },
   });
 
-  // Handle profile deletion
   const handleDeleteProfile = (id: string) => {
     setProfileToDelete(id);
     setDeleteDialogOpen(true);
@@ -108,14 +105,12 @@ const Profile = () => {
     }
   };
 
-  // Get avatar image for the child
   const getAvatarImage = (avatarId?: string) => {
     if (!avatarId) return avatarOptions[0].src;
     const avatar = avatarOptions.find(a => a.id === avatarId);
     return avatar ? avatar.src : avatarOptions[0].src;
   };
 
-  // Map learning style to readable format
   const getLearningStyleLabel = (style: string | undefined) => {
     switch (style) {
       case "visual":
@@ -131,7 +126,6 @@ const Profile = () => {
     }
   };
 
-  // Map SEL strength to readable format
   const getSELStrengthLabel = (strength: string | undefined) => {
     switch (strength) {
       case "self-awareness":
@@ -151,12 +145,10 @@ const Profile = () => {
     }
   };
 
-  // Format to readable string
   const formatArrayToString = (array: string[] | undefined) => {
     return array?.join(", ") || "None selected";
   };
 
-  // Save parent profile
   const saveParentProfile = (data: z.infer<typeof parentProfileSchema>) => {
     if (parentInfo) {
       updateParentInfo({
@@ -164,7 +156,6 @@ const Profile = () => {
         id: parentInfo.id,
       });
     } else {
-      // Make sure all required fields are provided
       setParentInfo({
         id: uuidv4(),
         name: data.name,
@@ -182,7 +173,6 @@ const Profile = () => {
     setEditParentMode(false);
   };
 
-  // Handle relationship update
   const handleRelationshipSave = () => {
     if (editChildRelationship && relationshipValue) {
       setRelationshipToParent(editChildRelationship, relationshipValue);
@@ -449,7 +439,6 @@ const Profile = () => {
                         <Button
                           variant="outline"
                           onClick={() => {
-                            // This would open password change in a real app
                             toast({
                               title: "Change Password",
                               description: "This feature is coming soon!",
@@ -477,7 +466,7 @@ const Profile = () => {
                           name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Full Name</FormLabel>
+                              <FormLabel className="block">Full Name</FormLabel>
                               <FormControl>
                                 <Input placeholder="Enter your full name" {...field} />
                               </FormControl>
@@ -491,7 +480,7 @@ const Profile = () => {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email</FormLabel>
+                              <FormLabel className="block">Email</FormLabel>
                               <FormControl>
                                 <Input placeholder="Enter your email" type="email" {...field} />
                               </FormControl>
@@ -505,7 +494,7 @@ const Profile = () => {
                           name="relationship"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Relationship to Child</FormLabel>
+                              <FormLabel className="block">Relationship to Child</FormLabel>
                               <Select
                                 onValueChange={field.onChange}
                                 defaultValue={field.value}
@@ -532,7 +521,7 @@ const Profile = () => {
                           name="emergencyContact"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Emergency Contact</FormLabel>
+                              <FormLabel className="block">Emergency Contact</FormLabel>
                               <FormControl>
                                 <Input placeholder="Enter emergency contact" {...field} />
                               </FormControl>
@@ -569,8 +558,8 @@ const Profile = () => {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-center">Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription className="text-center">
                 This action cannot be undone. This will permanently delete the child profile
                 and all associated journal entries and progress data.
               </AlertDialogDescription>
@@ -590,14 +579,14 @@ const Profile = () => {
         <Dialog open={!!editChildRelationship} onOpenChange={(open) => !open && setEditChildRelationship(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Relationship</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-center">Edit Relationship</DialogTitle>
+              <DialogDescription className="text-center">
                 Define the relationship between this child and the parent
               </DialogDescription>
             </DialogHeader>
             
             <div className="py-4">
-              <Label htmlFor="relationship">Relationship</Label>
+              <Label htmlFor="relationship" className="block">Relationship</Label>
               <Select
                 value={relationshipValue}
                 onValueChange={setRelationshipValue}
