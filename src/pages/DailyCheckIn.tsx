@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
+import { Smile, Frown, Angry, Fear, Surprise } from "lucide-react";
 
 const DailyCheckIn = () => {
   const navigate = useNavigate();
@@ -183,47 +183,85 @@ const DailyCheckIn = () => {
             {step === 1 && (
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold">How are you feeling today?</h2>
-                <RadioGroup value={mood} onValueChange={setMood}>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "happy" ? "bg-sprout-green/20 border-2 border-sprout-green" : "bg-gray-100"}`}>
-                        😊
+                <RadioGroup value={mood} onValueChange={setMood} className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                  <div className="flex flex-col items-center">
+                    <Label 
+                      htmlFor="happy" 
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                      onClick={() => setMood("happy")}
+                    >
+                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
+                        mood === "happy" ? "bg-sprout-green/20 border-2 border-sprout-green" : "bg-gray-100 hover:bg-gray-200"
+                      }`}>
+                        <Smile size={32} className="text-sprout-green" />
                       </div>
-                      <RadioGroupItem value="happy" id="happy" className="sr-only" />
-                      <Label htmlFor="happy" className="cursor-pointer">Happy</Label>
-                    </div>
-                    
-                    <div className="flex flex-col items-center">
-                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "sad" ? "bg-sprout-blue/20 border-2 border-sprout-blue" : "bg-gray-100"}`}>
-                        😢
+                      <span>Happy</span>
+                    </Label>
+                    <RadioGroupItem value="happy" id="happy" className="sr-only" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center">
+                    <Label 
+                      htmlFor="sad" 
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                      onClick={() => setMood("sad")}
+                    >
+                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
+                        mood === "sad" ? "bg-sprout-blue/20 border-2 border-sprout-blue" : "bg-gray-100 hover:bg-gray-200"
+                      }`}>
+                        <Frown size={32} className="text-sprout-blue" />
                       </div>
-                      <RadioGroupItem value="sad" id="sad" className="sr-only" />
-                      <Label htmlFor="sad" className="cursor-pointer">Sad</Label>
-                    </div>
-                    
-                    <div className="flex flex-col items-center">
-                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "angry" ? "bg-sprout-orange/20 border-2 border-sprout-orange" : "bg-gray-100"}`}>
-                        😡
+                      <span>Sad</span>
+                    </Label>
+                    <RadioGroupItem value="sad" id="sad" className="sr-only" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center">
+                    <Label 
+                      htmlFor="angry" 
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                      onClick={() => setMood("angry")}
+                    >
+                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
+                        mood === "angry" ? "bg-sprout-orange/20 border-2 border-sprout-orange" : "bg-gray-100 hover:bg-gray-200"
+                      }`}>
+                        <Angry size={32} className="text-sprout-orange" />
                       </div>
-                      <RadioGroupItem value="angry" id="angry" className="sr-only" />
-                      <Label htmlFor="angry" className="cursor-pointer">Angry</Label>
-                    </div>
-                    
-                    <div className="flex flex-col items-center">
-                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "worried" ? "bg-sprout-yellow/20 border-2 border-sprout-yellow" : "bg-gray-100"}`}>
-                        😨
+                      <span>Angry</span>
+                    </Label>
+                    <RadioGroupItem value="angry" id="angry" className="sr-only" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center">
+                    <Label 
+                      htmlFor="worried" 
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                      onClick={() => setMood("worried")}
+                    >
+                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
+                        mood === "worried" ? "bg-sprout-yellow/20 border-2 border-sprout-yellow" : "bg-gray-100 hover:bg-gray-200"
+                      }`}>
+                        <Fear size={32} className="text-sprout-yellow" />
                       </div>
-                      <RadioGroupItem value="worried" id="worried" className="sr-only" />
-                      <Label htmlFor="worried" className="cursor-pointer">Worried</Label>
-                    </div>
-                    
-                    <div className="flex flex-col items-center">
-                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "surprised" ? "bg-sprout-purple/20 border-2 border-sprout-purple" : "bg-gray-100"}`}>
-                        😲
+                      <span>Worried</span>
+                    </Label>
+                    <RadioGroupItem value="worried" id="worried" className="sr-only" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center">
+                    <Label 
+                      htmlFor="surprised" 
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                      onClick={() => setMood("surprised")}
+                    >
+                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
+                        mood === "surprised" ? "bg-sprout-purple/20 border-2 border-sprout-purple" : "bg-gray-100 hover:bg-gray-200"
+                      }`}>
+                        <Surprise size={32} className="text-sprout-purple" />
                       </div>
-                      <RadioGroupItem value="surprised" id="surprised" className="sr-only" />
-                      <Label htmlFor="surprised" className="cursor-pointer">Surprised</Label>
-                    </div>
+                      <span>Surprised</span>
+                    </Label>
+                    <RadioGroupItem value="surprised" id="surprised" className="sr-only" />
                   </div>
                 </RadioGroup>
               </div>
