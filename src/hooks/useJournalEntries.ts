@@ -29,6 +29,11 @@ export const useJournalEntries = (childId: string | undefined) => {
         
       if (error) {
         console.error("Error fetching journal entries:", error);
+        toast({
+          title: "Error",
+          description: "Could not fetch journal entries. Please try again.",
+          variant: "destructive"
+        });
         return;
       }
       
@@ -57,9 +62,15 @@ export const useJournalEntries = (childId: string | undefined) => {
         setJournalEntries(formattedEntries);
       } else {
         console.log("No journal entries found for child:", childId);
+        setJournalEntries([]);
       }
     } catch (error) {
       console.error("Error in fetchJournalEntries:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch journal entries. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -77,30 +88,33 @@ export const useJournalEntries = (childId: string | undefined) => {
     
     try {
       console.log("Saving journal entry for child:", childId);
+      console.log("Entry data:", entry);
+      
+      const journalData = {
+        child_id: childId,
+        title: `Journal Entry - ${format(new Date(), "MMMM d, yyyy")}`,
+        content: `${entry.wentWell}\n\n${entry.wentBadly}\n\n${entry.gratitude}\n\n${entry.challenge}\n\n${entry.tomorrowPlan}`,
+        mood: "neutral",
+        mood_intensity: entry.mood,
+        water: entry.water,
+        sleep: entry.sleep,
+        exercise: entry.exercise,
+        mindfulness: entry.mindfulness,
+        kindness: entry.kindness,
+        positivity: entry.positivity,
+        confidence: entry.confidence,
+        went_well: entry.wentWell,
+        went_badly: entry.wentBadly,
+        gratitude: entry.gratitude,
+        challenge: entry.challenge,
+        tomorrow_plan: entry.tomorrowPlan
+      };
+      
+      console.log("Preparing to save journal data:", journalData);
       
       const { data, error } = await supabase
         .from('journal_entries')
-        .insert([
-          {
-            child_id: childId,
-            title: `Journal Entry - ${format(new Date(), "MMMM d, yyyy")}`,
-            content: `${entry.wentWell}\n\n${entry.wentBadly}\n\n${entry.gratitude}\n\n${entry.challenge}\n\n${entry.tomorrowPlan}`,
-            mood: "neutral",
-            mood_intensity: entry.mood,
-            water: entry.water,
-            sleep: entry.sleep,
-            exercise: entry.exercise,
-            mindfulness: entry.mindfulness,
-            kindness: entry.kindness,
-            positivity: entry.positivity,
-            confidence: entry.confidence,
-            went_well: entry.wentWell,
-            went_badly: entry.wentBadly,
-            gratitude: entry.gratitude,
-            challenge: entry.challenge,
-            tomorrow_plan: entry.tomorrowPlan
-          }
-        ])
+        .insert([journalData])
         .select();
         
       if (error) {
@@ -137,7 +151,7 @@ export const useJournalEntries = (childId: string | undefined) => {
           completed: true,
         };
         
-        setJournalEntries([newEntry, ...journalEntries]);
+        setJournalEntries(prevEntries => [newEntry, ...prevEntries]);
         toast({
           title: "Journal Entry Saved!",
           description: "Great job on completing your journal entry today.",

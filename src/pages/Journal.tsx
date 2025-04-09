@@ -33,13 +33,18 @@ const Journal = () => {
       return null;
     }
     
+    console.log("Handling journal entry submission:", entry);
+    console.log("Current child:", currentChild);
+    
     const newEntry = await saveJournalEntry(entry);
     
     if (newEntry) {
+      console.log("Journal entry saved, updating XP points");
       if (currentChild && typeof currentChild.xpPoints === 'number') {
         updateChildProfile(currentChild.id, {
           xpPoints: currentChild.xpPoints + 15,
         });
+        console.log("XP points updated");
       } else {
         console.warn("Cannot update XP points: currentChild or xpPoints is undefined");
       }
@@ -48,6 +53,7 @@ const Journal = () => {
       return newEntry;
     }
     
+    console.log("Failed to save journal entry");
     return null;
   };
 
