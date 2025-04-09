@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -229,10 +230,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!parentInfo) return;
     
     try {
-      const { data: childData, error: childError } = await supabase
+      // Create child record
+      const { error: childError } = await supabase
         .from('children')
         .insert({
-          id: profile.id,
           parent_id: parentInfo.id,
           nickname: profile.nickname,
           age: profile.age,
@@ -241,10 +242,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           grade: profile.grade,
           avatar: profile.avatar,
           creation_status: profile.creationStatus,
-          relationship_to_parent: profile.relationshipToParent
-        })
-        .select()
-        .single();
+          relationship_to_parent: profile.relationshipToParent,
+          id: profile.id
+        });
         
       if (childError) {
         console.error("Error adding child:", childError);
@@ -256,6 +256,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
+      // Create preferences
       await supabase
         .from('child_preferences')
         .insert({
@@ -267,6 +268,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           challenges: profile.selChallenges
         });
         
+      // Create progress record
       await supabase
         .from('child_progress')
         .insert({
