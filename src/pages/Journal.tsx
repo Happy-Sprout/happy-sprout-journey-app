@@ -46,6 +46,16 @@ const Journal = () => {
       return null;
     }
     
+    // Check if an entry already exists for today before saving
+    if (todayEntryExists) {
+      toast({
+        title: "Journal entry limit reached",
+        description: "You've already created a journal entry today. Come back tomorrow!",
+        variant: "destructive",
+      });
+      return null;
+    }
+    
     console.log("Handling journal entry submission:", entry);
     console.log("Current child:", currentChild);
     
@@ -54,14 +64,11 @@ const Journal = () => {
     if (newEntry) {
       console.log("Journal entry saved, updating XP points");
       
-      // Only award XP if this was a new entry, not an update
-      if (!todayEntryExists && currentChild && typeof currentChild.xpPoints === 'number') {
+      if (currentChild && typeof currentChild.xpPoints === 'number') {
         updateChildProfile(currentChild.id, {
           xpPoints: currentChild.xpPoints + 15,
         });
         console.log("XP points updated");
-      } else if (todayEntryExists) {
-        console.log("No XP awarded for updating an existing entry");
       } else {
         console.warn("Cannot update XP points: currentChild or xpPoints is undefined");
       }
@@ -85,23 +92,30 @@ const Journal = () => {
         
         <Tabs defaultValue="new" value={currentTab} onValueChange={setCurrentTab}>
           <TabsList className="grid w-full grid-cols-2 mb-8 font-nunito">
-            <TabsTrigger value="new">{todayEntryExists ? "Edit Today's Entry" : "New Entry"}</TabsTrigger>
+            <TabsTrigger value="new">New Entry</TabsTrigger>
             <TabsTrigger value="history">Journal History</TabsTrigger>
           </TabsList>
           
           <TabsContent value="new">
             {todayEntryExists ? (
-              <div className="bg-amber-50 border border-amber-200 p-4 rounded-md mb-4">
-                <p className="text-amber-800">
-                  You've already created a journal entry today. Any changes will update your existing entry.
+              <div className="sprout-card text-center py-8">
+                <h2 className="text-2xl font-bold text-sprout-purple mb-4">You've completed today's journal entry!</h2>
+                <p className="mb-6 text-lg">
+                  Great job! You can come back tomorrow to write another entry.
                 </p>
+                <button 
+                  className="sprout-button"
+                  onClick={() => setCurrentTab("history")}
+                >
+                  View Journal History
+                </button>
               </div>
-            ) : null}
-            
-            <JournalEntryForm 
-              onSubmit={handleSubmitJournalEntry} 
-              loading={loading} 
-            />
+            ) : (
+              <JournalEntryForm 
+                onSubmit={handleSubmitJournalEntry} 
+                loading={loading} 
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="history">
