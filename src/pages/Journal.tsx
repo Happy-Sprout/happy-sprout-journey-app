@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -37,6 +36,28 @@ type JournalEntry = {
   completed?: boolean;
 };
 
+interface DBJournalEntry {
+  id: string;
+  child_id: string;
+  created_at: string;
+  title: string;
+  content: string;
+  mood: string;
+  mood_intensity: number;
+  water: number;
+  sleep: number;
+  exercise: number;
+  mindfulness: number;
+  kindness: number;
+  positivity: number;
+  confidence: number;
+  went_well: string;
+  went_badly: string;
+  gratitude: string;
+  challenge: string;
+  tomorrow_plan: string;
+}
+
 const DEFAULT_FILTERS = {
   startDate: undefined,
   endDate: undefined,
@@ -72,7 +93,6 @@ const Journal = () => {
   const [currentTab, setCurrentTab] = useState("new");
   const [isRecording, setIsRecording] = useState(false);
   
-  // Fetch journal entries when component mounts or when currentChildId changes
   useEffect(() => {
     if (currentChildId) {
       fetchJournalEntries();
@@ -97,7 +117,7 @@ const Journal = () => {
       
       if (data && data.length > 0) {
         console.log("Journal entries found:", data);
-        const formattedEntries: JournalEntry[] = data.map(entry => ({
+        const formattedEntries: JournalEntry[] = data.map((entry: DBJournalEntry) => ({
           id: entry.id,
           childId: entry.child_id,
           date: format(new Date(entry.created_at), "yyyy-MM-dd"),
@@ -143,7 +163,6 @@ const Journal = () => {
     try {
       console.log("Saving journal entry for child:", currentChild.id);
       
-      // Save to Supabase
       const { data, error } = await supabase
         .from('journal_entries')
         .insert([
@@ -151,7 +170,7 @@ const Journal = () => {
             child_id: currentChild.id,
             title: `Journal Entry - ${format(new Date(), "MMMM d, yyyy")}`,
             content: `${wentWell}\n\n${wentBadly}\n\n${gratitude}\n\n${challenge}\n\n${tomorrowPlan}`,
-            mood: "neutral", // Default mood category
+            mood: "neutral",
             mood_intensity: mood,
             water: water,
             sleep: sleep,
@@ -182,7 +201,6 @@ const Journal = () => {
       
       console.log("Journal entry saved successfully:", data);
       
-      // Update local state with the new entry
       if (data && data.length > 0) {
         const newEntry: JournalEntry = {
           id: data[0].id,
@@ -207,7 +225,6 @@ const Journal = () => {
         setJournalEntries([newEntry, ...journalEntries]);
       }
       
-      // Update XP points for the child
       updateChildProfile(currentChild.id, {
         xpPoints: currentChild.xpPoints + 15,
       });
@@ -303,13 +320,11 @@ const Journal = () => {
   };
   
   const filteredEntries = useMemo(() => {
-    // Filter entries belonging to current child
     let filtered = journalEntries.filter(entry => {
       if (!currentChildId) return false;
       return entry.childId === currentChildId;
     });
     
-    // Apply date range filter
     if (filters.startDate) {
       filtered = filtered.filter(entry => {
         const entryDate = parseISO(entry.date);
@@ -324,7 +339,6 @@ const Journal = () => {
       });
     }
     
-    // Apply search filter
     if (filters.searchTerm) {
       const searchLower = filters.searchTerm.toLowerCase();
       filtered = filtered.filter(entry => {
@@ -338,7 +352,6 @@ const Journal = () => {
       });
     }
     
-    // Apply mood filter
     if (filters.moodFilter) {
       const [high, low] = filters.moodFilter.split("-").map(Number);
       filtered = filtered.filter(entry => {

@@ -392,31 +392,67 @@ export type Database = {
       }
       journal_entries: {
         Row: {
+          challenge: string | null
           child_id: string | null
+          confidence: number | null
           content: string
           created_at: string
+          exercise: number | null
+          gratitude: string | null
           id: string
+          kindness: number | null
+          mindfulness: number | null
           mood: string | null
           mood_intensity: number | null
+          positivity: number | null
+          sleep: number | null
           title: string | null
+          tomorrow_plan: string | null
+          water: number | null
+          went_badly: string | null
+          went_well: string | null
         }
         Insert: {
+          challenge?: string | null
           child_id?: string | null
+          confidence?: number | null
           content: string
           created_at?: string
+          exercise?: number | null
+          gratitude?: string | null
           id?: string
+          kindness?: number | null
+          mindfulness?: number | null
           mood?: string | null
           mood_intensity?: number | null
+          positivity?: number | null
+          sleep?: number | null
           title?: string | null
+          tomorrow_plan?: string | null
+          water?: number | null
+          went_badly?: string | null
+          went_well?: string | null
         }
         Update: {
+          challenge?: string | null
           child_id?: string | null
+          confidence?: number | null
           content?: string
           created_at?: string
+          exercise?: number | null
+          gratitude?: string | null
           id?: string
+          kindness?: number | null
+          mindfulness?: number | null
           mood?: string | null
           mood_intensity?: number | null
+          positivity?: number | null
+          sleep?: number | null
           title?: string | null
+          tomorrow_plan?: string | null
+          water?: number | null
+          went_badly?: string | null
+          went_well?: string | null
         }
         Relationships: [
           {
