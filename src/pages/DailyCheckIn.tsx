@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
-import { Smile, Frown, Angry, Fear, Surprise } from "lucide-react";
+import { Smile, Frown, Angry, AlertCircle, Lightbulb } from "lucide-react";
 
 const DailyCheckIn = () => {
   const navigate = useNavigate();
@@ -24,7 +24,6 @@ const DailyCheckIn = () => {
   
   const totalSteps = 4;
   
-  // Mock data for scenario question
   const scenarioQuestion = {
     question: "Your friend won't let you join their game during recess. What would you do?",
     options: [
@@ -35,7 +34,6 @@ const DailyCheckIn = () => {
     ],
   };
   
-  // Motivational quotes
   const motivationalQuotes = [
     "Great job! Remember that sharing your feelings helps you grow stronger!",
     "You're doing amazing! Recognizing your emotions is the first step to managing them.",
@@ -49,7 +47,6 @@ const DailyCheckIn = () => {
   };
   
   const nextStep = () => {
-    // Validate current step
     if (step === 1 && !mood) {
       toast({
         title: "Selection needed",
@@ -89,7 +86,6 @@ const DailyCheckIn = () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
-      // Complete check-in
       completeCheckIn();
     }
   };
@@ -101,7 +97,6 @@ const DailyCheckIn = () => {
   };
   
   const completeCheckIn = () => {
-    // Mark check-in as completed
     if (currentChildId) {
       markDailyCheckInComplete(currentChildId);
       
@@ -110,7 +105,6 @@ const DailyCheckIn = () => {
         description: "Great job sharing how you feel today!",
       });
       
-      // In a real app, we would save this data to a database
       console.log({
         childId: currentChildId,
         date: new Date().toISOString().split('T')[0],
@@ -120,7 +114,6 @@ const DailyCheckIn = () => {
         scenarioAnswer,
       });
       
-      // Navigate to completion step
       setStep(totalSteps + 1);
     }
   };
@@ -162,7 +155,6 @@ const DailyCheckIn = () => {
           </p>
         </div>
         
-        {/* Progress indicator */}
         {step <= totalSteps && (
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
@@ -241,7 +233,7 @@ const DailyCheckIn = () => {
                       <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
                         mood === "worried" ? "bg-sprout-yellow/20 border-2 border-sprout-yellow" : "bg-gray-100 hover:bg-gray-200"
                       }`}>
-                        <Fear size={32} className="text-sprout-yellow" />
+                        <AlertCircle size={32} className="text-sprout-yellow" />
                       </div>
                       <span>Worried</span>
                     </Label>
@@ -257,7 +249,7 @@ const DailyCheckIn = () => {
                       <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
                         mood === "surprised" ? "bg-sprout-purple/20 border-2 border-sprout-purple" : "bg-gray-100 hover:bg-gray-200"
                       }`}>
-                        <Surprise size={32} className="text-sprout-purple" />
+                        <Lightbulb size={32} className="text-sprout-purple" />
                       </div>
                       <span>Surprised</span>
                     </Label>
