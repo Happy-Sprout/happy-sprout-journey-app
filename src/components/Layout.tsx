@@ -15,7 +15,7 @@ type LayoutProps = {
 };
 
 const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps) => {
-  const { isLoggedIn, setIsLoggedIn, getCurrentChild } = useUser();
+  const { isLoggedIn, logout, getCurrentChild } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -33,8 +33,8 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
     { name: "Journal", path: "/journal", icon: <BookOpen className="mr-2 h-4 w-4" /> },
   ];
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -145,3 +145,4 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
 };
 
 export default Layout;
+
