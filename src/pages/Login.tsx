@@ -34,7 +34,11 @@ const Login = () => {
     setError(null);
     
     try {
+      console.log("Login attempt with:", email);
       await loginWithEmail(email, password);
+      
+      // If we get here, login was successful
+      setLoading(false);
       
       // Check if the user is an admin and redirect accordingly
       const isAdmin = await checkAdminStatus();
@@ -44,9 +48,8 @@ const Login = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("Login error in component:", error);
       setError(error.message || "Login failed. Please check your credentials.");
-    } finally {
       setLoading(false);
     }
   };

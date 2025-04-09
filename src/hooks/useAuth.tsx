@@ -32,8 +32,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Set up the auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
@@ -41,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
     
+    // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -56,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithEmail = async (email: string, password: string) => {
     setLoading(true);
     try {
+      console.log("Attempting login with:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -65,13 +68,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
       
-      setIsLoggedIn(true);
-      toast({
-        title: "Login successful",
-        description: "Welcome back to Happy Sprout!"
-      });
+      if (data?.session) {
+        setSession(data.session);
+        setUser(data.user);
+        setIsLoggedIn(true);
+        
+        toast({
+          title: "Login successful",
+          description: "Welcome back to Happy Sprout!"
+        });
+        
+        return;
+      } else {
+        throw new Error("No session returned after login");
+      }
     } catch (error: any) {
       console.error("Login error:", error);
+      
+      // Handle "Email not confirmed" error specifically
+      if (error.message === "Email not confirmed") {
+        // For development, allow login even if email is not confirmed
+        try {
+          // Try to sign in anyway (only works if email confirmation is disabled in Supabase)
+          const { data } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          
+          if (data?.session) {
+            setSession(data.session);
+            setUser(data.user);
+            setIsLoggedIn(true);
+            
+            toast({
+              title: "Login successful",
+              description: "Welcome back to Happy Sprout!"
+            });
+            
+            return;
+          }
+        } catch (innerError) {
+          console.error("Second login attempt failed:", innerError);
+        }
+      }
+      
       toast({
         title: "Login failed",
         description: error.message || "Please check your email and password",
@@ -129,10 +169,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Parent record created successfully");
       }
       
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created successfully! You can now log in."
-      });
+      // Automatically sign in the user after registration
+      if (data.user) {
+        try {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          
+          if (signInError) {
+            console.error("Auto login after signup failed:", signInError);
+          } else if (signInData.session) {
+            setSession(signInData.session);
+            setUser(signInData.user);
+            setIsLoggedIn(true);
+            
+            toast({
+              title: "Registration successful",
+              description: "Welcome to Happy Sprout!"
+            });
+          }
+        } catch (signInError) {
+          console.error("Error during auto-login:", signInError);
+        }
+      }
       
       return data;
     } catch (error: any) {
