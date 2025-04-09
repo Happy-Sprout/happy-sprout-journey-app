@@ -1,0 +1,120 @@
+
+import { createContext, useContext, useState, ReactNode } from "react";
+
+// Types for our context
+type ChildProfile = {
+  id: string;
+  firstName: string;
+  lastName?: string;
+  nickname: string;
+  age: number;
+  dateOfBirth: string;
+  gender?: string;
+  grade: string;
+  learningStyle?: string;
+  strongestSEL?: string;
+  interests: string[];
+  storyPreferences: string[];
+  selChallenges: string[];
+  streakCount: number;
+  xpPoints: number;
+  badges: string[];
+};
+
+type ParentInfo = {
+  id: string;
+  name: string;
+  relationship: string;
+  email: string;
+  emergencyContact: string;
+};
+
+type UserContextType = {
+  isLoggedIn: boolean;
+  setIsLoggedIn: (value: boolean) => void;
+  parentInfo: ParentInfo | null;
+  setParentInfo: (info: ParentInfo | null) => void;
+  childProfiles: ChildProfile[];
+  setChildProfiles: (profiles: ChildProfile[]) => void;
+  addChildProfile: (profile: ChildProfile) => void;
+  updateChildProfile: (id: string, profile: Partial<ChildProfile>) => void;
+  deleteChildProfile: (id: string) => void;
+  currentChildId: string | null;
+  setCurrentChildId: (id: string | null) => void;
+  getCurrentChild: () => ChildProfile | undefined;
+};
+
+// Create context with default values
+const UserContext = createContext<UserContextType>({
+  isLoggedIn: false,
+  setIsLoggedIn: () => {},
+  parentInfo: null,
+  setParentInfo: () => {},
+  childProfiles: [],
+  setChildProfiles: () => {},
+  addChildProfile: () => {},
+  updateChildProfile: () => {},
+  deleteChildProfile: () => {},
+  currentChildId: null,
+  setCurrentChildId: () => {},
+  getCurrentChild: () => undefined,
+});
+
+// Provider component
+export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [parentInfo, setParentInfo] = useState<ParentInfo | null>(null);
+  const [childProfiles, setChildProfiles] = useState<ChildProfile[]>([]);
+  const [currentChildId, setCurrentChildId] = useState<string | null>(null);
+
+  // Add a new child profile
+  const addChildProfile = (profile: ChildProfile) => {
+    setChildProfiles((prev) => [...prev, profile]);
+  };
+
+  // Update an existing child profile
+  const updateChildProfile = (id: string, updatedInfo: Partial<ChildProfile>) => {
+    setChildProfiles((prev) =>
+      prev.map((profile) =>
+        profile.id === id ? { ...profile, ...updatedInfo } : profile
+      )
+    );
+  };
+
+  // Delete a child profile
+  const deleteChildProfile = (id: string) => {
+    setChildProfiles((prev) => prev.filter((profile) => profile.id !== id));
+    if (currentChildId === id) {
+      setCurrentChildId(null);
+    }
+  };
+
+  // Get the current active child profile
+  const getCurrentChild = () => {
+    return childProfiles.find((profile) => profile.id === currentChildId);
+  };
+
+  return (
+    <UserContext.Provider
+      value={{
+        isLoggedIn,
+        setIsLoggedIn,
+        parentInfo,
+        setParentInfo,
+        childProfiles,
+        setChildProfiles,
+        addChildProfile,
+        updateChildProfile,
+        deleteChildProfile,
+        currentChildId,
+        setCurrentChildId,
+        getCurrentChild,
+      }}
+    >
+      {children}
+    </UserContext.Provider>
+  );
+};
+
+// Custom hook for using the context
+export const useUser = () => useContext(UserContext);
