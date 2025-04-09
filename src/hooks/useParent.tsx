@@ -86,7 +86,15 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           }
           
           console.log("Parent record created successfully");
-          setParentInfo(newParent);
+          // Make sure we match the ParentInfo type when setting state
+          setParentInfo({
+            id: newParent.id,
+            name: newParent.name,
+            relationship: newParent.relationship,
+            email: newParent.email,
+            emergencyContact: newParent.emergency_contact,
+            // additionalInfo is optional, so we can omit it
+          });
         }
       }
     } catch (error) {
