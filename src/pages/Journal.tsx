@@ -84,7 +84,7 @@ const Journal = () => {
         </p>
         
         <Tabs defaultValue="new" value={currentTab} onValueChange={setCurrentTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsList className="grid w-full grid-cols-2 mb-8 font-nunito">
             <TabsTrigger value="new">{todayEntryExists ? "Edit Today's Entry" : "New Entry"}</TabsTrigger>
             <TabsTrigger value="history">Journal History</TabsTrigger>
           </TabsList>

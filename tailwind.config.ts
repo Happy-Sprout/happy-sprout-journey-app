@@ -117,7 +117,8 @@ export default {
 				'fade-in': 'fade-in 0.5s ease-out'
 			},
 			fontFamily: {
-				sprout: ['Comic Sans MS', 'Comic Sans', 'cursive']
+				sprout: ['Comic Sans MS', 'Comic Sans', 'cursive'],
+				nunito: ['Nunito', 'sans-serif']
 			}
 		}
 	},
