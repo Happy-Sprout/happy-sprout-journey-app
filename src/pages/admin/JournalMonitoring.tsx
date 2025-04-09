@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,12 +76,16 @@ const JournalMonitoring = () => {
         
       if (error) throw error;
       
-      const formattedData = data?.map(item => ({
-        ...item,
-        parent: item.parent?.parents
-      })) || [];
-      
-      setFlags(formattedData);
+      if (data) {
+        const formattedData: JournalFlag[] = data.map(item => ({
+          ...item,
+          parent: item.parent?.parents,
+          journal_entry: item.journal_entry || null,
+          child: item.child || null
+        }));
+        
+        setFlags(formattedData);
+      }
     } catch (error) {
       console.error("Error fetching flagged entries:", error);
       toast({

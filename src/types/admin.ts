@@ -15,15 +15,15 @@ export type JournalFlag = {
     title: string | null;
     content: string;
     created_at: string;
-  };
+  } | null; // Add null to handle potential null values
   child?: {
     nickname: string;
     age: number;
-  };
+  } | null; // Add null to handle potential null values
   parent?: {
     name: string;
     email: string;
-  };
+  } | null; // Add null to handle potential null values
 };
 
 export type JournalFilterState = {
