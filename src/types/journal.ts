@@ -52,5 +52,5 @@ export const DEFAULT_FILTERS: JournalFilters = {
   startDate: undefined,
   endDate: undefined,
   searchTerm: "",
-  moodFilter: "",
+  moodFilter: "all",
 };

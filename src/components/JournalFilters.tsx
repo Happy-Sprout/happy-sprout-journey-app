@@ -138,7 +138,7 @@ export const JournalFilters = ({
                 <SelectValue placeholder="Filter by mood" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Moods</SelectItem>
+                <SelectItem value="all">All Moods</SelectItem>
                 <SelectItem value="10-8">Very Happy (8-10)</SelectItem>
                 <SelectItem value="7-5">Good (5-7)</SelectItem>
                 <SelectItem value="4-3">Okay (3-4)</SelectItem>
@@ -169,7 +169,7 @@ export const JournalFilters = ({
             </Badge>
           )}
           
-          {filters.moodFilter && (
+          {filters.moodFilter && filters.moodFilter !== "all" && (
             <Badge variant="secondary" className="flex items-center gap-1">
               <span>
                 Mood: {

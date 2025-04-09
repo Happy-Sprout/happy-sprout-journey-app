@@ -24,7 +24,7 @@ export const JournalHistory = ({
       !!filters.startDate ||
       !!filters.endDate ||
       !!filters.searchTerm ||
-      !!filters.moodFilter
+      !!(filters.moodFilter && filters.moodFilter !== "all")
     );
   }, [filters]);
   
@@ -33,7 +33,7 @@ export const JournalHistory = ({
       startDate: undefined,
       endDate: undefined,
       searchTerm: "",
-      moodFilter: "",
+      moodFilter: "all",
     });
   };
   
@@ -67,7 +67,7 @@ export const JournalHistory = ({
       });
     }
     
-    if (filters.moodFilter) {
+    if (filters.moodFilter && filters.moodFilter !== "all") {
       const [high, low] = filters.moodFilter.split("-").map(Number);
       filtered = filtered.filter(entry => {
         return entry.mood <= high && entry.mood >= low;
