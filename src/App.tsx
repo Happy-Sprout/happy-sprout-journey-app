@@ -17,8 +17,19 @@ import DailyCheckIn from "./pages/DailyCheckIn";
 import Journal from "./pages/Journal";
 import NotFound from "./pages/NotFound";
 
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import ContentManagement from "./pages/admin/ContentManagement"; 
+import JournalMonitoring from "./pages/admin/JournalMonitoring";
+import AssessmentManagement from "./pages/admin/AssessmentManagement";
+import GamificationManagement from "./pages/admin/GamificationManagement";
+import NotificationsManagement from "./pages/admin/NotificationsManagement";
+import ReportingAnalytics from "./pages/admin/ReportingAnalytics";
+
 // Context
 import { UserProvider, useUser } from "./contexts/UserContext";
+import { AdminProvider, useAdmin } from "./contexts/AdminContext";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +45,29 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // Redirect to login if not authenticated
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Admin route component
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isLoggedIn, loading: userLoading } = useUser();
+  const { isAdmin, loading: adminLoading } = useAdmin();
+  
+  // If still loading auth state, show nothing or a loading indicator
+  if (userLoading || adminLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  // Redirect to login if not authenticated
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Redirect to dashboard if not an admin
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return <>{children}</>;
@@ -75,6 +109,49 @@ const AppRoutes = () => {
           <Journal />
         </ProtectedRoute>
       } />
+      
+      {/* Admin Routes */}
+      <Route path="/admin" element={
+        <AdminRoute>
+          <AdminDashboard />
+        </AdminRoute>
+      } />
+      <Route path="/admin/users" element={
+        <AdminRoute>
+          <UserManagement />
+        </AdminRoute>
+      } />
+      <Route path="/admin/content" element={
+        <AdminRoute>
+          <ContentManagement />
+        </AdminRoute>
+      } />
+      <Route path="/admin/journal-monitoring" element={
+        <AdminRoute>
+          <JournalMonitoring />
+        </AdminRoute>
+      } />
+      <Route path="/admin/assessments" element={
+        <AdminRoute>
+          <AssessmentManagement />
+        </AdminRoute>
+      } />
+      <Route path="/admin/gamification" element={
+        <AdminRoute>
+          <GamificationManagement />
+        </AdminRoute>
+      } />
+      <Route path="/admin/notifications" element={
+        <AdminRoute>
+          <NotificationsManagement />
+        </AdminRoute>
+      } />
+      <Route path="/admin/reports" element={
+        <AdminRoute>
+          <ReportingAnalytics />
+        </AdminRoute>
+      } />
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -83,13 +160,15 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
+      <AdminProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </AdminProvider>
     </UserProvider>
   </QueryClientProvider>
 );
