@@ -225,9 +225,13 @@ const Journal = () => {
         setJournalEntries([newEntry, ...journalEntries]);
       }
       
-      updateChildProfile(currentChild.id, {
-        xpPoints: currentChild.xpPoints + 15,
-      });
+      if (currentChild && typeof currentChild.xpPoints === 'number') {
+        updateChildProfile(currentChild.id, {
+          xpPoints: currentChild.xpPoints + 15,
+        });
+      } else {
+        console.warn("Cannot update XP points: currentChild or xpPoints is undefined");
+      }
       
       toast({
         title: "Journal Entry Saved!",

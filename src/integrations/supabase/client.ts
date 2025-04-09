@@ -19,6 +19,14 @@ export const supabase = createClient<Database>(
       storageKey: 'happy-sprout-auth',
       flowType: 'pkce', // Enable modern PKCE flow for more secure auth
       detectSessionInUrl: true, // Important for handling email confirmations
+    },
+    db: {
+      schema: 'public'
+    },
+    global: {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
   }
 );
