@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
-import { CalendarDays, BookOpen, Award, TrendingUp, Plus } from "lucide-react";
+import { CalendarDays, BookOpen, Award, TrendingUp, Plus, Check, Star, Trophy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { avatarOptions } from "@/constants/profileOptions";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -22,6 +25,47 @@ const Dashboard = () => {
   ];
   
   const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+
+  // Get avatar image for the child
+  const getAvatarImage = (avatarId?: string) => {
+    if (!avatarId) return avatarOptions[0].src;
+    const avatar = avatarOptions.find(a => a.id === avatarId);
+    return avatar ? avatar.src : avatarOptions[0].src;
+  };
+
+  // Mockup achievements and what's next
+  const achievements = [
+    { 
+      title: "First Login", 
+      description: "Completed your first login", 
+      icon: "🏆", 
+      completed: true 
+    },
+    { 
+      title: "Profile Creator", 
+      description: "Created your profile", 
+      icon: "🎨", 
+      completed: currentChild ? !!currentChild.creationStatus : false 
+    },
+    { 
+      title: "Emotion Explorer", 
+      description: "Completed first daily check-in", 
+      icon: "😊", 
+      completed: currentChild ? !!currentChild.dailyCheckInCompleted : false 
+    },
+    { 
+      title: "Journal Master", 
+      description: "Created your first journal entry", 
+      icon: "📝", 
+      completed: false 
+    },
+    { 
+      title: "Week Streak", 
+      description: "Completed check-ins for 7 days in a row", 
+      icon: "🔥", 
+      completed: currentChild ? currentChild.streakCount >= 7 : false 
+    },
+  ];
   
   return (
     <Layout requireAuth>
@@ -50,10 +94,18 @@ const Dashboard = () => {
                       className="p-4 bg-white rounded-lg border-2 border-sprout-purple/20 hover:border-sprout-purple cursor-pointer transition-all hover:shadow-md"
                       onClick={() => setCurrentChildId(profile.id)}
                     >
-                      <div className="text-3xl mb-2">👧👦</div>
+                      <Avatar className="h-16 w-16 mb-2">
+                        <AvatarImage src={getAvatarImage(profile.avatar)} alt={profile.nickname} />
+                        <AvatarFallback>{profile.nickname.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
                       <h3 className="font-bold text-lg">{profile.nickname}</h3>
                       <p className="text-sm text-gray-500">Age: {profile.age}</p>
                       <p className="text-sm text-gray-500">Grade: {profile.grade}</p>
+                      {profile.creationStatus && (
+                        <Badge className={profile.creationStatus === 'completed' ? 'bg-green-500' : 'bg-amber-500'}>
+                          {profile.creationStatus === 'completed' ? 'Complete' : 'Pending'}
+                        </Badge>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -63,8 +115,16 @@ const Dashboard = () => {
             {currentChild && (
               <>
                 <div className="mb-8">
-                  <h1 className="text-3xl font-bold mb-2">Welcome back, {currentChild.nickname}!</h1>
-                  <p className="text-gray-600">Let's continue growing your emotional skills today.</p>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={getAvatarImage(currentChild.avatar)} alt={currentChild.nickname} />
+                      <AvatarFallback>{currentChild.nickname.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h1 className="text-3xl font-bold mb-1">Welcome back, {currentChild.nickname}!</h1>
+                      <p className="text-gray-600">Let's continue growing your emotional skills today.</p>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -127,19 +187,24 @@ const Dashboard = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          <div className="flex items-center p-3 bg-sprout-orange/10 rounded-lg">
-                            <div className="mr-4 bg-sprout-orange text-white p-2 rounded-full">
-                              <CalendarDays className="h-5 w-5" />
+                          <div className={`flex items-center p-3 ${currentChild.dailyCheckInCompleted ? 'bg-sprout-green/10' : 'bg-sprout-orange/10'} rounded-lg`}>
+                            <div className={`mr-4 ${currentChild.dailyCheckInCompleted ? 'bg-sprout-green' : 'bg-sprout-orange'} text-white p-2 rounded-full`}>
+                              {currentChild.dailyCheckInCompleted ? <Check className="h-5 w-5" /> : <CalendarDays className="h-5 w-5" />}
                             </div>
                             <div>
                               <h3 className="font-medium">Daily Check-In</h3>
-                              <p className="text-sm text-gray-600">Share how you're feeling today!</p>
+                              <p className="text-sm text-gray-600">
+                                {currentChild.dailyCheckInCompleted 
+                                  ? "You've completed today's check-in!" 
+                                  : "Share how you're feeling today!"}
+                              </p>
                             </div>
                             <Button 
-                              className="ml-auto sprout-button"
+                              className={`ml-auto ${currentChild.dailyCheckInCompleted ? 'bg-sprout-green' : 'sprout-button'}`}
                               onClick={() => navigate("/daily-check-in")}
+                              disabled={currentChild.dailyCheckInCompleted}
                             >
-                              Start
+                              {currentChild.dailyCheckInCompleted ? 'Completed' : 'Start'}
                             </Button>
                           </div>
                           
@@ -173,6 +238,65 @@ const Dashboard = () => {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+
+                {/* New Achievements Section */}
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <Trophy className="h-6 w-6 text-sprout-orange" />
+                    Achievements
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {achievements.map((achievement, index) => (
+                      <div 
+                        key={index} 
+                        className={`p-4 rounded-lg border ${
+                          achievement.completed 
+                            ? 'bg-sprout-green/10 border-sprout-green' 
+                            : 'bg-gray-100 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">{achievement.icon}</div>
+                          <div>
+                            <h3 className="font-medium flex items-center gap-2">
+                              {achievement.title}
+                              {achievement.completed && (
+                                <Check className="h-4 w-4 text-sprout-green" />
+                              )}
+                            </h3>
+                            <p className="text-sm text-gray-600">{achievement.description}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Star className="h-5 w-5 text-sprout-yellow" />
+                      What's Next
+                    </h3>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="space-y-3">
+                          {achievements.filter(a => !a.completed).map((nextAchievement, index) => (
+                            <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
+                              <div className="text-xl text-gray-400">{nextAchievement.icon}</div>
+                              <div>
+                                <h4 className="font-medium">{nextAchievement.title}</h4>
+                                <p className="text-sm text-gray-500">{nextAchievement.description}</p>
+                              </div>
+                            </div>
+                          ))}
+                          {achievements.filter(a => !a.completed).length === 0 && (
+                            <p className="text-gray-500">Great job! You've completed all the beginning achievements!</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               </>
             )}

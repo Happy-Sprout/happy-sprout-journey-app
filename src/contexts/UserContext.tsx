@@ -4,21 +4,22 @@ import { createContext, useContext, useState, ReactNode } from "react";
 // Types for our context
 type ChildProfile = {
   id: string;
-  firstName: string;
-  lastName?: string;
   nickname: string;
   age: number;
   dateOfBirth: string;
   gender?: string;
   grade: string;
-  learningStyle?: string;
-  strongestSEL?: string;
+  learningStyles?: string[];
+  selStrengths?: string[];
+  avatar?: string;
   interests: string[];
   storyPreferences: string[];
   selChallenges: string[];
   streakCount: number;
   xpPoints: number;
   badges: string[];
+  creationStatus?: 'completed' | 'pending';
+  dailyCheckInCompleted?: boolean;
 };
 
 type ParentInfo = {
@@ -42,6 +43,9 @@ type UserContextType = {
   currentChildId: string | null;
   setCurrentChildId: (id: string | null) => void;
   getCurrentChild: () => ChildProfile | undefined;
+  // New methods
+  calculateAgeFromDOB: (dob: string) => number;
+  markDailyCheckInComplete: (id: string) => void;
 };
 
 // Create context with default values
@@ -58,6 +62,8 @@ const UserContext = createContext<UserContextType>({
   currentChildId: null,
   setCurrentChildId: () => {},
   getCurrentChild: () => undefined,
+  calculateAgeFromDOB: () => 0,
+  markDailyCheckInComplete: () => {},
 });
 
 // Provider component
@@ -94,6 +100,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return childProfiles.find((profile) => profile.id === currentChildId);
   };
 
+  // Calculate age from date of birth
+  const calculateAgeFromDOB = (dob: string): number => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  // Mark daily check-in as completed for a child
+  const markDailyCheckInComplete = (id: string) => {
+    updateChildProfile(id, { dailyCheckInCompleted: true });
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -109,6 +134,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         currentChildId,
         setCurrentChildId,
         getCurrentChild,
+        calculateAgeFromDOB,
+        markDailyCheckInComplete,
       }}
     >
       {children}

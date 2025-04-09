@@ -2,404 +2,420 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
-import { Frown, Meh, Smile, Heart, AlertCircle } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-
-// Emotion levels
-const emotions = [
-  { value: "veryHappy", label: "Very Happy", emoji: "😄", description: "I'm having a great day!" },
-  { value: "happy", label: "Happy", emoji: "🙂", description: "I'm feeling good." },
-  { value: "neutral", label: "Neutral", emoji: "😐", description: "I'm feeling okay." },
-  { value: "sad", label: "Sad", emoji: "😞", description: "I'm feeling a bit down." },
-  { value: "verySad", label: "Very Sad", emoji: "😢", description: "I'm having a tough day." },
-];
-
-// Mock role-play scenarios
-const rolePlayScenarios = [
-  {
-    id: 1,
-    scenario: "Your friend is playing with a toy you really want to play with too. What would you do?",
-    options: [
-      { value: "a", text: "Grab the toy because I want it now" },
-      { value: "b", text: "Politely ask if we can take turns with the toy" },
-      { value: "c", text: "Walk away and find something else to play with" },
-      { value: "d", text: "Tell a grown-up that my friend won't share" }
-    ],
-    correct: "b"
-  },
-  {
-    id: 2,
-    scenario: "You see a classmate sitting alone at lunch. What would you do?",
-    options: [
-      { value: "a", text: "Ignore them because I want to sit with my own friends" },
-      { value: "b", text: "Feel bad for them but don't do anything" },
-      { value: "c", text: "Ask them if they would like to join you and your friends" },
-      { value: "d", text: "Tell a teacher that the student is sitting alone" }
-    ],
-    correct: "c"
-  },
-  {
-    id: 3,
-    scenario: "You made a mistake on your homework. How do you feel?",
-    options: [
-      { value: "a", text: "Upset and angry at myself - I should have done better" },
-      { value: "b", text: "Worried that I'll get in trouble" },
-      { value: "c", text: "It's okay - everyone makes mistakes and I can learn from this" },
-      { value: "d", text: "I don't care about the mistake" }
-    ],
-    correct: "c"
-  }
-];
-
-// Mock motivational quotes
-const motivationalQuotes = [
-  "You are braver than you believe, stronger than you seem, and smarter than you think.",
-  "Every day is a new beginning. Take a deep breath and start again.",
-  "Kind words can be short and easy to speak, but their echoes are truly endless.",
-  "Believe you can and you're halfway there.",
-  "You don't have to be perfect to be amazing.",
-  "Your feelings matter, and so do you!",
-  "Be the reason someone smiles today.",
-  "When you feel like giving up, remember why you started.",
-  "A little progress each day adds up to big results."
-];
 
 const DailyCheckIn = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getCurrentChild, updateChildProfile } = useUser();
+  const { getCurrentChild, currentChildId, markDailyCheckInComplete } = useUser();
   const currentChild = getCurrentChild();
   
-  // Check-in states
-  const [currentStep, setCurrentStep] = useState(1);
-  const [selectedEmotion, setSelectedEmotion] = useState("");
-  const [confidenceLevel, setConfidenceLevel] = useState("");
-  const [selectedScenario, setSelectedScenario] = useState<typeof rolePlayScenarios[0] | null>(null);
+  const [step, setStep] = useState(1);
+  const [mood, setMood] = useState("");
+  const [energyLevel, setEnergyLevel] = useState("");
+  const [anxiety, setAnxiety] = useState("");
   const [scenarioAnswer, setScenarioAnswer] = useState("");
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [completionQuote, setCompletionQuote] = useState("");
   
-  // Select a random scenario for this check-in
-  useState(() => {
-    const randomIndex = Math.floor(Math.random() * rolePlayScenarios.length);
-    setSelectedScenario(rolePlayScenarios[randomIndex]);
-  });
+  const totalSteps = 4;
   
-  // Handle emotion selection
-  const handleEmotionSelect = (value: string) => {
-    setSelectedEmotion(value);
+  // Mock data for scenario question
+  const scenarioQuestion = {
+    question: "Your friend won't let you join their game during recess. What would you do?",
+    options: [
+      { value: "ask", label: "Politely ask why you can't join" },
+      { value: "other", label: "Find another game to play" },
+      { value: "teacher", label: "Tell a teacher" },
+      { value: "upset", label: "Get upset and tell them they're being mean" },
+    ],
   };
   
-  // Handle next step
-  const handleNextStep = () => {
-    if (currentStep === 1 && !selectedEmotion) {
+  // Motivational quotes
+  const motivationalQuotes = [
+    "Great job! Remember that sharing your feelings helps you grow stronger!",
+    "You're doing amazing! Recognizing your emotions is the first step to managing them.",
+    "Awesome check-in! Each day you learn more about yourself and your emotions.",
+    "Well done! Your emotional awareness is growing every day.",
+    "Fantastic! Understanding your feelings today helps you handle tomorrow better.",
+  ];
+  
+  const getRandomQuote = () => {
+    return motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+  };
+  
+  const nextStep = () => {
+    // Validate current step
+    if (step === 1 && !mood) {
       toast({
-        title: "Please select how you're feeling",
+        title: "Selection needed",
+        description: "Please select how you're feeling today",
         variant: "destructive",
       });
       return;
     }
     
-    if (currentStep === 2 && !confidenceLevel) {
+    if (step === 2 && !energyLevel) {
       toast({
-        title: "Please select your confidence level",
+        title: "Selection needed",
+        description: "Please select your energy level",
         variant: "destructive",
       });
       return;
     }
     
-    if (currentStep === 3 && !scenarioAnswer) {
+    if (step === 3 && !anxiety) {
       toast({
-        title: "Please select an answer",
+        title: "Selection needed",
+        description: "Please select your worry level",
         variant: "destructive",
       });
       return;
     }
     
-    if (currentStep === 3) {
-      // Check if answer is correct
-      if (selectedScenario) {
-        setIsCorrect(scenarioAnswer === selectedScenario.correct);
-      }
-      
-      // Set random completion quote
-      const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-      setCompletionQuote(motivationalQuotes[randomIndex]);
-      
-      // Update child profile
-      if (currentChild) {
-        updateChildProfile(currentChild.id, {
-          streakCount: currentChild.streakCount + 1,
-          xpPoints: currentChild.xpPoints + 10,
-        });
-      }
+    if (step === 4 && !scenarioAnswer) {
+      toast({
+        title: "Selection needed",
+        description: "Please select an answer to the scenario",
+        variant: "destructive",
+      });
+      return;
     }
     
-    setCurrentStep(current => current + 1);
-  };
-  
-  // Handle scenario answer selection
-  const handleScenarioAnswerSelect = (value: string) => {
-    setScenarioAnswer(value);
-  };
-  
-  // Finish check-in and navigate to dashboard
-  const handleFinish = () => {
-    toast({
-      title: "Daily Check-in Complete!",
-      description: "Great job on completing your daily check-in.",
-    });
-    navigate("/dashboard");
-  };
-  
-  // Handle back button
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(current => current - 1);
+    if (step < totalSteps) {
+      setStep(step + 1);
     } else {
-      navigate("/dashboard");
+      // Complete check-in
+      completeCheckIn();
     }
   };
+  
+  const prevStep = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
+  
+  const completeCheckIn = () => {
+    // Mark check-in as completed
+    if (currentChildId) {
+      markDailyCheckInComplete(currentChildId);
+      
+      toast({
+        title: "Check-in Complete!",
+        description: "Great job sharing how you feel today!",
+      });
+      
+      // In a real app, we would save this data to a database
+      console.log({
+        childId: currentChildId,
+        date: new Date().toISOString().split('T')[0],
+        mood,
+        energyLevel,
+        anxiety,
+        scenarioAnswer,
+      });
+      
+      // Navigate to completion step
+      setStep(totalSteps + 1);
+    }
+  };
+  
+  if (!currentChild) {
+    return (
+      <Layout requireAuth>
+        <div className="container mx-auto px-4 py-8 max-w-md">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-4">
+                <h2 className="text-xl font-bold mb-2">No Active Profile</h2>
+                <p className="text-gray-600 mb-4">
+                  Please select or create a child profile first.
+                </p>
+                <Button
+                  className="sprout-button"
+                  onClick={() => navigate("/profile")}
+                >
+                  Go to Profiles
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout requireAuth>
-      <div className="container mx-auto max-w-3xl px-4">
-        <h1 className="text-3xl font-bold mb-2">Daily Check-In</h1>
-        <p className="text-gray-600 mb-8">
-          Let's take a moment to check in with your feelings and thoughts today.
-        </p>
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl md:text-3xl font-bold">
+            Daily Emotion Check-In
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Hi {currentChild.nickname}! Let's talk about how you're feeling today.
+          </p>
+        </div>
         
-        {/* Step 1: Emotion Selection */}
-        {currentStep === 1 && (
-          <Card className="animate-fade-in">
-            <CardHeader>
-              <CardTitle>How are you feeling today?</CardTitle>
-              <CardDescription>Select the emoji that best matches your mood right now</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
-                {emotions.map((emotion) => (
-                  <div
-                    key={emotion.value}
-                    className={`flex flex-col items-center p-4 rounded-xl cursor-pointer transition-all border-2 ${
-                      selectedEmotion === emotion.value
-                        ? "border-sprout-purple bg-sprout-purple/10"
-                        : "border-transparent hover:border-gray-200 hover:bg-gray-50"
-                    }`}
-                    onClick={() => handleEmotionSelect(emotion.value)}
-                  >
-                    <div className="text-4xl mb-2">{emotion.emoji}</div>
-                    <div className="font-medium text-center">{emotion.label}</div>
-                    <div className="text-xs text-center text-gray-500 mt-1">{emotion.description}</div>
+        {/* Progress indicator */}
+        {step <= totalSteps && (
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">Step {step} of {totalSteps}</span>
+              <span className="text-sm font-medium">{Math.round((step / totalSteps) * 100)}%</span>
+            </div>
+            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-sprout-purple transition-all duration-300"
+                style={{ width: `${(step / totalSteps) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
+        
+        <Card>
+          <CardContent className="pt-6">
+            {step === 1 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">How are you feeling today?</h2>
+                <RadioGroup value={mood} onValueChange={setMood}>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "happy" ? "bg-sprout-green/20 border-2 border-sprout-green" : "bg-gray-100"}`}>
+                        😊
+                      </div>
+                      <RadioGroupItem value="happy" id="happy" className="sr-only" />
+                      <Label htmlFor="happy" className="cursor-pointer">Happy</Label>
+                    </div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "sad" ? "bg-sprout-blue/20 border-2 border-sprout-blue" : "bg-gray-100"}`}>
+                        😢
+                      </div>
+                      <RadioGroupItem value="sad" id="sad" className="sr-only" />
+                      <Label htmlFor="sad" className="cursor-pointer">Sad</Label>
+                    </div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "angry" ? "bg-sprout-orange/20 border-2 border-sprout-orange" : "bg-gray-100"}`}>
+                        😡
+                      </div>
+                      <RadioGroupItem value="angry" id="angry" className="sr-only" />
+                      <Label htmlFor="angry" className="cursor-pointer">Angry</Label>
+                    </div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "worried" ? "bg-sprout-yellow/20 border-2 border-sprout-yellow" : "bg-gray-100"}`}>
+                        😨
+                      </div>
+                      <RadioGroupItem value="worried" id="worried" className="sr-only" />
+                      <Label htmlFor="worried" className="cursor-pointer">Worried</Label>
+                    </div>
+                    
+                    <div className="flex flex-col items-center">
+                      <div className={`w-14 h-14 flex items-center justify-center text-4xl rounded-full mb-2 ${mood === "surprised" ? "bg-sprout-purple/20 border-2 border-sprout-purple" : "bg-gray-100"}`}>
+                        😲
+                      </div>
+                      <RadioGroupItem value="surprised" id="surprised" className="sr-only" />
+                      <Label htmlFor="surprised" className="cursor-pointer">Surprised</Label>
+                    </div>
                   </div>
-                ))}
-              </div>
-              
-              <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={handleBack}>
-                  Back
-                </Button>
-                <Button className="sprout-button" onClick={handleNextStep}>
-                  Continue
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        
-        {/* Step 2: Confidence Level */}
-        {currentStep === 2 && (
-          <Card className="animate-fade-in">
-            <CardHeader>
-              <CardTitle>How confident do you feel today?</CardTitle>
-              <CardDescription>Select the level that best matches how you feel about yourself right now</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup 
-                value={confidenceLevel} 
-                onValueChange={setConfidenceLevel}
-                className="space-y-3"
-              >
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
-                  <RadioGroupItem value="very" id="very" />
-                  <Label htmlFor="very" className="cursor-pointer flex-1">
-                    <div className="font-medium flex items-center">
-                      <span className="mr-2">💪</span> Very Confident
-                    </div>
-                    <p className="text-sm text-gray-500">I feel like I can handle anything today!</p>
-                  </Label>
-                </div>
-                
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
-                  <RadioGroupItem value="somewhat" id="somewhat" />
-                  <Label htmlFor="somewhat" className="cursor-pointer flex-1">
-                    <div className="font-medium flex items-center">
-                      <span className="mr-2">🙂</span> Somewhat Confident
-                    </div>
-                    <p className="text-sm text-gray-500">I feel good, but have some doubts.</p>
-                  </Label>
-                </div>
-                
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
-                  <RadioGroupItem value="neutral" id="neutral" />
-                  <Label htmlFor="neutral" className="cursor-pointer flex-1">
-                    <div className="font-medium flex items-center">
-                      <span className="mr-2">😐</span> Neutral
-                    </div>
-                    <p className="text-sm text-gray-500">I don't feel particularly confident or unconfident.</p>
-                  </Label>
-                </div>
-                
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
-                  <RadioGroupItem value="not-very" id="not-very" />
-                  <Label htmlFor="not-very" className="cursor-pointer flex-1">
-                    <div className="font-medium flex items-center">
-                      <span className="mr-2">😕</span> Not Very Confident
-                    </div>
-                    <p className="text-sm text-gray-500">I'm feeling a bit unsure of myself today.</p>
-                  </Label>
-                </div>
-                
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
-                  <RadioGroupItem value="not-at-all" id="not-at-all" />
-                  <Label htmlFor="not-at-all" className="cursor-pointer flex-1">
-                    <div className="font-medium flex items-center">
-                      <span className="mr-2">😟</span> Not Confident At All
-                    </div>
-                    <p className="text-sm text-gray-500">I'm really doubting myself today.</p>
-                  </Label>
-                </div>
-              </RadioGroup>
-              
-              <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={handleBack}>
-                  Back
-                </Button>
-                <Button className="sprout-button" onClick={handleNextStep}>
-                  Continue
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        
-        {/* Step 3: Role-Play Scenario */}
-        {currentStep === 3 && selectedScenario && (
-          <Card className="animate-fade-in">
-            <CardHeader>
-              <CardTitle>Social Scenario</CardTitle>
-              <CardDescription>Let's think about what you would do in this situation</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="p-4 bg-sprout-yellow/20 rounded-lg mb-6">
-                <h3 className="font-medium mb-2">{selectedScenario.scenario}</h3>
-                <RadioGroup 
-                  value={scenarioAnswer} 
-                  onValueChange={handleScenarioAnswerSelect}
-                  className="space-y-3 mt-4"
-                >
-                  {selectedScenario.options.map(option => (
-                    <div
-                      key={option.value}
-                      className="flex items-center space-x-3 p-3 bg-white rounded-lg border hover:bg-gray-50 cursor-pointer"
-                    >
-                      <RadioGroupItem value={option.value} id={`scenario-${option.value}`} />
-                      <Label
-                        htmlFor={`scenario-${option.value}`}
-                        className="cursor-pointer flex-1"
-                      >
-                        {option.text}
-                      </Label>
-                    </div>
-                  ))}
                 </RadioGroup>
               </div>
-              
-              <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={handleBack}>
-                  Back
-                </Button>
-                <Button className="sprout-button" onClick={handleNextStep}>
-                  Submit Answer
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        
-        {/* Step 4: Completion/Feedback */}
-        {currentStep === 4 && selectedScenario && (
-          <Card className="animate-fade-in">
-            <CardHeader>
-              <CardTitle>Great Job!</CardTitle>
-              <CardDescription>Thanks for completing your daily check-in</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <h3 className="font-medium mb-2">Your answer:</h3>
-                <div className={`p-4 rounded-lg ${
-                  isCorrect 
-                    ? "bg-green-100 border border-green-200" 
-                    : "bg-orange-100 border border-orange-200"
-                }`}>
-                  <div className="flex items-start">
-                    {isCorrect ? (
-                      <Heart className="w-5 h-5 mr-2 text-green-600 mt-1" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 mr-2 text-orange-600 mt-1" />
-                    )}
-                    <div>
-                      <p className="font-medium">
-                        {selectedScenario.options.find(o => o.value === scenarioAnswer)?.text}
-                      </p>
-                      {isCorrect ? (
-                        <p className="text-sm text-green-700 mt-1">
-                          That's a great choice! Asking to take turns is a kind and respectful way to handle the situation.
-                        </p>
-                      ) : (
-                        <p className="text-sm text-orange-700 mt-1">
-                          That's one way to handle it. Remember that asking politely to take turns is often the most helpful approach.
-                        </p>
-                      )}
+            )}
+            
+            {step === 2 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">How is your energy level today?</h2>
+                <RadioGroup value={energyLevel} onValueChange={setEnergyLevel}>
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${energyLevel === "very-high" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setEnergyLevel("very-high")}>
+                      <RadioGroupItem value="very-high" id="very-high" />
+                      <Label htmlFor="very-high" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Very High Energy</div>
+                        <div className="text-sm text-gray-500">I feel super energetic and can't sit still!</div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${energyLevel === "high" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setEnergyLevel("high")}>
+                      <RadioGroupItem value="high" id="high" />
+                      <Label htmlFor="high" className="flex-1 cursor-pointer">
+                        <div className="font-medium">High Energy</div>
+                        <div className="text-sm text-gray-500">I feel active and ready to do things</div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${energyLevel === "medium" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setEnergyLevel("medium")}>
+                      <RadioGroupItem value="medium" id="medium" />
+                      <Label htmlFor="medium" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Medium Energy</div>
+                        <div className="text-sm text-gray-500">I feel balanced - not too energetic, not too tired</div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${energyLevel === "low" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setEnergyLevel("low")}>
+                      <RadioGroupItem value="low" id="low" />
+                      <Label htmlFor="low" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Low Energy</div>
+                        <div className="text-sm text-gray-500">I feel a bit tired and moving slowly</div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${energyLevel === "very-low" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setEnergyLevel("very-low")}>
+                      <RadioGroupItem value="very-low" id="very-low" />
+                      <Label htmlFor="very-low" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Very Low Energy</div>
+                        <div className="text-sm text-gray-500">I feel extremely tired and don't want to do anything</div>
+                      </Label>
                     </div>
                   </div>
+                </RadioGroup>
+              </div>
+            )}
+            
+            {step === 3 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">How worried or nervous do you feel today?</h2>
+                <RadioGroup value={anxiety} onValueChange={setAnxiety}>
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${anxiety === "not-at-all" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setAnxiety("not-at-all")}>
+                      <RadioGroupItem value="not-at-all" id="not-at-all" />
+                      <Label htmlFor="not-at-all" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Not worried at all</div>
+                        <div className="text-sm text-gray-500">I feel calm and relaxed</div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${anxiety === "slightly" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setAnxiety("slightly")}>
+                      <RadioGroupItem value="slightly" id="slightly" />
+                      <Label htmlFor="slightly" className="flex-1 cursor-pointer">
+                        <div className="font-medium">A little worried</div>
+                        <div className="text-sm text-gray-500">Something small is bothering me</div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${anxiety === "somewhat" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setAnxiety("somewhat")}>
+                      <RadioGroupItem value="somewhat" id="somewhat" />
+                      <Label htmlFor="somewhat" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Somewhat worried</div>
+                        <div className="text-sm text-gray-500">I've been thinking about something that worries me</div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${anxiety === "very" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setAnxiety("very")}>
+                      <RadioGroupItem value="very" id="very" />
+                      <Label htmlFor="very" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Very worried</div>
+                        <div className="text-sm text-gray-500">I can't stop thinking about something that's bothering me</div>
+                      </Label>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${anxiety === "extremely" ? "bg-sprout-green/10 border-sprout-green" : "bg-white hover:bg-gray-50"}`}
+                      onClick={() => setAnxiety("extremely")}>
+                      <RadioGroupItem value="extremely" id="extremely" />
+                      <Label htmlFor="extremely" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Extremely worried</div>
+                        <div className="text-sm text-gray-500">I feel overwhelmed with worry or fear</div>
+                      </Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+            
+            {step === 4 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">Social Scenario</h2>
+                <div className="p-4 bg-sprout-yellow/10 rounded-lg mb-4">
+                  <p>{scenarioQuestion.question}</p>
+                </div>
+                
+                <RadioGroup value={scenarioAnswer} onValueChange={setScenarioAnswer}>
+                  <div className="grid grid-cols-1 gap-3">
+                    {scenarioQuestion.options.map((option) => (
+                      <div
+                        key={option.value}
+                        className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer ${
+                          scenarioAnswer === option.value ? "bg-sprout-purple/10 border-sprout-purple" : "bg-white hover:bg-gray-50"
+                        }`}
+                        onClick={() => setScenarioAnswer(option.value)}
+                      >
+                        <RadioGroupItem value={option.value} id={option.value} />
+                        <Label htmlFor={option.value} className="cursor-pointer">{option.label}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+            
+            {step === totalSteps + 1 && (
+              <div className="text-center py-4">
+                <div className="text-5xl mb-4">🎉</div>
+                <h2 className="text-2xl font-bold mb-3">Awesome job!</h2>
+                <div className="p-6 bg-gradient-to-r from-sprout-yellow/20 to-sprout-green/20 rounded-lg mb-6">
+                  <p className="italic text-lg">"{getRandomQuote()}"</p>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  You've completed your daily check-in. Keep up the great work!
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    className="sprout-button"
+                    onClick={() => navigate("/dashboard")}
+                  >
+                    Return to Dashboard
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/journal")}
+                  >
+                    Write in Journal
+                  </Button>
                 </div>
               </div>
-              
-              <div className="p-4 bg-gradient-to-br from-sprout-yellow/30 to-sprout-orange/30 rounded-lg mb-6">
-                <h3 className="font-medium mb-2 text-center">Today's Inspiration</h3>
-                <p className="italic text-center">"{completionQuote}"</p>
-              </div>
-              
-              <div className="bg-sprout-purple/10 p-4 rounded-lg mb-6">
-                <h3 className="font-medium mb-2 flex items-center">
-                  <Award className="w-5 h-5 mr-2 text-sprout-purple" />
-                  Progress Update
-                </h3>
-                <p className="text-sm">You've completed your daily check-in! You earned +10 XP and added 1 day to your streak.</p>
-              </div>
-              
-              <div className="flex justify-center mt-6">
-                <Button className="sprout-button" onClick={handleFinish}>
-                  Finish
+            )}
+            
+            {step <= totalSteps && (
+              <div className="flex justify-between mt-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  disabled={step === 1}
+                >
+                  Back
+                </Button>
+                
+                <Button
+                  type="button"
+                  className="sprout-button"
+                  onClick={nextStep}
+                >
+                  {step === totalSteps ? "Complete" : "Next"}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
-};
-
-// Missing component imports
-const Award = (props: any) => {
-  return <span {...props} />;
 };
 
 export default DailyCheckIn;

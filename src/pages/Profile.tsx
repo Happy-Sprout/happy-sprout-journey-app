@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import { Edit, Plus, Trash2, UserCircle } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { avatarOptions } from "@/constants/profileOptions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +54,13 @@ const Profile = () => {
       setDeleteDialogOpen(false);
       setProfileToDelete(null);
     }
+  };
+
+  // Get avatar image for the child
+  const getAvatarImage = (avatarId?: string) => {
+    if (!avatarId) return avatarOptions[0].src;
+    const avatar = avatarOptions.find(a => a.id === avatarId);
+    return avatar ? avatar.src : avatarOptions[0].src;
   };
 
   // Map learning style to readable format
@@ -153,19 +162,24 @@ const Profile = () => {
                     <CardHeader className="pb-3">
                       <div className="flex justify-between">
                         <CardTitle className="flex items-center">
-                          <UserCircle className="h-5 w-5 mr-2 text-sprout-purple" />
-                          {profile.firstName} {profile.lastName}
-                          {profile.nickname && profile.nickname !== profile.firstName && (
-                            <span className="ml-2 text-gray-500">
-                              ({profile.nickname})
-                            </span>
-                          )}
+                          <Avatar className="h-8 w-8 mr-2">
+                            <AvatarImage src={getAvatarImage(profile.avatar)} alt={profile.nickname} />
+                            <AvatarFallback>{profile.nickname.substring(0, 2)}</AvatarFallback>
+                          </Avatar>
+                          {profile.nickname}
                         </CardTitle>
-                        {profile.id === currentChildId && (
-                          <Badge variant="outline" className="bg-sprout-purple text-white">
-                            Active Profile
-                          </Badge>
-                        )}
+                        <div className="flex gap-2">
+                          {profile.id === currentChildId && (
+                            <Badge variant="outline" className="bg-sprout-purple text-white">
+                              Active Profile
+                            </Badge>
+                          )}
+                          {profile.creationStatus && (
+                            <Badge className={profile.creationStatus === 'completed' ? 'bg-green-500' : 'bg-amber-500'}>
+                              {profile.creationStatus === 'completed' ? 'Complete' : 'Pending'}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <CardDescription>
                         Age: {profile.age} • Grade: {profile.grade}
@@ -176,12 +190,20 @@ const Profile = () => {
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <h4 className="text-sm font-medium text-gray-500 mb-1">Learning Style</h4>
-                            <p>{getLearningStyleLabel(profile.learningStyle)}</p>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Learning Styles</h4>
+                            <p>
+                              {profile.learningStyles && profile.learningStyles.length > 0 
+                                ? profile.learningStyles.map(style => getLearningStyleLabel(style)).join(", ")
+                                : getLearningStyleLabel(profile.learningStyle)}
+                            </p>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium text-gray-500 mb-1">SEL Strength</h4>
-                            <p>{getSELStrengthLabel(profile.strongestSEL)}</p>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">SEL Strengths</h4>
+                            <p>
+                              {profile.selStrengths && profile.selStrengths.length > 0 
+                                ? profile.selStrengths.map(strength => getSELStrengthLabel(strength)).join(", ")
+                                : getSELStrengthLabel(profile.strongestSEL)}
+                            </p>
                           </div>
                         </div>
 

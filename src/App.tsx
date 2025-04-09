@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
 
 // Pages
 import Index from "./pages/Index";
@@ -13,6 +12,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import CreateProfile from "./pages/CreateProfile";
+import EditProfile from "./pages/EditProfile";
 import DailyCheckIn from "./pages/DailyCheckIn";
 import Journal from "./pages/Journal";
 import NotFound from "./pages/NotFound";
@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/create-profile" element={<CreateProfile />} />
+            <Route path="/edit-profile/:id" element={<EditProfile />} />
             <Route path="/daily-check-in" element={<DailyCheckIn />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="*" element={<NotFound />} />

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,20 @@ import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import { Check } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
+import AvatarSelector from "@/components/AvatarSelector";
+import MultipleCheckboxGroup from "@/components/MultipleCheckboxGroup";
+import { 
+  gradeOptions, 
+  learningStyleOptions,
+  selStrengthOptions 
+} from "@/constants/profileOptions";
 
 // Define types for multi-select options
 type Option = {
@@ -22,20 +36,19 @@ type Option = {
 const CreateProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addChildProfile, setCurrentChildId } = useUser();
+  const { addChildProfile, setCurrentChildId, calculateAgeFromDOB } = useUser();
   
   // Basic Information
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [nickname, setNickname] = useState("");
-  const [age, setAge] = useState("");
+  const [age, setAge] = useState<number | null>(null);
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [grade, setGrade] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState("avatar1");
   
   // Learning Preferences
-  const [learningStyle, setLearningStyle] = useState("");
-  const [strongestSEL, setStrongestSEL] = useState("");
+  const [selectedLearningStyles, setSelectedLearningStyles] = useState<string[]>([]);
+  const [selectedSELStrengths, setSelectedSELStrengths] = useState<string[]>([]);
   
   // Interests & Challenges
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -74,6 +87,14 @@ const CreateProfile = () => {
     { value: "speaking", label: "Speaking up and sharing ideas" },
     { value: "peerpressure", label: "Dealing with peer pressure and conflicts" },
   ];
+
+  // Update age when date of birth changes
+  useEffect(() => {
+    if (dateOfBirth) {
+      const calculatedAge = calculateAgeFromDOB(dateOfBirth);
+      setAge(calculatedAge);
+    }
+  }, [dateOfBirth, calculateAgeFromDOB]);
   
   // Toggle selection for multi-select options
   const toggleInterest = (value: string) => {
@@ -93,12 +114,24 @@ const CreateProfile = () => {
       prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
     );
   };
+
+  const toggleLearningStyle = (value: string) => {
+    setSelectedLearningStyles(prev => 
+      prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
+    );
+  };
+
+  const toggleSELStrength = (value: string) => {
+    setSelectedSELStrengths(prev => 
+      prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
+    );
+  };
   
   // Step navigation
   const nextStep = () => {
     if (currentStep === 1) {
       // Validate basic information
-      if (!firstName || !nickname || !age || !dateOfBirth || !grade) {
+      if (!nickname || !dateOfBirth || !grade) {
         toast({
           title: "Missing information",
           description: "Please fill in all required fields",
@@ -108,10 +141,10 @@ const CreateProfile = () => {
       }
     } else if (currentStep === 2) {
       // Validate learning preferences
-      if (!learningStyle || !strongestSEL) {
+      if (selectedLearningStyles.length === 0 || selectedSELStrengths.length === 0) {
         toast({
           title: "Missing information",
-          description: "Please select your learning style and strongest SEL area",
+          description: "Please select at least one learning style and SEL strength",
           variant: "destructive",
         });
         return;
@@ -142,21 +175,22 @@ const CreateProfile = () => {
     // Create profile
     const newProfile = {
       id: uuidv4(),
-      firstName,
-      lastName,
       nickname,
-      age: parseInt(age),
+      age: age || 0,
       dateOfBirth,
       gender,
       grade,
-      learningStyle,
-      strongestSEL,
+      learningStyles: selectedLearningStyles,
+      selStrengths: selectedSELStrengths,
+      avatar: selectedAvatar,
       interests: selectedInterests,
       storyPreferences: selectedStoryPreferences,
       selChallenges: selectedChallenges,
       streakCount: 0,
       xpPoints: 0,
       badges: [],
+      creationStatus: 'completed' as const,
+      dailyCheckInCompleted: false,
     };
     
     // Add profile to context
@@ -217,56 +251,24 @@ const CreateProfile = () => {
               <div className="space-y-6 animate-fade-in">
                 <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="firstName"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      required
-                      className="sprout-input"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name (Optional)</Label>
-                    <Input
-                      id="lastName"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="sprout-input"
-                    />
-                  </div>
-                </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="nickname">Nickname <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="nickname">What should we call you? <span className="text-red-500">*</span></Label>
                   <Input
                     id="nickname"
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     required
                     className="sprout-input"
-                    placeholder="What should we call your child?"
+                    placeholder="Your name in the app"
                   />
                 </div>
+
+                <AvatarSelector 
+                  selectedAvatar={selectedAvatar} 
+                  onChange={setSelectedAvatar} 
+                />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="age">Age <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      min="5"
-                      max="16"
-                      value={age}
-                      onChange={(e) => setAge(e.target.value)}
-                      required
-                      className="sprout-input"
-                    />
-                  </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
                     <Input
@@ -276,6 +278,18 @@ const CreateProfile = () => {
                       onChange={(e) => setDateOfBirth(e.target.value)}
                       required
                       className="sprout-input"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="age">Age</Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      value={age !== null ? age.toString() : ''}
+                      readOnly
+                      className="sprout-input bg-gray-50"
+                      placeholder="Auto-calculated from DOB"
                     />
                   </div>
                 </div>
@@ -301,14 +315,18 @@ const CreateProfile = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="grade">Grade Level <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="grade"
-                      value={grade}
-                      onChange={(e) => setGrade(e.target.value)}
-                      required
-                      className="sprout-input"
-                      placeholder="e.g., 3rd Grade"
-                    />
+                    <Select value={grade} onValueChange={setGrade} required>
+                      <SelectTrigger id="grade" className="sprout-input">
+                        <SelectValue placeholder="Select grade level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {gradeOptions.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -319,100 +337,22 @@ const CreateProfile = () => {
               <div className="space-y-6 animate-fade-in">
                 <h2 className="text-xl font-semibold mb-4">Learning Preferences</h2>
                 
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-base font-medium block mb-3">
-                      Preferred Learning Style <span className="text-red-500">*</span>
-                    </Label>
-                    <RadioGroup value={learningStyle} onValueChange={setLearningStyle} className="space-y-3">
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="visual" id="visual" className="mt-1" />
-                        <div>
-                          <Label htmlFor="visual" className="font-medium">Visual</Label>
-                          <p className="text-sm text-gray-500">I learn best with pictures, charts, and videos</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="auditory" id="auditory" className="mt-1" />
-                        <div>
-                          <Label htmlFor="auditory" className="font-medium">Auditory</Label>
-                          <p className="text-sm text-gray-500">I learn best by listening to explanations and discussions</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="kinesthetic" id="kinesthetic" className="mt-1" />
-                        <div>
-                          <Label htmlFor="kinesthetic" className="font-medium">Kinesthetic</Label>
-                          <p className="text-sm text-gray-500">I learn best by doing hands-on activities</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="mixed" id="mixed" className="mt-1" />
-                        <div>
-                          <Label htmlFor="mixed" className="font-medium">Mixed</Label>
-                          <p className="text-sm text-gray-500">I learn using a combination of methods</p>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </div>
+                <div className="space-y-6">
+                  <MultipleCheckboxGroup
+                    label="Preferred Learning Styles"
+                    options={learningStyleOptions}
+                    selectedValues={selectedLearningStyles}
+                    onChange={toggleLearningStyle}
+                    required={true}
+                  />
                   
-                  <div className="mt-6">
-                    <Label className="text-base font-medium block mb-3">
-                      Which SEL area is your child strongest in? <span className="text-red-500">*</span>
-                    </Label>
-                    <RadioGroup value={strongestSEL} onValueChange={setStrongestSEL} className="space-y-3">
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="self-awareness" id="self-awareness" className="mt-1" />
-                        <div>
-                          <Label htmlFor="self-awareness" className="font-medium">Self-awareness</Label>
-                          <p className="text-sm text-gray-500">Understanding emotions and thoughts</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="self-management" id="self-management" className="mt-1" />
-                        <div>
-                          <Label htmlFor="self-management" className="font-medium">Self-management</Label>
-                          <p className="text-sm text-gray-500">Controlling emotions and behaviors</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="social-awareness" id="social-awareness" className="mt-1" />
-                        <div>
-                          <Label htmlFor="social-awareness" className="font-medium">Social awareness</Label>
-                          <p className="text-sm text-gray-500">Understanding and respecting others</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="relationship-skills" id="relationship-skills" className="mt-1" />
-                        <div>
-                          <Label htmlFor="relationship-skills" className="font-medium">Relationship skills</Label>
-                          <p className="text-sm text-gray-500">Making and keeping friends, teamwork</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="decision-making" id="decision-making" className="mt-1" />
-                        <div>
-                          <Label htmlFor="decision-making" className="font-medium">Responsible decision-making</Label>
-                          <p className="text-sm text-gray-500">Making good choices</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border hover:bg-gray-50 transition cursor-pointer">
-                        <RadioGroupItem value="unaware" id="unaware" className="mt-1" />
-                        <div>
-                          <Label htmlFor="unaware" className="font-medium">Unaware</Label>
-                          <p className="text-sm text-gray-500">I'm not sure yet</p>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </div>
+                  <MultipleCheckboxGroup
+                    label="Which SEL areas are you strongest in?"
+                    options={selStrengthOptions}
+                    selectedValues={selectedSELStrengths}
+                    onChange={toggleSELStrength}
+                    required={true}
+                  />
                 </div>
               </div>
             )}
@@ -425,7 +365,7 @@ const CreateProfile = () => {
                 <div className="space-y-6">
                   <div>
                     <Label className="text-base font-medium block mb-3">
-                      What are your child's interests and hobbies? <span className="text-red-500">*</span>
+                      What are your interests and hobbies? <span className="text-red-500">*</span>
                     </Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {interestOptions.map(option => (
@@ -455,7 +395,7 @@ const CreateProfile = () => {
                   
                   <div>
                     <Label className="text-base font-medium block mb-3">
-                      What kind of stories or characters does your child enjoy? <span className="text-red-500">*</span>
+                      What kind of stories or characters do you enjoy? <span className="text-red-500">*</span>
                     </Label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {storyOptions.map(option => (
@@ -485,7 +425,7 @@ const CreateProfile = () => {
                   
                   <div>
                     <Label className="text-base font-medium block mb-3">
-                      What SEL challenges does your child currently experience? (Optional)
+                      What SEL challenges do you currently experience? (Optional)
                     </Label>
                     <div className="space-y-3">
                       {challengeOptions.map(option => (
