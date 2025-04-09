@@ -24,8 +24,13 @@ const Login = () => {
     
     try {
       await loginWithEmail(email, password);
+      toast({
+        title: "Login successful",
+        description: "Welcome back to Happy Sprout!",
+      });
       navigate("/dashboard");
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: error.message || "Please check your email and password",
