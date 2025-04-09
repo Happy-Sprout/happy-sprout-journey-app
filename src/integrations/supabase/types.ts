@@ -9,7 +9,168 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      child_preferences: {
+        Row: {
+          challenges: string[] | null
+          child_id: string
+          created_at: string
+          id: string
+          interests: string[] | null
+          learning_styles: string[] | null
+          story_preferences: string[] | null
+          strengths: string[] | null
+        }
+        Insert: {
+          challenges?: string[] | null
+          child_id: string
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          learning_styles?: string[] | null
+          story_preferences?: string[] | null
+          strengths?: string[] | null
+        }
+        Update: {
+          challenges?: string[] | null
+          child_id?: string
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          learning_styles?: string[] | null
+          story_preferences?: string[] | null
+          strengths?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_preferences_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_progress: {
+        Row: {
+          badges: string[] | null
+          child_id: string
+          created_at: string
+          daily_check_in_completed: boolean | null
+          id: string
+          last_check_in: string | null
+          streak_count: number | null
+          xp_points: number | null
+        }
+        Insert: {
+          badges?: string[] | null
+          child_id: string
+          created_at?: string
+          daily_check_in_completed?: boolean | null
+          id?: string
+          last_check_in?: string | null
+          streak_count?: number | null
+          xp_points?: number | null
+        }
+        Update: {
+          badges?: string[] | null
+          child_id?: string
+          created_at?: string
+          daily_check_in_completed?: boolean | null
+          id?: string
+          last_check_in?: string | null
+          streak_count?: number | null
+          xp_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_progress_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      children: {
+        Row: {
+          age: number
+          avatar: string | null
+          created_at: string
+          creation_status: string | null
+          date_of_birth: string
+          gender: string | null
+          grade: string
+          id: string
+          nickname: string
+          parent_id: string
+          relationship_to_parent: string | null
+        }
+        Insert: {
+          age: number
+          avatar?: string | null
+          created_at?: string
+          creation_status?: string | null
+          date_of_birth: string
+          gender?: string | null
+          grade: string
+          id: string
+          nickname: string
+          parent_id: string
+          relationship_to_parent?: string | null
+        }
+        Update: {
+          age?: number
+          avatar?: string | null
+          created_at?: string
+          creation_status?: string | null
+          date_of_birth?: string
+          gender?: string | null
+          grade?: string
+          id?: string
+          nickname?: string
+          parent_id?: string
+          relationship_to_parent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "children_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "parents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parents: {
+        Row: {
+          additional_info: string | null
+          created_at: string
+          email: string
+          emergency_contact: string
+          id: string
+          name: string
+          relationship: string
+        }
+        Insert: {
+          additional_info?: string | null
+          created_at?: string
+          email: string
+          emergency_contact: string
+          id: string
+          name: string
+          relationship: string
+        }
+        Update: {
+          additional_info?: string | null
+          created_at?: string
+          email?: string
+          emergency_contact?: string
+          id?: string
+          name?: string
+          relationship?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
