@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,12 +9,11 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
-import { CheckCircle, ChevronDown, ChevronUp, Clock, HeartPulse, Mic, Water, Save } from "lucide-react";
+import { CheckCircle, ChevronDown, ChevronUp, Clock, HeartPulse, Mic, Droplet, Save, Heart, Sun } from "lucide-react";
 import { format } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { v4 as uuidv4 } from "uuid";
 
-// Types for our journal entries
 type JournalEntry = {
   id: string;
   childId: string;
@@ -41,10 +39,8 @@ const Journal = () => {
   const { getCurrentChild, updateChildProfile } = useUser();
   const currentChild = getCurrentChild();
   
-  // Mock previous entries (in a real app, these would be stored in a database)
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   
-  // Form state
   const [mood, setMood] = useState(5);
   const [water, setWater] = useState(4);
   const [sleep, setSleep] = useState(7);
@@ -63,7 +59,6 @@ const Journal = () => {
   const [currentTab, setCurrentTab] = useState("new");
   const [isRecording, setIsRecording] = useState(false);
   
-  // Handle journal submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -76,7 +71,6 @@ const Journal = () => {
       return;
     }
     
-    // Create new journal entry
     const newEntry: JournalEntry = {
       id: uuidv4(),
       childId: currentChild.id,
@@ -96,28 +90,22 @@ const Journal = () => {
       tomorrowPlan,
     };
     
-    // Add to journal entries
     setJournalEntries([newEntry, ...journalEntries]);
     
-    // Update child profile
     updateChildProfile(currentChild.id, {
       xpPoints: currentChild.xpPoints + 15,
     });
     
-    // Show success toast
     toast({
       title: "Journal Entry Saved!",
       description: "Great job on completing your journal entry today.",
     });
     
-    // Reset form
     resetForm();
     
-    // Switch to history tab
     setCurrentTab("history");
   };
   
-  // Reset form values
   const resetForm = () => {
     setMood(5);
     setWater(4);
@@ -134,9 +122,7 @@ const Journal = () => {
     setTomorrowPlan("");
   };
   
-  // Handle audio recording (simulated)
   const toggleRecording = (field: string) => {
-    // In a real app, this would start/stop audio recording
     setIsRecording(!isRecording);
     if (isRecording) {
       toast({
@@ -144,7 +130,6 @@ const Journal = () => {
         description: "Your audio has been converted to text.",
       });
       
-      // Simulate converting audio to text
       setTimeout(() => {
         const sampleResponses: Record<string, string> = {
           wentWell: "I had a great time playing with my friends at recess today.",
@@ -154,7 +139,6 @@ const Journal = () => {
           tomorrowPlan: "I want to remember to bring my library book back to school.",
         };
         
-        // Update the corresponding field
         switch (field) {
           case "wentWell":
             setWentWell(sampleResponses.wentWell);
@@ -176,7 +160,6 @@ const Journal = () => {
     }
   };
   
-  // Format date for display
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "EEEE, MMMM d, yyyy");
   };
@@ -230,7 +213,7 @@ const Journal = () => {
                       <div>
                         <div className="flex justify-between mb-2">
                           <Label className="flex items-center">
-                            <Water className="w-4 h-4 mr-1" /> Water Intake:
+                            <Droplet className="w-4 h-4 mr-1" /> Water Intake:
                           </Label>
                           <span>{water} glasses</span>
                         </div>
@@ -520,7 +503,7 @@ const Journal = () => {
                         <div className="mt-3 pl-4 border-l-2 border-gray-200">
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div className="flex items-center">
-                              <Water className="w-4 h-4 mr-1 text-blue-500" /> Water: {entry.water} glasses
+                              <Droplet className="w-4 h-4 mr-1 text-blue-500" /> Water: {entry.water} glasses
                             </div>
                             <div className="flex items-center">
                               <Clock className="w-4 h-4 mr-1 text-purple-500" /> Sleep: {entry.sleep} hours
@@ -573,15 +556,6 @@ const Journal = () => {
       </div>
     </Layout>
   );
-};
-
-// Missing component imports
-const Heart = (props: any) => {
-  return <span {...props} />;
-};
-
-const Sun = (props: any) => {
-  return <span {...props} />;
 };
 
 export default Journal;
