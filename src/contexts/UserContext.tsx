@@ -1,7 +1,9 @@
 
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 // Types for our context
 type ChildProfile = {
@@ -726,3 +728,4 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 // Custom hook for using the context
 export const useUser = () => useContext(UserContext);
+
