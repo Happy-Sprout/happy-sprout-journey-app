@@ -1,5 +1,3 @@
-
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -50,7 +48,6 @@ type UserContextType = {
   currentChildId: string | null;
   setCurrentChildId: (id: string | null) => void;
   getCurrentChild: () => ChildProfile | undefined;
-  // New methods
   calculateAgeFromDOB: (dob: string) => number;
   markDailyCheckInComplete: (id: string) => void;
   setRelationshipToParent: (childId: string, relationship: string) => void;
@@ -60,7 +57,6 @@ type UserContextType = {
   loading: boolean;
 };
 
-// Create context with default values
 const UserContext = createContext<UserContextType>({
   isLoggedIn: false,
   setIsLoggedIn: () => {},
@@ -84,7 +80,6 @@ const UserContext = createContext<UserContextType>({
   loading: false,
 });
 
-// Provider component
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [parentInfo, setParentInfo] = useState<ParentInfo | null>(null);
@@ -93,17 +88,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
-  // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Check for existing session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
           setIsLoggedIn(true);
           
-          // Fetch parent info
           const { data: parentData, error: parentError } = await supabase
             .from('parents')
             .select('*')
@@ -123,7 +115,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             });
           }
           
-          // Fetch child profiles
           await fetchChildProfiles(session.user.id);
         }
       } catch (error) {
@@ -135,12 +126,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     initializeAuth();
     
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' && session) {
           setIsLoggedIn(true);
-          // Fetch user data when signed in
           fetchUserData(session.user.id);
         } else if (event === 'SIGNED_OUT') {
           setIsLoggedIn(false);
@@ -156,10 +145,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
   
-  // Fetch child profiles from database
   const fetchChildProfiles = async (parentId: string) => {
     try {
-      // Fetch children
       const { data: childrenData, error: childrenError } = await supabase
         .from('children')
         .select('*')
@@ -175,18 +162,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Prepare child profiles with preferences and progress data
       const profiles: ChildProfile[] = [];
       
       for (const child of childrenData) {
-        // Fetch preferences
         const { data: preferencesData } = await supabase
           .from('child_preferences')
           .select('*')
           .eq('child_id', child.id)
           .maybeSingle();
           
-        // Fetch progress
         const { data: progressData } = await supabase
           .from('child_progress')
           .select('*')
@@ -201,7 +185,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           gender: child.gender,
           grade: child.grade,
           avatar: child.avatar,
-          creationStatus: child.creation_status,
+          creationStatus: (child.creation_status as 'completed' | 'pending') || 'pending',
           relationshipToParent: child.relationship_to_parent,
           learningStyles: preferencesData?.learning_styles || [],
           selStrengths: preferencesData?.strengths || [],
@@ -217,7 +201,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       
       setChildProfiles(profiles);
       
-      // Set current child if not set and profiles exist
       if (!currentChildId && profiles.length > 0) {
         setCurrentChildId(profiles[0].id);
       }
@@ -226,10 +209,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Fetch complete user data
   const fetchUserData = async (userId: string) => {
     try {
-      // Fetch parent info
       const { data: parentData, error: parentError } = await supabase
         .from('parents')
         .select('*')
@@ -249,19 +230,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         });
       }
       
-      // Fetch child profiles
       await fetchChildProfiles(userId);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
   };
 
-  // Add a new child profile
   const addChildProfile = async (profile: ChildProfile) => {
     if (!parentInfo) return;
     
     try {
-      // Insert into children table
       const { data: childData, error: childError } = await supabase
         .from('children')
         .insert({
@@ -289,7 +267,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Insert preferences
       await supabase
         .from('child_preferences')
         .insert({
@@ -301,7 +278,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           challenges: profile.selChallenges
         });
         
-      // Insert progress
       await supabase
         .from('child_progress')
         .insert({
@@ -312,7 +288,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           daily_check_in_completed: profile.dailyCheckInCompleted
         });
       
-      // Update local state
       setChildProfiles((prev) => [...prev, profile]);
       
       toast({
@@ -320,7 +295,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         description: `Profile for ${profile.nickname} created successfully!`
       });
       
-      // Set as current child if first profile
       if (childProfiles.length === 0) {
         setCurrentChildId(profile.id);
       }
@@ -334,17 +308,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Update an existing child profile
   const updateChildProfile = async (id: string, updatedInfo: Partial<ChildProfile>) => {
     try {
-      // Find the child to update
       const childIndex = childProfiles.findIndex((profile) => profile.id === id);
       if (childIndex === -1) return;
       
       const currentChild = childProfiles[childIndex];
       const updatedChild = { ...currentChild, ...updatedInfo };
       
-      // Update children table if needed
       if (
         updatedInfo.nickname !== undefined ||
         updatedInfo.age !== undefined ||
@@ -381,7 +352,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
-      // Update preferences if needed
       if (
         updatedInfo.learningStyles !== undefined ||
         updatedInfo.selStrengths !== undefined ||
@@ -406,7 +376,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
-      // Update progress if needed
       if (
         updatedInfo.streakCount !== undefined ||
         updatedInfo.xpPoints !== undefined ||
@@ -434,7 +403,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
-      // Update local state
       setChildProfiles((prev) =>
         prev.map((profile) =>
           profile.id === id ? { ...profile, ...updatedInfo } : profile
@@ -455,12 +423,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Update parent info
   const updateParentInfo = async (updatedInfo: Partial<ParentInfo>) => {
     if (!isLoggedIn) return;
     
     try {
-      // Update in database
       const update: any = {};
       if (updatedInfo.name) update.name = updatedInfo.name;
       if (updatedInfo.relationship) update.relationship = updatedInfo.relationship;
@@ -483,11 +449,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update local state
       setParentInfo((prev) => {
         if (!prev) {
-          // If there's no existing parent info and we're trying to update it,
-          // all required fields must be provided
           if (
             !updatedInfo.name ||
             !updatedInfo.relationship ||
@@ -501,7 +464,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           return updatedInfo as ParentInfo;
         }
         
-        // If we're updating existing parent info, merge with previous values
         return { ...prev, ...updatedInfo };
       });
       
@@ -519,10 +481,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Delete a child profile
   const deleteChildProfile = async (id: string) => {
     try {
-      // Delete from database - the cascade will handle related tables
       const { error } = await supabase
         .from('children')
         .delete()
@@ -538,7 +498,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update local state
       setChildProfiles((prev) => prev.filter((profile) => profile.id !== id));
       
       if (currentChildId === id) {
@@ -560,12 +519,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Get the current active child profile
   const getCurrentChild = () => {
     return childProfiles.find((profile) => profile.id === currentChildId);
   };
 
-  // Calculate age from date of birth
   const calculateAgeFromDOB = (dob: string): number => {
     const birthDate = new Date(dob);
     const today = new Date();
@@ -579,7 +536,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return age;
   };
 
-  // Mark daily check-in as completed for a child
   const markDailyCheckInComplete = (id: string) => {
     updateChildProfile(id, { 
       dailyCheckInCompleted: true,
@@ -588,12 +544,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Set relationship to parent for a child
   const setRelationshipToParent = (childId: string, relationship: string) => {
     updateChildProfile(childId, { relationshipToParent: relationship });
   };
   
-  // Authentication methods
   const loginWithEmail = async (email: string, password: string) => {
     setLoading(true);
     try {
@@ -627,7 +581,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmail = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
-      // Create auth user
       const { data, error } = await supabase.auth.signUp({
         email,
         password
@@ -641,7 +594,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("User creation failed");
       }
       
-      // Create parent record
       const { error: parentError } = await supabase
         .from('parents')
         .insert({
@@ -654,7 +606,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         
       if (parentError) {
         console.error("Error creating parent record:", parentError);
-        // Continue anyway since the auth user was created
       }
       
       setIsLoggedIn(true);
@@ -726,6 +677,4 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Custom hook for using the context
 export const useUser = () => useContext(UserContext);
-
