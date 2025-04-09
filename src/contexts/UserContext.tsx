@@ -20,6 +20,7 @@ type ChildProfile = {
   badges: string[];
   creationStatus?: 'completed' | 'pending';
   dailyCheckInCompleted?: boolean;
+  relationshipToParent?: string;
 };
 
 type ParentInfo = {
@@ -28,6 +29,7 @@ type ParentInfo = {
   relationship: string;
   email: string;
   emergencyContact: string;
+  additionalInfo?: string;
 };
 
 type UserContextType = {
@@ -35,6 +37,7 @@ type UserContextType = {
   setIsLoggedIn: (value: boolean) => void;
   parentInfo: ParentInfo | null;
   setParentInfo: (info: ParentInfo | null) => void;
+  updateParentInfo: (info: Partial<ParentInfo>) => void;
   childProfiles: ChildProfile[];
   setChildProfiles: (profiles: ChildProfile[]) => void;
   addChildProfile: (profile: ChildProfile) => void;
@@ -46,6 +49,7 @@ type UserContextType = {
   // New methods
   calculateAgeFromDOB: (dob: string) => number;
   markDailyCheckInComplete: (id: string) => void;
+  setRelationshipToParent: (childId: string, relationship: string) => void;
 };
 
 // Create context with default values
@@ -54,6 +58,7 @@ const UserContext = createContext<UserContextType>({
   setIsLoggedIn: () => {},
   parentInfo: null,
   setParentInfo: () => {},
+  updateParentInfo: () => {},
   childProfiles: [],
   setChildProfiles: () => {},
   addChildProfile: () => {},
@@ -64,6 +69,7 @@ const UserContext = createContext<UserContextType>({
   getCurrentChild: () => undefined,
   calculateAgeFromDOB: () => 0,
   markDailyCheckInComplete: () => {},
+  setRelationshipToParent: () => {},
 });
 
 // Provider component
@@ -85,6 +91,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         profile.id === id ? { ...profile, ...updatedInfo } : profile
       )
     );
+  };
+
+  // Update parent info
+  const updateParentInfo = (updatedInfo: Partial<ParentInfo>) => {
+    setParentInfo((prev) => prev ? { ...prev, ...updatedInfo } : null);
   };
 
   // Delete a child profile
@@ -119,6 +130,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     updateChildProfile(id, { dailyCheckInCompleted: true });
   };
 
+  // Set relationship to parent for a child
+  const setRelationshipToParent = (childId: string, relationship: string) => {
+    updateChildProfile(childId, { relationshipToParent: relationship });
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -126,6 +142,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setIsLoggedIn,
         parentInfo,
         setParentInfo,
+        updateParentInfo,
         childProfiles,
         setChildProfiles,
         addChildProfile,
@@ -136,6 +153,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         getCurrentChild,
         calculateAgeFromDOB,
         markDailyCheckInComplete,
+        setRelationshipToParent,
       }}
     >
       {children}

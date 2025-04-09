@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +10,11 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
-import { CheckCircle, ChevronDown, ChevronUp, Clock, HeartPulse, Mic, Droplet, Save, Heart, Sun } from "lucide-react";
-import { format } from "date-fns";
+import { CheckCircle, ChevronDown, Clock, HeartPulse, Mic, Droplet, Save, Heart, Sun } from "lucide-react";
+import { format, isAfter, isBefore, parseISO } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { v4 as uuidv4 } from "uuid";
+import { JournalFilters } from "@/components/JournalFilters";
 
 type JournalEntry = {
   id: string;
@@ -31,15 +33,24 @@ type JournalEntry = {
   gratitude: string;
   challenge: string;
   tomorrowPlan: string;
+  completed?: boolean;
+};
+
+const DEFAULT_FILTERS = {
+  startDate: undefined,
+  endDate: undefined,
+  searchTerm: "",
+  moodFilter: "",
 };
 
 const Journal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getCurrentChild, updateChildProfile } = useUser();
+  const { getCurrentChild, updateChildProfile, currentChildId } = useUser();
   const currentChild = getCurrentChild();
   
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
   
   const [mood, setMood] = useState(5);
   const [water, setWater] = useState(4);
@@ -88,6 +99,7 @@ const Journal = () => {
       gratitude,
       challenge,
       tomorrowPlan,
+      completed: true,
     };
     
     setJournalEntries([newEntry, ...journalEntries]);
@@ -163,6 +175,66 @@ const Journal = () => {
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "EEEE, MMMM d, yyyy");
   };
+  
+  const hasActiveFilters = useMemo(() => {
+    return (
+      !!filters.startDate ||
+      !!filters.endDate ||
+      !!filters.searchTerm ||
+      !!filters.moodFilter
+    );
+  }, [filters]);
+  
+  const clearFilters = () => {
+    setFilters(DEFAULT_FILTERS);
+  };
+  
+  const filteredEntries = useMemo(() => {
+    // Filter entries belonging to current child
+    let filtered = journalEntries.filter(entry => {
+      if (!currentChildId) return false;
+      return entry.childId === currentChildId;
+    });
+    
+    // Apply date range filter
+    if (filters.startDate) {
+      filtered = filtered.filter(entry => {
+        const entryDate = parseISO(entry.date);
+        return isAfter(entryDate, filters.startDate) || entry.date === format(filters.startDate, "yyyy-MM-dd");
+      });
+    }
+    
+    if (filters.endDate) {
+      filtered = filtered.filter(entry => {
+        const entryDate = parseISO(entry.date);
+        return isBefore(entryDate, filters.endDate) || entry.date === format(filters.endDate, "yyyy-MM-dd");
+      });
+    }
+    
+    // Apply search filter
+    if (filters.searchTerm) {
+      const searchLower = filters.searchTerm.toLowerCase();
+      filtered = filtered.filter(entry => {
+        return (
+          entry.wentWell.toLowerCase().includes(searchLower) ||
+          entry.wentBadly.toLowerCase().includes(searchLower) ||
+          entry.gratitude.toLowerCase().includes(searchLower) ||
+          entry.challenge.toLowerCase().includes(searchLower) ||
+          entry.tomorrowPlan.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+    
+    // Apply mood filter
+    if (filters.moodFilter) {
+      const [high, low] = filters.moodFilter.split("-").map(Number);
+      filtered = filtered.filter(entry => {
+        return entry.mood <= high && entry.mood >= low;
+      });
+    }
+    
+    return filtered;
+  }, [journalEntries, filters, currentChildId]);
   
   return (
     <Layout requireAuth>
@@ -472,17 +544,38 @@ const Journal = () => {
           </TabsContent>
           
           <TabsContent value="history">
-            {journalEntries.length === 0 ? (
+            <JournalFilters 
+              filters={filters}
+              setFilters={setFilters}
+              hasActiveFilters={hasActiveFilters}
+              clearFilters={clearFilters}
+            />
+            
+            {filteredEntries.length === 0 ? (
               <div className="text-center py-12">
-                <h2 className="text-xl font-semibold mb-4">No Journal Entries Yet</h2>
-                <p className="text-gray-600 mb-6">Start writing in your journal to see your entries here.</p>
-                <Button className="sprout-button" onClick={() => setCurrentTab("new")}>
-                  Create First Entry
-                </Button>
+                <h2 className="text-xl font-semibold mb-4">
+                  {hasActiveFilters 
+                    ? "No Entries Match Your Filters" 
+                    : "No Journal Entries Yet"}
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  {hasActiveFilters 
+                    ? "Try adjusting or clearing your filters to see more entries."
+                    : "Start writing in your journal to see your entries here."}
+                </p>
+                {hasActiveFilters ? (
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear All Filters
+                  </Button>
+                ) : (
+                  <Button className="sprout-button" onClick={() => setCurrentTab("new")}>
+                    Create First Entry
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-6">
-                {journalEntries.map((entry) => (
+                {filteredEntries.map((entry) => (
                   <Card key={entry.id} className="mb-4">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-center">
@@ -543,6 +636,20 @@ const Journal = () => {
                           <div>
                             <div className="font-medium text-sprout-purple">Gratitude:</div>
                             <p className="text-gray-700 mt-1">{entry.gratitude}</p>
+                          </div>
+                        )}
+                        
+                        {entry.challenge && (
+                          <div>
+                            <div className="font-medium text-sprout-orange">Challenge:</div>
+                            <p className="text-gray-700 mt-1">{entry.challenge}</p>
+                          </div>
+                        )}
+                        
+                        {entry.tomorrowPlan && (
+                          <div>
+                            <div className="font-medium text-sprout-green">Tomorrow's Plan:</div>
+                            <p className="text-gray-700 mt-1">{entry.tomorrowPlan}</p>
                           </div>
                         )}
                       </div>
