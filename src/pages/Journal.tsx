@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { format, isAfter, isBefore, parseISO } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { v4 as uuidv4 } from "uuid";
 import { JournalFilters } from "@/components/JournalFilters";
+import { supabase } from "@/integrations/supabase/client";
 
 type JournalEntry = {
   id: string;
@@ -51,6 +52,7 @@ const Journal = () => {
   
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [loading, setLoading] = useState(false);
   
   const [mood, setMood] = useState(5);
   const [water, setWater] = useState(4);
@@ -70,7 +72,61 @@ const Journal = () => {
   const [currentTab, setCurrentTab] = useState("new");
   const [isRecording, setIsRecording] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch journal entries when component mounts or when currentChildId changes
+  useEffect(() => {
+    if (currentChildId) {
+      fetchJournalEntries();
+    }
+  }, [currentChildId]);
+  
+  const fetchJournalEntries = async () => {
+    if (!currentChildId) return;
+    
+    try {
+      console.log("Fetching journal entries for child:", currentChildId);
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .eq('child_id', currentChildId)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching journal entries:", error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        console.log("Journal entries found:", data);
+        const formattedEntries: JournalEntry[] = data.map(entry => ({
+          id: entry.id,
+          childId: entry.child_id,
+          date: format(new Date(entry.created_at), "yyyy-MM-dd"),
+          mood: entry.mood_intensity || 5,
+          water: entry.water || 4,
+          sleep: entry.sleep || 7,
+          exercise: entry.exercise || 3,
+          mindfulness: entry.mindfulness || 5,
+          kindness: entry.kindness || 5,
+          positivity: entry.positivity || 6,
+          confidence: entry.confidence || 5,
+          wentWell: entry.went_well || "",
+          wentBadly: entry.went_badly || "",
+          gratitude: entry.gratitude || "",
+          challenge: entry.challenge || "",
+          tomorrowPlan: entry.tomorrow_plan || "",
+          completed: true
+        }));
+        
+        setJournalEntries(formattedEntries);
+      } else {
+        console.log("No journal entries found for child:", currentChildId);
+      }
+    } catch (error) {
+      console.error("Error in fetchJournalEntries:", error);
+    }
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!currentChild) {
@@ -82,40 +138,97 @@ const Journal = () => {
       return;
     }
     
-    const newEntry: JournalEntry = {
-      id: uuidv4(),
-      childId: currentChild.id,
-      date: format(new Date(), "yyyy-MM-dd"),
-      mood,
-      water,
-      sleep,
-      exercise,
-      mindfulness,
-      kindness,
-      positivity,
-      confidence,
-      wentWell,
-      wentBadly,
-      gratitude,
-      challenge,
-      tomorrowPlan,
-      completed: true,
-    };
+    setLoading(true);
     
-    setJournalEntries([newEntry, ...journalEntries]);
-    
-    updateChildProfile(currentChild.id, {
-      xpPoints: currentChild.xpPoints + 15,
-    });
-    
-    toast({
-      title: "Journal Entry Saved!",
-      description: "Great job on completing your journal entry today.",
-    });
-    
-    resetForm();
-    
-    setCurrentTab("history");
+    try {
+      console.log("Saving journal entry for child:", currentChild.id);
+      
+      // Save to Supabase
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .insert([
+          {
+            child_id: currentChild.id,
+            title: `Journal Entry - ${format(new Date(), "MMMM d, yyyy")}`,
+            content: `${wentWell}\n\n${wentBadly}\n\n${gratitude}\n\n${challenge}\n\n${tomorrowPlan}`,
+            mood: "neutral", // Default mood category
+            mood_intensity: mood,
+            water: water,
+            sleep: sleep,
+            exercise: exercise,
+            mindfulness: mindfulness,
+            kindness: kindness,
+            positivity: positivity,
+            confidence: confidence,
+            went_well: wentWell,
+            went_badly: wentBadly,
+            gratitude: gratitude,
+            challenge: challenge,
+            tomorrow_plan: tomorrowPlan
+          }
+        ])
+        .select();
+        
+      if (error) {
+        console.error("Error saving journal entry:", error);
+        toast({
+          title: "Error",
+          description: "Could not save your journal entry. Please try again.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Journal entry saved successfully:", data);
+      
+      // Update local state with the new entry
+      if (data && data.length > 0) {
+        const newEntry: JournalEntry = {
+          id: data[0].id,
+          childId: currentChild.id,
+          date: format(new Date(), "yyyy-MM-dd"),
+          mood,
+          water,
+          sleep,
+          exercise,
+          mindfulness,
+          kindness,
+          positivity,
+          confidence,
+          wentWell,
+          wentBadly,
+          gratitude,
+          challenge,
+          tomorrowPlan,
+          completed: true,
+        };
+        
+        setJournalEntries([newEntry, ...journalEntries]);
+      }
+      
+      // Update XP points for the child
+      updateChildProfile(currentChild.id, {
+        xpPoints: currentChild.xpPoints + 15,
+      });
+      
+      toast({
+        title: "Journal Entry Saved!",
+        description: "Great job on completing your journal entry today.",
+      });
+      
+      resetForm();
+      setCurrentTab("history");
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save your journal entry. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   const resetForm = () => {
@@ -535,9 +648,9 @@ const Journal = () => {
                 <Button variant="outline" type="button" onClick={resetForm}>
                   Reset
                 </Button>
-                <Button className="sprout-button" type="submit">
+                <Button className="sprout-button" type="submit" disabled={loading}>
                   <Save className="mr-2 h-4 w-4" />
-                  Save Journal Entry
+                  {loading ? "Saving..." : "Save Journal Entry"}
                 </Button>
               </div>
             </form>

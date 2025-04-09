@@ -414,12 +414,43 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     return age;
   };
 
-  const markDailyCheckInComplete = (id: string) => {
-    updateChildProfile(id, { 
-      dailyCheckInCompleted: true,
-      streakCount: (getCurrentChild()?.streakCount || 0) + 1,
-      xpPoints: (getCurrentChild()?.xpPoints || 0) + 10
-    });
+  const markDailyCheckInComplete = async (id: string) => {
+    try {
+      console.log("Marking daily check-in as complete for child:", id);
+      const currentChild = childProfiles.find(child => child.id === id);
+      if (!currentChild) {
+        console.error("Child not found:", id);
+        return;
+      }
+      
+      const streakIncrement = currentChild.dailyCheckInCompleted ? 0 : 1;
+      const xpIncrement = currentChild.dailyCheckInCompleted ? 0 : 10;
+      
+      updateChildProfile(id, { 
+        dailyCheckInCompleted: true,
+        streakCount: (currentChild.streakCount || 0) + streakIncrement,
+        xpPoints: (currentChild.xpPoints || 0) + xpIncrement
+      });
+      
+      // Log completion to the database
+      await supabase
+        .from('user_activity_logs')
+        .insert([
+          {
+            user_id: id,
+            user_type: 'child',
+            action_type: 'daily_check_in_completed',
+            action_details: {
+              date: new Date().toISOString(),
+              streakCount: (currentChild.streakCount || 0) + streakIncrement
+            }
+          }
+        ]);
+        
+      console.log("Daily check-in marked as complete successfully");
+    } catch (error) {
+      console.error("Error in markDailyCheckInComplete:", error);
+    }
   };
 
   const setRelationshipToParent = (childId: string, relationship: string) => {

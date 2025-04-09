@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
-import { Smile, Frown, Angry, AlertCircle, Lightbulb } from "lucide-react";
+import { Smile, Frown, Angry, AlertCircle, Lightbulb, Calendar, ArrowRight } from "lucide-react";
 
 const DailyCheckIn = () => {
   const navigate = useNavigate();
@@ -21,8 +22,17 @@ const DailyCheckIn = () => {
   const [energyLevel, setEnergyLevel] = useState("");
   const [anxiety, setAnxiety] = useState("");
   const [scenarioAnswer, setScenarioAnswer] = useState("");
+  const [alreadyCompletedToday, setAlreadyCompletedToday] = useState(false);
   
   const totalSteps = 4;
+
+  useEffect(() => {
+    // Check if the current child has already completed the daily check-in
+    if (currentChild?.dailyCheckInCompleted) {
+      console.log("Daily check-in already completed for today");
+      setAlreadyCompletedToday(true);
+    }
+  }, [currentChild]);
   
   const scenarioQuestion = {
     question: "Your friend won't let you join their game during recess. What would you do?",
@@ -115,6 +125,7 @@ const DailyCheckIn = () => {
       });
       
       setStep(totalSteps + 1);
+      setAlreadyCompletedToday(true);
     }
   };
   
@@ -135,6 +146,44 @@ const DailyCheckIn = () => {
                 >
                   Go to Profiles
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (alreadyCompletedToday) {
+    return (
+      <Layout requireAuth>
+        <div className="container mx-auto px-4 py-8 max-w-md">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-4">
+                <div className="text-5xl mb-4">✅</div>
+                <h2 className="text-xl font-bold mb-2">Check-in Already Completed</h2>
+                <p className="text-gray-600 mb-4">
+                  You've already completed your check-in for today. Great job!
+                </p>
+                <div className="p-6 bg-gradient-to-r from-sprout-yellow/20 to-sprout-green/20 rounded-lg mb-6">
+                  <p className="italic text-lg">"{getRandomQuote()}"</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    className="sprout-button"
+                    onClick={() => navigate("/dashboard")}
+                  >
+                    Return to Dashboard
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/journal")}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Write in Journal
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -438,6 +487,7 @@ const DailyCheckIn = () => {
                   onClick={nextStep}
                 >
                   {step === totalSteps ? "Complete" : "Next"}
+                  {step !== totalSteps && <ArrowRight className="ml-2 h-4 w-4" />}
                 </Button>
               </div>
             )}
