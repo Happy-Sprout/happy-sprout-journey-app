@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import { JournalEntryForm } from "@/components/journal/JournalEntryForm";
@@ -16,12 +16,25 @@ const Journal = () => {
   
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [currentTab, setCurrentTab] = useState("new");
+  const [todayEntryExists, setTodayEntryExists] = useState(false);
   
   const { 
     journalEntries, 
     loading, 
-    saveJournalEntry 
+    saveJournalEntry,
+    getTodayEntry
   } = useJournalEntries(currentChildId);
+
+  useEffect(() => {
+    const checkTodayEntry = async () => {
+      const entry = await getTodayEntry();
+      setTodayEntryExists(!!entry);
+    };
+    
+    if (currentChildId) {
+      checkTodayEntry();
+    }
+  }, [currentChildId, getTodayEntry]);
 
   const handleSubmitJournalEntry = async (entry: any) => {
     if (!currentChild) {
@@ -40,15 +53,20 @@ const Journal = () => {
     
     if (newEntry) {
       console.log("Journal entry saved, updating XP points");
-      if (currentChild && typeof currentChild.xpPoints === 'number') {
+      
+      // Only award XP if this was a new entry, not an update
+      if (!todayEntryExists && currentChild && typeof currentChild.xpPoints === 'number') {
         updateChildProfile(currentChild.id, {
           xpPoints: currentChild.xpPoints + 15,
         });
         console.log("XP points updated");
+      } else if (todayEntryExists) {
+        console.log("No XP awarded for updating an existing entry");
       } else {
         console.warn("Cannot update XP points: currentChild or xpPoints is undefined");
       }
       
+      setTodayEntryExists(true);
       setCurrentTab("history");
       return newEntry;
     }
@@ -67,11 +85,19 @@ const Journal = () => {
         
         <Tabs defaultValue="new" value={currentTab} onValueChange={setCurrentTab}>
           <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="new">New Entry</TabsTrigger>
+            <TabsTrigger value="new">{todayEntryExists ? "Edit Today's Entry" : "New Entry"}</TabsTrigger>
             <TabsTrigger value="history">Journal History</TabsTrigger>
           </TabsList>
           
           <TabsContent value="new">
+            {todayEntryExists ? (
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-md mb-4">
+                <p className="text-amber-800">
+                  You've already created a journal entry today. Any changes will update your existing entry.
+                </p>
+              </div>
+            ) : null}
+            
             <JournalEntryForm 
               onSubmit={handleSubmitJournalEntry} 
               loading={loading} 

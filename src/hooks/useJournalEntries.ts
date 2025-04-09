@@ -74,6 +74,58 @@ export const useJournalEntries = (childId: string | undefined) => {
     }
   };
 
+  const getTodayEntry = async (): Promise<JournalEntry | null> => {
+    if (!childId) return null;
+    
+    try {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const startOfDay = `${today}T00:00:00.000Z`;
+      const endOfDay = `${today}T23:59:59.999Z`;
+      
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .eq('child_id', childId)
+        .gte('created_at', startOfDay)
+        .lte('created_at', endOfDay)
+        .order('created_at', { ascending: false })
+        .limit(1);
+        
+      if (error) {
+        console.error("Error checking for today's entry:", error);
+        return null;
+      }
+      
+      if (data && data.length > 0) {
+        console.log("Found today's entry:", data[0]);
+        return {
+          id: data[0].id,
+          childId: data[0].child_id,
+          date: format(new Date(data[0].created_at), "yyyy-MM-dd"),
+          mood: data[0].mood_intensity || 5,
+          water: data[0].water || 4,
+          sleep: data[0].sleep || 7,
+          exercise: data[0].exercise || 3,
+          mindfulness: data[0].mindfulness || 5,
+          kindness: data[0].kindness || 5,
+          positivity: data[0].positivity || 6,
+          confidence: data[0].confidence || 5,
+          wentWell: data[0].went_well || "",
+          wentBadly: data[0].went_badly || "",
+          gratitude: data[0].gratitude || "",
+          challenge: data[0].challenge || "",
+          tomorrowPlan: data[0].tomorrow_plan || "",
+          completed: true
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error checking for today's entry:", error);
+      return null;
+    }
+  };
+
   const saveJournalEntry = async (entry: Omit<JournalEntry, "id" | "childId" | "date" | "completed">) => {
     if (!childId) {
       toast({
@@ -89,6 +141,9 @@ export const useJournalEntries = (childId: string | undefined) => {
     try {
       console.log("Saving journal entry for child:", childId);
       console.log("Entry data:", entry);
+      
+      // Check if there's already an entry for today
+      const todayEntry = await getTodayEntry();
       
       const journalData = {
         child_id: childId,
@@ -110,29 +165,33 @@ export const useJournalEntries = (childId: string | undefined) => {
         tomorrow_plan: entry.tomorrowPlan
       };
       
-      console.log("Preparing to save journal data:", journalData);
+      let result;
       
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .insert([journalData])
-        .select();
+      if (todayEntry) {
+        // Update today's entry
+        console.log("Updating existing journal entry for today with ID:", todayEntry.id);
+        result = await supabase
+          .from('journal_entries')
+          .update(journalData)
+          .eq('id', todayEntry.id)
+          .select();
+          
+        if (result.error) {
+          console.error("Error updating journal entry:", result.error);
+          toast({
+            title: "Error",
+            description: "Could not update your journal entry. Please try again.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return null;
+        }
         
-      if (error) {
-        console.error("Error saving journal entry:", error);
-        toast({
-          title: "Error",
-          description: "Could not save your journal entry. Please try again.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return null;
-      }
-      
-      console.log("Journal entry saved successfully:", data);
-      
-      if (data && data.length > 0) {
-        const newEntry: JournalEntry = {
-          id: data[0].id,
+        console.log("Journal entry updated successfully:", result.data);
+        
+        // Update state with the updated entry
+        const updatedEntry: JournalEntry = {
+          id: todayEntry.id,
           childId: childId,
           date: format(new Date(), "yyyy-MM-dd"),
           mood: entry.mood,
@@ -151,13 +210,68 @@ export const useJournalEntries = (childId: string | undefined) => {
           completed: true,
         };
         
-        setJournalEntries(prevEntries => [newEntry, ...prevEntries]);
-        toast({
-          title: "Journal Entry Saved!",
-          description: "Great job on completing your journal entry today.",
+        // Update the state to replace the old entry with the new one
+        setJournalEntries(prevEntries => {
+          const filtered = prevEntries.filter(e => e.id !== todayEntry.id);
+          return [updatedEntry, ...filtered];
         });
         
-        return newEntry;
+        toast({
+          title: "Journal Entry Updated!",
+          description: "Your journal entry for today has been updated.",
+        });
+        
+        return updatedEntry;
+      } else {
+        // Create new entry
+        console.log("Creating new journal entry for today");
+        result = await supabase
+          .from('journal_entries')
+          .insert([journalData])
+          .select();
+          
+        if (result.error) {
+          console.error("Error saving journal entry:", result.error);
+          toast({
+            title: "Error",
+            description: "Could not save your journal entry. Please try again.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return null;
+        }
+        
+        console.log("Journal entry saved successfully:", result.data);
+        
+        if (result.data && result.data.length > 0) {
+          const newEntry: JournalEntry = {
+            id: result.data[0].id,
+            childId: childId,
+            date: format(new Date(), "yyyy-MM-dd"),
+            mood: entry.mood,
+            water: entry.water,
+            sleep: entry.sleep,
+            exercise: entry.exercise,
+            mindfulness: entry.mindfulness,
+            kindness: entry.kindness,
+            positivity: entry.positivity,
+            confidence: entry.confidence,
+            wentWell: entry.wentWell,
+            wentBadly: entry.wentBadly,
+            gratitude: entry.gratitude,
+            challenge: entry.challenge,
+            tomorrowPlan: entry.tomorrowPlan,
+            completed: true,
+          };
+          
+          setJournalEntries(prevEntries => [newEntry, ...prevEntries]);
+          toast({
+            title: "Journal Entry Saved!",
+            description: "Great job on completing your journal entry today.",
+          });
+          
+          return newEntry;
+        }
       }
       
       return null;
@@ -178,6 +292,7 @@ export const useJournalEntries = (childId: string | undefined) => {
     journalEntries,
     loading,
     fetchJournalEntries,
-    saveJournalEntry
+    saveJournalEntry,
+    getTodayEntry
   };
 };
