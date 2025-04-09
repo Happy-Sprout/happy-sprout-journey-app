@@ -62,8 +62,6 @@ const Register = () => {
         if (error.message.includes("already registered")) {
           setError("This email is already registered. Please log in instead.");
           setTimeout(() => navigate("/login"), 3000);
-        } else if (error.message.includes("rate limit")) {
-          setError("Too many attempts. Please try again in a few minutes.");
         } else {
           setError(error.message || "Could not create your account. Please try again.");
         }

@@ -94,7 +94,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           data: {
             name: name
           },
-          emailRedirectTo: undefined // Disable email redirect
+          // Important: This ensures no email verification is required
+          emailRedirectTo: null
         }
       });
       
@@ -135,20 +136,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Your account has been created successfully!"
       });
       
-      // We'll automatically sign in the user after registration
-      setIsLoggedIn(true);
+      // Automatically sign the user in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (signInError) {
+        console.error("Auto sign-in error:", signInError);
+        toast({
+          title: "Login failed",
+          description: "Your account was created but automatic login failed. Please log in manually.",
+          variant: "destructive"
+        });
+      } else {
+        setIsLoggedIn(true);
+      }
       
       return data;
     } catch (error: any) {
       console.error("Signup error:", error);
-      
-      // Improved error handling for specific errors
       let errorMessage = error.message || "Could not create your account. Please try again.";
-      
-      // Check for rate limiting errors
-      if (error.message && error.message.includes("rate limit")) {
-        errorMessage = "Too many attempts. Please try again in a few minutes.";
-      }
       
       toast({
         title: "Registration failed",
