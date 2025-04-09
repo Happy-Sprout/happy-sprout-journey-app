@@ -40,6 +40,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   
   const fetchParentInfo = async (userId: string) => {
     try {
+      console.log("Fetching parent info for user:", userId);
       const { data, error } = await supabase
         .from('parents')
         .select('*')
@@ -52,6 +53,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (data) {
+        console.log("Parent data found:", data);
         setParentInfo({
           id: data.id,
           name: data.name,
@@ -60,6 +62,8 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           emergencyContact: data.emergency_contact,
           additionalInfo: data.additional_info
         });
+      } else {
+        console.log("No parent data found for user:", userId);
       }
     } catch (error) {
       console.error("Error in fetchParentInfo:", error);
@@ -67,9 +71,13 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateParentInfo = async (updatedInfo: Partial<ParentInfo>) => {
-    if (!user?.id || !parentInfo) return;
+    if (!user?.id || !parentInfo) {
+      console.error("Cannot update parent info: no user logged in or no parent info available");
+      return;
+    }
     
     try {
+      console.log("Updating parent info:", updatedInfo);
       const update: any = {};
       if (updatedInfo.name) update.name = updatedInfo.name;
       if (updatedInfo.relationship) update.relationship = updatedInfo.relationship;

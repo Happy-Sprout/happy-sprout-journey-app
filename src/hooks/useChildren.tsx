@@ -70,6 +70,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
   
   const fetchChildProfiles = async (parentId: string) => {
     try {
+      console.log("Fetching child profiles for parent:", parentId);
       const { data: childrenData, error: childrenError } = await supabase
         .from('children')
         .select('*')
@@ -81,10 +82,12 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (!childrenData || childrenData.length === 0) {
+        console.log("No child profiles found for parent:", parentId);
         setChildProfiles([]);
         return;
       }
       
+      console.log("Children data found:", childrenData);
       const profiles: ChildProfile[] = [];
       
       for (const child of childrenData) {
@@ -132,9 +135,11 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         });
       }
       
+      console.log("Processed child profiles:", profiles);
       setChildProfiles(profiles);
       
       if (!currentChildId && profiles.length > 0) {
+        console.log("Setting current child to first profile:", profiles[0].id);
         setCurrentChildId(profiles[0].id);
       }
     } catch (error) {
@@ -144,6 +149,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
   
   const addChildProfile = async (profile: ChildProfile) => {
     if (!user) {
+      console.error("Cannot add child profile: no user logged in");
       toast({
         title: "Error",
         description: "You must be logged in to add a child profile",
@@ -155,6 +161,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     try {
       // First, generate UUID if not provided
       const childId = profile.id || uuidv4();
+      console.log("Adding child profile with ID:", childId);
       
       // Create child record
       const { error: childError } = await supabase
@@ -223,6 +230,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (childProfiles.length === 0) {
+        console.log("Setting current child to newly created profile:", childId);
         setCurrentChildId(childId);
       }
     } catch (error) {

@@ -86,6 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmail = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
+      // First, create the auth user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -105,6 +106,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("User creation failed");
       }
       
+      console.log("User created successfully:", data.user.id);
+      
       // Create parent record in database
       const { error: parentError } = await supabase
         .from('parents')
@@ -118,6 +121,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
       if (parentError) {
         console.error("Error creating parent record:", parentError);
+        toast({
+          title: "Profile creation issue",
+          description: "Your account was created but we couldn't set up your profile. Please try again later.",
+          variant: "destructive"
+        });
+      } else {
+        console.log("Parent record created successfully");
       }
       
       setIsLoggedIn(true);
