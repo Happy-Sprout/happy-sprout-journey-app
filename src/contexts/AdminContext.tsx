@@ -26,7 +26,8 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return false;
     
     try {
-      const { data, error } = await supabase.rpc('is_admin_user');
+      // Use "is_admin" function instead of "is_admin_user" to match Supabase's available RPC functions
+      const { data, error } = await supabase.rpc('is_admin');
       
       if (error) {
         console.error("Error checking admin status:", error);

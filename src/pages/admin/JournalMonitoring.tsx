@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,41 +34,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { SuccessBadge, WarningBadge } from "@/components/ui/badge-extensions";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { AlertTriangle, CheckCircle, Clock, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-type JournalFlag = {
-  id: string;
-  entry_id: string;
-  child_id: string;
-  flag_reason: string;
-  severity: 'high' | 'medium' | 'low';
-  status: 'pending' | 'reviewed' | 'dismissed';
-  created_at: string;
-  reviewed_at: string | null;
-  reviewed_by: string | null;
-  // Joined data
-  journal_entry?: {
-    title: string;
-    content: string;
-    created_at: string;
-  };
-  child?: {
-    nickname: string;
-    age: number;
-  };
-  parent?: {
-    name: string;
-    email: string;
-  };
-};
-
-type JournalFilterState = {
-  severity: string;
-  status: string;
-};
+import { JournalFlag, JournalFilterState } from "@/types/admin";
 
 const JournalMonitoring = () => {
   const [flags, setFlags] = useState<JournalFlag[]>([]);
@@ -105,7 +75,6 @@ const JournalMonitoring = () => {
         
       if (error) throw error;
       
-      // Format data for display
       const formattedData = data?.map(item => ({
         ...item,
         parent: item.parent?.parents
@@ -139,7 +108,6 @@ const JournalMonitoring = () => {
         
       if (error) throw error;
       
-      // Log the review action
       await supabase
         .from('user_activity_logs')
         .insert([
@@ -161,7 +129,6 @@ const JournalMonitoring = () => {
         description: "Journal entry status updated successfully"
       });
       
-      // Update local state
       setFlags(prev => prev.map(flag => 
         flag.id === selectedFlag.id 
           ? { 
@@ -185,17 +152,14 @@ const JournalMonitoring = () => {
   };
 
   const filteredFlags = flags.filter(flag => {
-    // Apply severity filter
     if (filter.severity !== "all" && flag.severity !== filter.severity) {
       return false;
     }
     
-    // Apply status filter
     if (filter.status !== "all" && flag.status !== filter.status) {
       return false;
     }
     
-    // Apply search
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       return (
@@ -214,7 +178,7 @@ const JournalMonitoring = () => {
       case 'high':
         return <Badge variant="destructive" className="font-medium">High</Badge>;
       case 'medium':
-        return <Badge variant="warning" className="bg-amber-500 text-white font-medium">Medium</Badge>;
+        return <WarningBadge className="font-medium">Medium</WarningBadge>;
       case 'low':
         return <Badge variant="outline" className="font-medium">Low</Badge>;
       default:
@@ -227,7 +191,7 @@ const JournalMonitoring = () => {
       case 'pending':
         return <Badge variant="outline" className="flex items-center gap-1"><Clock className="h-3 w-3" /> Pending</Badge>;
       case 'reviewed':
-        return <Badge variant="success" className="bg-green-500 text-white flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Reviewed</Badge>;
+        return <SuccessBadge className="flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Reviewed</SuccessBadge>;
       case 'dismissed':
         return <Badge variant="secondary" className="flex items-center gap-1">Dismissed</Badge>;
       default:
@@ -359,7 +323,6 @@ const JournalMonitoring = () => {
           </CardContent>
         </Card>
         
-        {/* Journal Entry Details Dialog */}
         <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
@@ -439,7 +402,6 @@ const JournalMonitoring = () => {
           </DialogContent>
         </Dialog>
         
-        {/* Resolve Dialog */}
         <Dialog open={resolveDialogOpen} onOpenChange={setResolveDialogOpen}>
           <DialogContent>
             <DialogHeader>
