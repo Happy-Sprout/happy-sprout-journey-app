@@ -107,12 +107,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       console.log("User created successfully:", data.user.id);
       
-      // Now create parent record - use RPC call with security definer to bypass RLS
-      const { error: parentError } = await supabase.rpc('create_parent_profile', {
-        user_id: data.user.id,
-        user_name: name,
-        user_email: email
-      });
+      // Now create parent record - use direct SQL query instead of RPC to bypass TypeScript error
+      const { error: parentError } = await supabase
+        .from('parents')
+        .insert({
+          id: data.user.id,
+          name: name,
+          relationship: 'Parent',
+          email: email,
+          emergency_contact: ''
+        });
         
       if (parentError) {
         console.error("Error creating parent record:", parentError);
