@@ -19,9 +19,9 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { setIsLoggedIn, setParentInfo } = useUser();
+  const { signUpWithEmail } = useUser();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
@@ -44,25 +44,22 @@ const Register = () => {
     
     setIsLoading(true);
     
-    // Simulate registration - in a real app, this would be an API call
-    setTimeout(() => {
-      setIsLoggedIn(true);
-      setParentInfo({
-        id: "1",
-        name: name,
-        relationship: "Parent",
-        email: email,
-        emergencyContact: "",
-      });
-      
+    try {
+      await signUpWithEmail(email, password, name);
       toast({
         title: "Registration successful!",
-        description: "Welcome to Happy Sprout!",
+        description: "Please check your email to confirm your account.",
       });
-      
       navigate("/create-profile");
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "Could not create your account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from "react
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
+import { Session, User } from "@supabase/supabase-js";
 
 // Types for our context
 type ChildProfile = {
@@ -55,6 +56,8 @@ type UserContextType = {
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
+  user: User | null;
+  session: Session | null;
 };
 
 const UserContext = createContext<UserContextType>({
@@ -78,6 +81,8 @@ const UserContext = createContext<UserContextType>({
   signUpWithEmail: async () => {},
   logout: async () => {},
   loading: false,
+  user: null,
+  session: null,
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -86,59 +91,41 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [childProfiles, setChildProfiles] = useState<ChildProfile[]>([]);
   const [currentChildId, setCurrentChildId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          setIsLoggedIn(true);
-          
-          const { data: parentData, error: parentError } = await supabase
-            .from('parents')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-            
-          if (parentError) {
-            console.error("Error fetching parent data:", parentError);
-          } else if (parentData) {
-            setParentInfo({
-              id: parentData.id,
-              name: parentData.name,
-              relationship: parentData.relationship,
-              email: parentData.email,
-              emergencyContact: parentData.emergency_contact,
-              additionalInfo: parentData.additional_info
-            });
-          }
-          
-          await fetchChildProfiles(session.user.id);
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    initializeAuth();
-    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoggedIn(!!session);
+        
         if (event === 'SIGNED_IN' && session) {
-          setIsLoggedIn(true);
-          fetchUserData(session.user.id);
+          setTimeout(() => {
+            fetchUserData(session.user.id);
+          }, 0);
         } else if (event === 'SIGNED_OUT') {
-          setIsLoggedIn(false);
           setParentInfo(null);
           setChildProfiles([]);
           setCurrentChildId(null);
         }
       }
     );
+    
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoggedIn(!!session);
+      
+      if (session?.user) {
+        fetchUserData(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
     
     return () => {
       subscription.unsubscribe();
@@ -233,6 +220,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       await fetchChildProfiles(userId);
     } catch (error) {
       console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -583,7 +572,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo: window.location.origin + '/login',
+          data: {
+            name: name
+          }
+        }
       });
       
       if (error) {
@@ -609,10 +604,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
       
       setIsLoggedIn(true);
-      toast({
-        title: "Registration successful",
-        description: "Welcome to Happy Sprout!"
-      });
+      setUser(data.user);
+      setSession(data.session);
+      
+      if (data.session) {
+        toast({
+          title: "Registration successful",
+          description: "Welcome to Happy Sprout!"
+        });
+      } else {
+        toast({
+          title: "Registration successful",
+          description: "Please check your email to confirm your account."
+        });
+      }
     } catch (error: any) {
       console.error("Signup error:", error);
       toast({
@@ -633,6 +638,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setParentInfo(null);
       setChildProfiles([]);
       setCurrentChildId(null);
+      setUser(null);
+      setSession(null);
       toast({
         title: "Logged out",
         description: "You have been successfully logged out."
@@ -669,7 +676,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         loginWithEmail,
         signUpWithEmail,
         logout,
-        loading
+        loading,
+        user,
+        session
       }}
     >
       {children}

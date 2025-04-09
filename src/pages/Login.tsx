@@ -16,38 +16,24 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { setIsLoggedIn, setParentInfo } = useUser();
+  const { loginWithEmail } = useUser();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate login - in a real app, this would be an API call
-    setTimeout(() => {
-      // For demo purposes, any login works
-      if (email && password) {
-        setIsLoggedIn(true);
-        setParentInfo({
-          id: "1",
-          name: "Demo Parent",
-          relationship: "Parent",
-          email: email,
-          emergencyContact: "555-123-4567"
-        });
-        toast({
-          title: "Login successful!",
-          description: "Welcome back to Happy Sprout!",
-        });
-        navigate("/dashboard");
-      } else {
-        toast({
-          title: "Login failed",
-          description: "Please check your email and password",
-          variant: "destructive",
-        });
-      }
+    try {
+      await loginWithEmail(email, password);
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your email and password",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
