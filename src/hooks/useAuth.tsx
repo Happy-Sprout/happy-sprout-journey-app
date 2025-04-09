@@ -11,8 +11,6 @@ type AuthContextType = {
   session: Session | null;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, name: string) => Promise<{ user: User | null; session: Session | null; } | undefined>;
-  verifyOtp: (email: string, token: string) => Promise<boolean>;
-  sendOtp: (email: string) => Promise<boolean>;
   logout: () => Promise<void>;
 };
 
@@ -23,8 +21,6 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loginWithEmail: async () => {},
   signUpWithEmail: async () => undefined,
-  verifyOtp: async () => false,
-  sendOtp: async () => false,
   logout: async () => {},
 });
 
@@ -90,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmail = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
-      // Create the user with email confirmation disabled
+      // Direct signup without email verification
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -98,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           data: {
             name: name
           },
-          // No email redirect needed as we're not verifying emails
+          emailRedirectTo: undefined // Disable email redirect
         }
       });
       
@@ -139,90 +135,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Your account has been created successfully!"
       });
       
-      // Auto sign in the user
-      await loginWithEmail(email, password);
+      // We'll automatically sign in the user after registration
+      setIsLoggedIn(true);
       
       return data;
     } catch (error: any) {
       console.error("Signup error:", error);
+      
+      // Improved error handling for specific errors
+      let errorMessage = error.message || "Could not create your account. Please try again.";
+      
+      // Check for rate limiting errors
+      if (error.message && error.message.includes("rate limit")) {
+        errorMessage = "Too many attempts. Please try again in a few minutes.";
+      }
+      
+      toast({
+        title: "Registration failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
-    }
-  };
-  
-  // Function to send OTP to the user's email (kept for potential future use)
-  const sendOtp = async (email: string) => {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-        }
-      });
-      
-      if (error) {
-        toast({
-          title: "Failed to send OTP",
-          description: error.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      toast({
-        title: "OTP Sent",
-        description: "Please check your email for the verification code"
-      });
-      return true;
-    } catch (error: any) {
-      console.error("Send OTP error:", error);
-      toast({
-        title: "Failed to send OTP",
-        description: error.message || "Could not send verification code",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-  
-  // Function to verify OTP (kept for potential future use)
-  const verifyOtp = async (email: string, token: string) => {
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: "email"
-      });
-      
-      if (error) {
-        toast({
-          title: "Verification failed",
-          description: error.message,
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      setSession(data.session);
-      setUser(data.user);
-      setIsLoggedIn(!!data.session);
-      
-      toast({
-        title: "Verification successful",
-        description: "Your account has been verified"
-      });
-      return true;
-    } catch (error: any) {
-      console.error("OTP verification error:", error);
-      toast({
-        title: "Verification failed",
-        description: error.message || "Could not verify code",
-        variant: "destructive"
-      });
-      return false;
     }
   };
   
@@ -255,8 +190,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         loginWithEmail,
         signUpWithEmail,
-        verifyOtp,
-        sendOtp,
         logout
       }}
     >

@@ -4,7 +4,6 @@ import { useParent } from "./useParent";
 import { useChildren } from "./useChildren";
 import { ParentInfo } from "./useParent";
 import { ChildProfile } from "./useChildren";
-import { User, Session } from "@supabase/supabase-js";
 
 // This hook combines all the functionality from the separate contexts
 // for backwards compatibility
@@ -21,8 +20,6 @@ export const useUser = () => {
     session: auth.session,
     loginWithEmail: auth.loginWithEmail,
     signUpWithEmail: auth.signUpWithEmail,
-    verifyOtp: auth.verifyOtp,
-    sendOtp: auth.sendOtp,
     logout: auth.logout,
     
     // Parent properties
