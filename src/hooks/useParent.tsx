@@ -64,6 +64,30 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         });
       } else {
         console.log("No parent data found for user:", userId);
+        
+        // If parent record doesn't exist and we have user data, create one
+        if (user?.id && user.user_metadata?.name) {
+          console.log("Creating parent record for user:", userId);
+          const newParent = {
+            id: user.id,
+            name: user.user_metadata.name as string,
+            relationship: "Parent",
+            email: user.email || "",
+            emergency_contact: ""
+          };
+          
+          const { error: insertError } = await supabase
+            .from('parents')
+            .insert([newParent]);
+            
+          if (insertError) {
+            console.error("Error creating parent record:", insertError);
+            return;
+          }
+          
+          console.log("Parent record created successfully");
+          setParentInfo(newParent);
+        }
       }
     } catch (error) {
       console.error("Error in fetchParentInfo:", error);

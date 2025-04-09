@@ -1,9 +1,9 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from "@/hooks/useAuth";
+import { useParent } from "./useParent";
 
 export type ChildProfile = {
   id: string;
@@ -61,14 +61,20 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
   const [currentChildId, setCurrentChildId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { parentInfo } = useParent();
   
   useEffect(() => {
     if (user?.id) {
       fetchChildProfiles(user.id);
     }
-  }, [user]);
+  }, [user, parentInfo]);
   
   const fetchChildProfiles = async (parentId: string) => {
+    if (!parentInfo) {
+      console.log("Parent info not available yet, will fetch children later");
+      return;
+    }
+    
     try {
       console.log("Fetching child profiles for parent:", parentId);
       const { data: childrenData, error: childrenError } = await supabase
@@ -148,22 +154,20 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addChildProfile = async (profile: ChildProfile) => {
-    if (!user) {
-      console.error("Cannot add child profile: no user logged in");
+    if (!user || !parentInfo) {
+      console.error("Cannot add child profile: no user logged in or parent profile not created");
       toast({
         title: "Error",
-        description: "You must be logged in to add a child profile",
+        description: "Parent profile must be created before adding a child. Please try again.",
         variant: "destructive"
       });
       return;
     }
     
     try {
-      // First, generate UUID if not provided
       const childId = profile.id || uuidv4();
       console.log("Adding child profile with ID:", childId);
       
-      // Create child record
       const { error: childError } = await supabase
         .from('children')
         .insert([{
@@ -189,7 +193,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Create preferences
       const { error: prefError } = await supabase
         .from('child_preferences')
         .insert([{
@@ -205,7 +208,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error adding preferences:", prefError);
       }
         
-      // Create progress record
       const { error: progressError } = await supabase
         .from('child_progress')
         .insert([{
@@ -220,7 +222,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error adding progress:", progressError);
       }
       
-      // Update local state
       const newProfile = {...profile, id: childId};
       setChildProfiles((prev) => [...prev, newProfile]);
       
