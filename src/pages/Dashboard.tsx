@@ -9,11 +9,28 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { avatarOptions } from "@/constants/profileOptions";
+import { useEffect, useState } from "react";
+import { useJournalEntries } from "@/hooks/useJournalEntries";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { childProfiles, getCurrentChild, currentChildId, setCurrentChildId } = useUser();
   const currentChild = getCurrentChild();
+  const [journalCompleted, setJournalCompleted] = useState(false);
+  
+  // Get journal entries to check if today's entry exists
+  const { getTodayEntry } = useJournalEntries(currentChildId);
+  
+  useEffect(() => {
+    const checkTodayJournalEntry = async () => {
+      if (currentChildId) {
+        const todayEntry = await getTodayEntry();
+        setJournalCompleted(!!todayEntry);
+      }
+    };
+    
+    checkTodayJournalEntry();
+  }, [currentChildId, getTodayEntry]);
   
   // Mock quotes for demo
   const motivationalQuotes = [
@@ -57,7 +74,7 @@ const Dashboard = () => {
       title: "Journal Master", 
       description: "Created your first journal entry", 
       icon: "📝", 
-      completed: false 
+      completed: journalCompleted
     },
     { 
       title: "Week Streak", 
@@ -208,19 +225,24 @@ const Dashboard = () => {
                             </Button>
                           </div>
                           
-                          <div className="flex items-center p-3 bg-sprout-purple/10 rounded-lg">
-                            <div className="mr-4 bg-sprout-purple text-white p-2 rounded-full">
-                              <BookOpen className="h-5 w-5" />
+                          <div className={`flex items-center p-3 ${journalCompleted ? 'bg-sprout-green/10' : 'bg-sprout-purple/10'} rounded-lg`}>
+                            <div className={`mr-4 ${journalCompleted ? 'bg-sprout-green' : 'bg-sprout-purple'} text-white p-2 rounded-full`}>
+                              {journalCompleted ? <Check className="h-5 w-5" /> : <BookOpen className="h-5 w-5" />}
                             </div>
                             <div>
                               <h3 className="font-medium">Journal Entry</h3>
-                              <p className="text-sm text-gray-600">Write about your day and thoughts</p>
+                              <p className="text-sm text-gray-600">
+                                {journalCompleted 
+                                  ? "You've completed today's journal entry!" 
+                                  : "Write about your day and thoughts"}
+                              </p>
                             </div>
                             <Button 
-                              className="ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full"
+                              className={`ml-auto ${journalCompleted ? 'bg-sprout-green' : 'bg-sprout-purple text-white hover:bg-sprout-purple/90'} rounded-full`}
                               onClick={() => navigate("/journal")}
+                              disabled={journalCompleted}
                             >
-                              Start
+                              {journalCompleted ? 'Completed' : 'Start'}
                             </Button>
                           </div>
                         </div>

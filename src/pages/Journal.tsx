@@ -65,8 +65,10 @@ const Journal = () => {
       console.log("Journal entry saved, updating XP points");
       
       if (currentChild && typeof currentChild.xpPoints === 'number') {
+        // Update XP points and mark the Journal Master achievement as completed
         updateChildProfile(currentChild.id, {
           xpPoints: currentChild.xpPoints + 15,
+          // If we had a badges field in the child profile, we would add the Journal Master badge here
         });
         console.log("XP points updated");
       } else {
