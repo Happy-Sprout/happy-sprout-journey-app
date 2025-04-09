@@ -9,7 +9,7 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   loginWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, name: string) => Promise<{ user: User | null; session: Session | null; } | undefined>;
   logout: () => Promise<void>;
 };
 
@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loginWithEmail: async () => {},
-  signUpWithEmail: async () => {},
+  signUpWithEmail: async () => undefined,
   logout: async () => {},
 });
 

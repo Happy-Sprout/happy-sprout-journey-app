@@ -47,7 +47,7 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      await signUpWithEmail(email, password, name);
+      const data = await signUpWithEmail(email, password, name);
       toast({
         title: "Registration successful!",
         description: "Please check your email to confirm your account.",
