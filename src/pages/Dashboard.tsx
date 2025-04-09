@@ -111,18 +111,20 @@ const Dashboard = () => {
                       className="p-4 bg-white rounded-lg border-2 border-sprout-purple/20 hover:border-sprout-purple cursor-pointer transition-all hover:shadow-md"
                       onClick={() => setCurrentChildId(profile.id)}
                     >
-                      <Avatar className="h-16 w-16 mb-2">
-                        <AvatarImage src={getAvatarImage(profile.avatar)} alt={profile.nickname} />
-                        <AvatarFallback>{profile.nickname.substring(0, 2)}</AvatarFallback>
-                      </Avatar>
-                      <h3 className="font-bold text-lg">{profile.nickname}</h3>
-                      <p className="text-sm text-gray-500">Age: {profile.age}</p>
-                      <p className="text-sm text-gray-500">Grade: {profile.grade}</p>
-                      {profile.creationStatus && (
-                        <Badge className={profile.creationStatus === 'completed' ? 'bg-green-500' : 'bg-amber-500'}>
-                          {profile.creationStatus === 'completed' ? 'Complete' : 'Pending'}
-                        </Badge>
-                      )}
+                      <div className="flex flex-col items-center text-center">
+                        <Avatar className="h-16 w-16 mb-2">
+                          <AvatarImage src={getAvatarImage(profile.avatar)} alt={profile.nickname} />
+                          <AvatarFallback>{profile.nickname.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <h3 className="font-bold text-lg">{profile.nickname}</h3>
+                        <p className="text-sm text-gray-500">Age: {profile.age}</p>
+                        <p className="text-sm text-gray-500">Grade: {profile.grade}</p>
+                        {profile.creationStatus && (
+                          <Badge className={profile.creationStatus === 'completed' ? 'bg-green-500' : 'bg-amber-500'}>
+                            {profile.creationStatus === 'completed' ? 'Complete' : 'Pending'}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -255,7 +257,7 @@ const Dashboard = () => {
                       <CardTitle>Daily Inspiration</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="p-4 bg-gradient-to-br from-sprout-yellow/30 to-sprout-orange/30 rounded-lg">
+                      <div className="p-4 bg-gradient-to-br from-sprout-yellow/30 to-sprout-orange/30 rounded-lg text-center">
                         <p className="italic text-gray-800">"{randomQuote}"</p>
                       </div>
                     </CardContent>
@@ -313,7 +315,7 @@ const Dashboard = () => {
                             </div>
                           ))}
                           {achievements.filter(a => !a.completed).length === 0 && (
-                            <p className="text-gray-500">Great job! You've completed all the beginning achievements!</p>
+                            <p className="text-center text-gray-500">Great job! You've completed all the beginning achievements!</p>
                           )}
                         </div>
                       </CardContent>
