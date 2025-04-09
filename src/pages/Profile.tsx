@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -194,7 +193,7 @@ const Profile = () => {
                             <p>
                               {profile.learningStyles && profile.learningStyles.length > 0 
                                 ? profile.learningStyles.map(style => getLearningStyleLabel(style)).join(", ")
-                                : getLearningStyleLabel(profile.learningStyle)}
+                                : "Not specified"}
                             </p>
                           </div>
                           <div>
@@ -202,7 +201,7 @@ const Profile = () => {
                             <p>
                               {profile.selStrengths && profile.selStrengths.length > 0 
                                 ? profile.selStrengths.map(strength => getSELStrengthLabel(strength)).join(", ")
-                                : getSELStrengthLabel(profile.strongestSEL)}
+                                : "Not specified"}
                             </p>
                           </div>
                         </div>
