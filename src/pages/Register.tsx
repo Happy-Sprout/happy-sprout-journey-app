@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
-import { useUser } from "@/contexts/UserContext";
+import { useUser } from "@/hooks/useUser";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, AlertTriangleIcon } from "lucide-react";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -19,12 +19,14 @@ const Register = () => {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signUpWithEmail, sendOtp } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (password !== confirmPassword) {
       toast({
@@ -57,28 +59,26 @@ const Register = () => {
         // Step 3: Redirect to OTP verification page
         navigate("/verify-otp", { state: { email } });
       } else {
-        toast({
-          title: "Registration issue",
-          description: "Account could not be created. Please try again.",
-          variant: "destructive",
-        });
+        setError("Account could not be created. Please try again.");
       }
     } catch (error: any) {
       console.error("Signup error:", error);
       
-      // Improved error handling
-      let errorMessage = "Could not create your account. Please try again.";
-      
-      if (error.message && error.message.includes("already registered")) {
-        errorMessage = "This email is already registered. Please log in instead.";
-        setTimeout(() => navigate("/login"), 3000);
+      // Improved error handling for specific errors
+      if (error.message) {
+        if (error.message.includes("already registered")) {
+          setError("This email is already registered. Please log in instead.");
+          setTimeout(() => navigate("/login"), 3000);
+        } else if (error.message.includes("rate limit")) {
+          setError("Too many attempts. Please try again in a few minutes.");
+        } else if (error.message.includes("sending confirmation email")) {
+          setError("There was an issue with our email service. Please try again later.");
+        } else {
+          setError(error.message || "Could not create your account. Please try again.");
+        }
+      } else {
+        setError("Could not create your account. Please try again.");
       }
-      
-      toast({
-        title: "Registration issue",
-        description: errorMessage,
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +100,15 @@ const Register = () => {
             <p className="text-gray-600 mt-2">Join Happy Sprout to start your child's emotional growth journey</p>
           </div>
           
-          <div className="sprout-card">
+          {error && (
+            <Alert className="mb-6 bg-red-50 border-red-200">
+              <AlertTriangleIcon className="h-4 w-4 text-red-500" />
+              <AlertTitle>Registration issue</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="bg-white rounded-lg shadow-md overflow-hidden p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -111,7 +119,7 @@ const Register = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="sprout-input"
+                  className="w-full"
                 />
               </div>
               
@@ -124,7 +132,7 @@ const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="sprout-input"
+                  className="w-full"
                 />
               </div>
               
@@ -137,7 +145,7 @@ const Register = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="sprout-input"
+                  className="w-full"
                 />
               </div>
               
@@ -150,7 +158,7 @@ const Register = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="sprout-input"
+                  className="w-full"
                 />
               </div>
               
@@ -198,7 +206,7 @@ const Register = () => {
               
               <Button
                 type="submit"
-                className="w-full sprout-button"
+                className="w-full bg-sprout-purple hover:bg-sprout-purple/90 text-white"
                 disabled={isLoading}
               >
                 {isLoading ? "Creating account..." : "Create Account"}

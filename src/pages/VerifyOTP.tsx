@@ -6,14 +6,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { MailIcon, RefreshCwIcon } from "lucide-react";
+import { MailIcon, RefreshCwIcon, AlertTriangleIcon } from "lucide-react";
 import Layout from "@/components/Layout";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { verifyOtp, sendOtp } = useAuth();
@@ -52,14 +54,18 @@ const VerifyOTP = () => {
     }
     
     setLoading(true);
+    setError(null);
     
     try {
       const success = await verifyOtp(email, otp);
       if (success) {
         navigate("/dashboard");
+      } else {
+        setError("Verification failed. Please check the code and try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Verification error:", error);
+      setError(error.message || "Verification failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,14 +73,18 @@ const VerifyOTP = () => {
   
   const handleResendOtp = async () => {
     setResendLoading(true);
+    setError(null);
     
     try {
       const success = await sendOtp(email);
       if (success) {
         setCountdown(60); // Set a 60-second countdown
+      } else {
+        setError("Could not send verification code. Please try again later.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Resend OTP error:", error);
+      setError(error.message || "Could not send verification code. Please try again later.");
     } finally {
       setResendLoading(false);
     }
@@ -88,6 +98,14 @@ const VerifyOTP = () => {
             <h1 className="text-3xl font-bold text-sprout-purple">Happy Sprout</h1>
             <p className="text-gray-600">Verify Your Account</p>
           </div>
+          
+          {error && (
+            <Alert className="mb-6 bg-red-50 border-red-200">
+              <AlertTriangleIcon className="h-4 w-4 text-red-500" />
+              <AlertTitle>Verification issue</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           
           <Card>
             <CardHeader>
@@ -124,7 +142,7 @@ const VerifyOTP = () => {
             <CardFooter className="flex flex-col space-y-4">
               <Button 
                 type="button" 
-                className="w-full" 
+                className="w-full bg-sprout-purple hover:bg-sprout-purple/90 text-white" 
                 onClick={handleVerify}
                 disabled={loading || otp.length !== 6}
               >

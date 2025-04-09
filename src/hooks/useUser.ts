@@ -4,6 +4,7 @@ import { useParent } from "./useParent";
 import { useChildren } from "./useChildren";
 import { ParentInfo } from "./useParent";
 import { ChildProfile } from "./useChildren";
+import { User, Session } from "@supabase/supabase-js";
 
 // This hook combines all the functionality from the separate contexts
 // for backwards compatibility
