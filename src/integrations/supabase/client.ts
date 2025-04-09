@@ -17,7 +17,8 @@ export const supabase = createClient<Database>(
       persistSession: true,
       autoRefreshToken: true,
       storageKey: 'happy-sprout-auth',
-      flowType: 'pkce' // Enable modern PKCE flow for more secure auth
+      flowType: 'pkce', // Enable modern PKCE flow for more secure auth
+      detectSessionInUrl: true, // Important for handling email confirmations
     }
   }
 );

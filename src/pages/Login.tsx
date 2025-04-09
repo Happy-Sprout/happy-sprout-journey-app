@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,15 +8,53 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { useUser } from "@/contexts/UserContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { loginWithEmail } = useUser();
+  const { loginWithEmail, isLoggedIn } = useUser();
+
+  // Check for email confirmation success
+  useEffect(() => {
+    const errorCode = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
+    const email_confirmed = searchParams.get("email_confirmed");
+    
+    if (email_confirmed === "true") {
+      setVerificationMessage("Email verified successfully! You can now log in.");
+      toast({
+        title: "Email verified",
+        description: "Your email has been successfully verified! You can now log in.",
+      });
+    } else if (errorCode) {
+      toast({
+        title: "Authentication Error",
+        description: errorDescription || "An error occurred with authentication",
+        variant: "destructive",
+      });
+    }
+    
+    // Clean up URL parameters
+    if (email_confirmed || errorCode) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams, toast]);
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/dashboard");
+    }
+  }, [isLoggedIn, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +69,60 @@ const Login = () => {
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
+      
+      // Handle specific error cases
+      if (error.message.includes("Email not confirmed")) {
+        toast({
+          title: "Email not verified",
+          description: "Please check your email and verify your account before logging in.",
+          variant: "destructive",
+        });
+      } else if (error.message.includes("Invalid login credentials")) {
+        toast({
+          title: "Login failed",
+          description: "Invalid email or password. Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Login failed",
+          description: error.message || "Please check your email and password",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to resend verification email
+  const handleResendVerification = async () => {
+    if (!email) {
       toast({
-        title: "Login failed",
-        description: error.message || "Please check your email and password",
+        title: "Email required",
+        description: "Please enter your email address first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Verification email sent",
+        description: "Please check your inbox for the verification link",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Could not send verification email",
         variant: "destructive",
       });
     } finally {
@@ -56,6 +145,14 @@ const Login = () => {
             <h1 className="text-3xl font-bold">Welcome Back!</h1>
             <p className="text-gray-600 mt-2">Log in to continue your Happy Sprout journey</p>
           </div>
+          
+          {verificationMessage && (
+            <Alert className="mb-6 bg-green-50 border-green-200">
+              <AlertDescription className="text-green-700">
+                {verificationMessage}
+              </AlertDescription>
+            </Alert>
+          )}
           
           <div className="sprout-card">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -90,18 +187,29 @@ const Login = () => {
                 />
               </div>
               
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
-                  checked={rememberMe} 
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <label 
-                  htmlFor="remember" 
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="remember" 
+                    checked={rememberMe} 
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  />
+                  <label 
+                    htmlFor="remember" 
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Remember me
+                  </label>
+                </div>
+                
+                <button 
+                  type="button" 
+                  onClick={handleResendVerification}
+                  className="text-xs text-sprout-purple hover:underline"
+                  disabled={isLoading}
                 >
-                  Remember me
-                </label>
+                  Resend verification
+                </button>
               </div>
               
               <Button
@@ -109,7 +217,12 @@ const Login = () => {
                 className="w-full sprout-button"
                 disabled={isLoading}
               >
-                {isLoading ? "Logging in..." : "Log in"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : "Log in"}
               </Button>
             </form>
             
@@ -124,7 +237,30 @@ const Login = () => {
               </div>
               
               <div className="mt-6 grid grid-cols-2 gap-3">
-                <Button variant="outline" className="bg-white hover:bg-gray-50">
+                <Button 
+                  variant="outline" 
+                  className="bg-white hover:bg-gray-50"
+                  onClick={async () => {
+                    try {
+                      setIsLoading(true);
+                      const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                          redirectTo: `${window.location.origin}/dashboard`
+                        }
+                      });
+                      if (error) throw error;
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to login with Google",
+                        variant: "destructive",
+                      });
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
+                >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -146,7 +282,30 @@ const Login = () => {
                   </svg>
                   Google
                 </Button>
-                <Button variant="outline" className="bg-white hover:bg-gray-50">
+                <Button 
+                  variant="outline" 
+                  className="bg-white hover:bg-gray-50"
+                  onClick={async () => {
+                    try {
+                      setIsLoading(true);
+                      const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'facebook',
+                        options: {
+                          redirectTo: `${window.location.origin}/dashboard`
+                        }
+                      });
+                      if (error) throw error;
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to login with Facebook",
+                        variant: "destructive",
+                      });
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
+                >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                     <path
                       d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
