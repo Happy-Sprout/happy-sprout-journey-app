@@ -164,9 +164,13 @@ const Profile = () => {
         id: parentInfo.id,
       });
     } else {
+      // Make sure all required fields are provided
       setParentInfo({
         id: uuidv4(),
-        ...data,
+        name: data.name,
+        email: data.email,
+        relationship: data.relationship || "Parent",
+        emergencyContact: data.emergencyContact || "",
       });
     }
     

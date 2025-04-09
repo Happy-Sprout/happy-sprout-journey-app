@@ -95,7 +95,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   // Update parent info
   const updateParentInfo = (updatedInfo: Partial<ParentInfo>) => {
-    setParentInfo((prev) => prev ? { ...prev, ...updatedInfo } : null);
+    setParentInfo((prev) => {
+      if (!prev) {
+        // If there's no existing parent info and we're trying to update it,
+        // all required fields must be provided
+        if (
+          !updatedInfo.name ||
+          !updatedInfo.relationship ||
+          !updatedInfo.email ||
+          !updatedInfo.emergencyContact ||
+          !updatedInfo.id
+        ) {
+          console.error("Missing required fields for parent info");
+          return null;
+        }
+        return updatedInfo as ParentInfo;
+      }
+      
+      // If we're updating existing parent info, merge with previous values
+      return { ...prev, ...updatedInfo };
+    });
   };
 
   // Delete a child profile
