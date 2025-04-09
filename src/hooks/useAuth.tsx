@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -86,7 +85,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmail = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
-      // First, create the auth user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -108,7 +106,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       console.log("User created successfully:", data.user.id);
       
-      // Create parent record in database
       const { error: parentError } = await supabase
         .from('parents')
         .insert([{
@@ -130,7 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Parent record created successfully");
       }
       
-      setIsLoggedIn(true);
+      setIsLoggedIn(!!data.session);
       setUser(data.user);
       setSession(data.session);
       
@@ -145,13 +142,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           description: "Please check your email to confirm your account."
         });
       }
+      
+      return data;
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast({
-        title: "Registration failed",
-        description: error.message || "Could not create account. Please try again.",
-        variant: "destructive"
-      });
+      
+      if (error.message && error.message.includes("sending confirmation email")) {
+        toast({
+          title: "Account created",
+          description: "Your account was created but we couldn't send a confirmation email. Please proceed to login.",
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Registration failed",
+          description: error.message || "Could not create account. Please try again.",
+          variant: "destructive"
+        });
+      }
+      
       throw error;
     } finally {
       setLoading(false);

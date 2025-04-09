@@ -63,6 +63,14 @@ const Login = () => {
           </AlertDescription>
         </Alert>
         
+        <Alert className="mb-6 bg-yellow-50 border-yellow-200">
+          <InfoIcon className="h-4 w-4 text-yellow-500" />
+          <AlertTitle>Email Verification Notice</AlertTitle>
+          <AlertDescription>
+            If you registered but didn't receive a verification email, you can still try to log in. Our system may create your account even without email verification.
+          </AlertDescription>
+        </Alert>
+        
         <Card>
           <CardHeader>
             <CardTitle>Welcome Back!</CardTitle>

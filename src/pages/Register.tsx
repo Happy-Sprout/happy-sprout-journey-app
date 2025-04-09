@@ -8,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { useUser } from "@/contexts/UserContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -50,11 +52,27 @@ const Register = () => {
         title: "Registration successful!",
         description: "Please check your email to confirm your account.",
       });
-      navigate("/create-profile");
+      
+      // Navigate to login even if there are email sending issues
+      // The account might still be created even if the email wasn't sent
+      navigate("/login");
     } catch (error: any) {
+      console.error("Signup error:", error);
+      
+      // Improved error handling
+      let errorMessage = "Could not create your account. Please try again.";
+      
+      if (error.message && error.message.includes("sending confirmation email")) {
+        errorMessage = "Account created, but we couldn't send a confirmation email. Please proceed to login.";
+        // Navigate to login page after a short delay
+        setTimeout(() => navigate("/login"), 3000);
+      } else if (error.message && error.message.includes("already registered")) {
+        errorMessage = "This email is already registered. Please log in instead.";
+      }
+      
       toast({
-        title: "Registration failed",
-        description: error.message || "Could not create your account. Please try again.",
+        title: "Registration issue",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
