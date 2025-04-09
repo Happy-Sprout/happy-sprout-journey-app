@@ -21,7 +21,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signUpWithEmail } = useUser();
+  const { signUpWithEmail, sendOtp } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,27 +47,31 @@ const Register = () => {
     setIsLoading(true);
     
     try {
+      // Step 1: Create the account
       const data = await signUpWithEmail(email, password, name);
-      toast({
-        title: "Registration successful!",
-        description: "Please check your email to confirm your account.",
-      });
       
-      // Navigate to login even if there are email sending issues
-      // The account might still be created even if the email wasn't sent
-      navigate("/login");
+      if (data?.user) {
+        // Step 2: Send OTP for verification
+        await sendOtp(email);
+        
+        // Step 3: Redirect to OTP verification page
+        navigate("/verify-otp", { state: { email } });
+      } else {
+        toast({
+          title: "Registration issue",
+          description: "Account could not be created. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error("Signup error:", error);
       
       // Improved error handling
       let errorMessage = "Could not create your account. Please try again.";
       
-      if (error.message && error.message.includes("sending confirmation email")) {
-        errorMessage = "Account created, but we couldn't send a confirmation email. Please proceed to login.";
-        // Navigate to login page after a short delay
-        setTimeout(() => navigate("/login"), 3000);
-      } else if (error.message && error.message.includes("already registered")) {
+      if (error.message && error.message.includes("already registered")) {
         errorMessage = "This email is already registered. Please log in instead.";
+        setTimeout(() => navigate("/login"), 3000);
       }
       
       toast({

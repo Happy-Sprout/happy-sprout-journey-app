@@ -15,8 +15,9 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showVerificationOption, setShowVerificationOption] = useState(false);
   const navigate = useNavigate();
-  const { loginWithEmail, isLoggedIn } = useAuth();
+  const { loginWithEmail, isLoggedIn, sendOtp } = useAuth();
   const { checkAdminStatus } = useAdmin();
   const { toast } = useToast();
 
@@ -34,9 +35,41 @@ const Login = () => {
       } else {
         navigate("/dashboard");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      // Toast is already shown in the loginWithEmail function
+      
+      // Check if the error might be related to verification
+      if (error.message && (
+          error.message.includes("Email not confirmed") || 
+          error.message.includes("not verified") || 
+          error.message.includes("not confirmed"))) {
+        setShowVerificationOption(true);
+      }
+      
+      setLoading(false);
+    }
+  };
+
+  const handleSendVerificationOTP = async () => {
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const success = await sendOtp(email);
+      if (success) {
+        navigate("/verify-otp", { state: { email } });
+      }
+    } catch (error) {
+      console.error("Send OTP error:", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -63,13 +96,24 @@ const Login = () => {
           </AlertDescription>
         </Alert>
         
-        <Alert className="mb-6 bg-yellow-50 border-yellow-200">
-          <InfoIcon className="h-4 w-4 text-yellow-500" />
-          <AlertTitle>Email Verification Notice</AlertTitle>
-          <AlertDescription>
-            If you registered but didn't receive a verification email, you can still try to log in. Our system may create your account even without email verification.
-          </AlertDescription>
-        </Alert>
+        {showVerificationOption && (
+          <Alert className="mb-6 bg-yellow-50 border-yellow-200">
+            <InfoIcon className="h-4 w-4 text-yellow-500" />
+            <AlertTitle>Account Verification Required</AlertTitle>
+            <AlertDescription className="flex flex-col gap-2">
+              <p>Your account needs to be verified before you can log in.</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="self-start"
+                onClick={handleSendVerificationOTP}
+                disabled={loading}
+              >
+                {loading ? "Sending..." : "Send verification code"}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         
         <Card>
           <CardHeader>

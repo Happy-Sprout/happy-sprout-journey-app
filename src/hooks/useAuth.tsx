@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +11,8 @@ type AuthContextType = {
   session: Session | null;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, name: string) => Promise<{ user: User | null; session: Session | null; } | undefined>;
+  verifyOtp: (email: string, token: string) => Promise<boolean>;
+  sendOtp: (email: string) => Promise<boolean>;
   logout: () => Promise<void>;
 };
 
@@ -20,6 +23,8 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loginWithEmail: async () => {},
   signUpWithEmail: async () => undefined,
+  verifyOtp: async () => false,
+  sendOtp: async () => false,
   logout: async () => {},
 });
 
@@ -85,11 +90,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmail = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
+      // Create the user without email confirmation
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin + '/login',
           data: {
             name: name
           }
@@ -106,6 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       console.log("User created successfully:", data.user.id);
       
+      // Create parent record in database
       const { error: parentError } = await supabase
         .from('parents')
         .insert([{
@@ -127,43 +133,97 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Parent record created successfully");
       }
       
-      setIsLoggedIn(!!data.session);
-      setUser(data.user);
-      setSession(data.session);
-      
-      if (data.session) {
-        toast({
-          title: "Registration successful",
-          description: "Welcome to Happy Sprout!"
-        });
-      } else {
-        toast({
-          title: "Registration successful",
-          description: "Please check your email to confirm your account."
-        });
-      }
+      // Instead of waiting for email verification, we set the session directly
+      // The user will still need to verify with OTP in the next step
+      toast({
+        title: "Registration successful",
+        description: "Please verify your account with the OTP code"
+      });
       
       return data;
     } catch (error: any) {
       console.error("Signup error:", error);
-      
-      if (error.message && error.message.includes("sending confirmation email")) {
-        toast({
-          title: "Account created",
-          description: "Your account was created but we couldn't send a confirmation email. Please proceed to login.",
-          variant: "default"
-        });
-      } else {
-        toast({
-          title: "Registration failed",
-          description: error.message || "Could not create account. Please try again.",
-          variant: "destructive"
-        });
-      }
-      
+      toast({
+        title: "Registration failed",
+        description: error.message || "Could not create account. Please try again.",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // New function to send OTP to the user's email
+  const sendOtp = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false, // Don't create a new user
+        }
+      });
+      
+      if (error) {
+        toast({
+          title: "Failed to send OTP",
+          description: error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      toast({
+        title: "OTP Sent",
+        description: "Please check your email for the verification code"
+      });
+      return true;
+    } catch (error: any) {
+      console.error("Send OTP error:", error);
+      toast({
+        title: "Failed to send OTP",
+        description: error.message || "Could not send verification code",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+  
+  // New function to verify OTP
+  const verifyOtp = async (email: string, token: string) => {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: "email"
+      });
+      
+      if (error) {
+        toast({
+          title: "Verification failed",
+          description: error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      setSession(data.session);
+      setUser(data.user);
+      setIsLoggedIn(!!data.session);
+      
+      toast({
+        title: "Verification successful",
+        description: "Your account has been verified"
+      });
+      return true;
+    } catch (error: any) {
+      console.error("OTP verification error:", error);
+      toast({
+        title: "Verification failed",
+        description: error.message || "Could not verify code",
+        variant: "destructive"
+      });
+      return false;
     }
   };
   
@@ -196,6 +256,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         loginWithEmail,
         signUpWithEmail,
+        verifyOtp,
+        sendOtp,
         logout
       }}
     >

@@ -20,6 +20,8 @@ export const useUser = () => {
     session: auth.session,
     loginWithEmail: auth.loginWithEmail,
     signUpWithEmail: auth.signUpWithEmail,
+    verifyOtp: auth.verifyOtp,
+    sendOtp: auth.sendOtp,
     logout: auth.logout,
     
     // Parent properties
