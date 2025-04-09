@@ -22,7 +22,7 @@ const Register = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signUpWithEmail, sendOtp } = useUser();
+  const { signUpWithEmail } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,18 +49,11 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      // Step 1: Create the account
-      const data = await signUpWithEmail(email, password, name);
+      // Create the account and directly log in the user
+      await signUpWithEmail(email, password, name);
       
-      if (data?.user) {
-        // Step 2: Send OTP for verification
-        await sendOtp(email);
-        
-        // Step 3: Redirect to OTP verification page
-        navigate("/verify-otp", { state: { email } });
-      } else {
-        setError("Account could not be created. Please try again.");
-      }
+      // User is now registered and logged in, redirect to dashboard
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("Signup error:", error);
       
@@ -71,8 +64,6 @@ const Register = () => {
           setTimeout(() => navigate("/login"), 3000);
         } else if (error.message.includes("rate limit")) {
           setError("Too many attempts. Please try again in a few minutes.");
-        } else if (error.message.includes("sending confirmation email")) {
-          setError("There was an issue with our email service. Please try again later.");
         } else {
           setError(error.message || "Could not create your account. Please try again.");
         }

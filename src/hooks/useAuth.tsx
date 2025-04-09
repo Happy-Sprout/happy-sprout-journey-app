@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmail = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
-      // Create the user with email confirmation disabled to use our own OTP verification
+      // Create the user with email confirmation disabled
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           data: {
             name: name
           },
-          emailRedirectTo: window.location.origin + '/login'
+          // No email redirect needed as we're not verifying emails
         }
       });
       
@@ -136,8 +136,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       toast({
         title: "Registration successful",
-        description: "Please verify your account with the OTP code"
+        description: "Your account has been created successfully!"
       });
+      
+      // Auto sign in the user
+      await loginWithEmail(email, password);
       
       return data;
     } catch (error: any) {
@@ -148,16 +151,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Function to send OTP to the user's email
+  // Function to send OTP to the user's email (kept for potential future use)
   const sendOtp = async (email: string) => {
     try {
-      // Use a small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 300));
       
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          shouldCreateUser: false, // Don't create a new user
+          shouldCreateUser: false,
         }
       });
       
@@ -186,7 +188,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Function to verify OTP
+  // Function to verify OTP (kept for potential future use)
   const verifyOtp = async (email: string, token: string) => {
     try {
       const { data, error } = await supabase.auth.verifyOtp({

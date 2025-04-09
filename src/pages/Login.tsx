@@ -9,21 +9,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, AlertTriangleIcon } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showVerificationOption, setShowVerificationOption] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { loginWithEmail, isLoggedIn, sendOtp } = useAuth();
+  const { loginWithEmail, isLoggedIn } = useAuth();
   const { checkAdminStatus } = useAdmin();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
     try {
       await loginWithEmail(email, password);
@@ -37,39 +38,7 @@ const Login = () => {
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      
-      // Check if the error might be related to verification
-      if (error.message && (
-          error.message.includes("Email not confirmed") || 
-          error.message.includes("not verified") || 
-          error.message.includes("not confirmed"))) {
-        setShowVerificationOption(true);
-      }
-      
-      setLoading(false);
-    }
-  };
-
-  const handleSendVerificationOTP = async () => {
-    if (!email) {
-      toast({
-        title: "Email Required",
-        description: "Please enter your email address first",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const success = await sendOtp(email);
-      if (success) {
-        navigate("/verify-otp", { state: { email } });
-      }
-    } catch (error) {
-      console.error("Send OTP error:", error);
-    } finally {
+      setError(error.message || "Login failed. Please check your credentials.");
       setLoading(false);
     }
   };
@@ -96,22 +65,11 @@ const Login = () => {
           </AlertDescription>
         </Alert>
         
-        {showVerificationOption && (
-          <Alert className="mb-6 bg-yellow-50 border-yellow-200">
-            <InfoIcon className="h-4 w-4 text-yellow-500" />
-            <AlertTitle>Account Verification Required</AlertTitle>
-            <AlertDescription className="flex flex-col gap-2">
-              <p>Your account needs to be verified before you can log in.</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="self-start"
-                onClick={handleSendVerificationOTP}
-                disabled={loading}
-              >
-                {loading ? "Sending..." : "Send verification code"}
-              </Button>
-            </AlertDescription>
+        {error && (
+          <Alert className="mb-6 bg-red-50 border-red-200">
+            <AlertTriangleIcon className="h-4 w-4 text-red-500" />
+            <AlertTitle>Login failed</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
         
