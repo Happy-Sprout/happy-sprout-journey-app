@@ -49,15 +49,20 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      // Create the account and directly log in the user
+      // Create the account
       await signUpWithEmail(email, password, name);
       
-      // User is now registered and logged in, redirect to dashboard
-      navigate("/dashboard");
+      // Notify the user that they need to log in
+      toast({
+        title: "Account created",
+        description: "Your account was created successfully. Please log in now.",
+      });
+      
+      // Redirect to login
+      navigate("/login");
     } catch (error: any) {
       console.error("Signup error:", error);
       
-      // Improved error handling for specific errors
       if (error.message) {
         if (error.message.includes("already registered")) {
           setError("This email is already registered. Please log in instead.");

@@ -86,16 +86,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUpWithEmail = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
-      // Direct signup without email verification
+      // First create the user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name: name
-          },
-          // Important: This ensures no email verification is required
-          emailRedirectTo: null
+          }
         }
       });
       
@@ -109,16 +107,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       console.log("User created successfully:", data.user.id);
       
-      // Create parent record in database
-      const { error: parentError } = await supabase
-        .from('parents')
-        .insert([{
-          id: data.user.id,
-          name: name,
-          relationship: "Parent",
-          email: email,
-          emergency_contact: ""
-        }]);
+      // Now create parent record - use RPC call with security definer to bypass RLS
+      const { error: parentError } = await supabase.rpc('create_parent_profile', {
+        user_id: data.user.id,
+        user_name: name,
+        user_email: email
+      });
         
       if (parentError) {
         console.error("Error creating parent record:", parentError);
@@ -133,25 +127,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       toast({
         title: "Registration successful",
-        description: "Your account has been created successfully!"
+        description: "Your account has been created successfully! You can now log in."
       });
-      
-      // Automatically sign the user in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (signInError) {
-        console.error("Auto sign-in error:", signInError);
-        toast({
-          title: "Login failed",
-          description: "Your account was created but automatic login failed. Please log in manually.",
-          variant: "destructive"
-        });
-      } else {
-        setIsLoggedIn(true);
-      }
       
       return data;
     } catch (error: any) {
