@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import DailyCheckIn from "@/pages/DailyCheckIn";
 import Journal from "@/pages/Journal";
+import SELAssessment from "@/pages/SELAssessment";
 import NotFound from "@/pages/NotFound";
 import CreateProfile from "@/pages/CreateProfile";
 import EditProfile from "@/pages/EditProfile";
@@ -42,6 +43,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/daily-check-in" element={<DailyCheckIn />} />
               <Route path="/journal" element={<Journal />} />
+              <Route path="/sel-assessment" element={<SELAssessment />} />
               <Route path="/create-profile" element={<CreateProfile />} />
               <Route path="/edit-profile/:id" element={<EditProfile />} />
               

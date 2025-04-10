@@ -17,16 +17,16 @@ const ProfileLayout = () => {
         </p>
 
         <Tabs defaultValue="children" className="space-y-6 sm:space-y-8">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="w-full grid grid-cols-2 mb-6">
             <TabsTrigger value="children">Child Profiles</TabsTrigger>
             <TabsTrigger value="parent">Parent Information</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="children" className="space-y-6">
+          <TabsContent value="children" className="space-y-6 focus-visible:outline-none focus-visible:ring-0">
             <ChildProfilesTab />
           </TabsContent>
 
-          <TabsContent value="parent">
+          <TabsContent value="parent" className="focus-visible:outline-none focus-visible:ring-0">
             <ParentInfoTab />
           </TabsContent>
         </Tabs>
