@@ -8,8 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
-import { Smile, Frown, Angry, AlertCircle, Lightbulb, Calendar, ArrowRight } from "lucide-react";
+import { Smile, Frown, Angry, AlertCircle, Lightbulb, Calendar, ArrowRight, Meh } from "lucide-react";
 import { warningToast, successToast } from "@/components/ui/toast-extensions";
+import { supabase } from "@/integrations/supabase/client";
 
 const emotionFeelingMap = {
   "happy": {
@@ -100,7 +101,7 @@ const DailyCheckIn = () => {
     if (!currentChildId) return scenarioQuestions[0];
     
     const childIdSum = currentChildId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
     
     const questionIndex = (childIdSum + dayOfYear) % scenarioQuestions.length;
     return scenarioQuestions[questionIndex];
