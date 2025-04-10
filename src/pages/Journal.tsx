@@ -6,13 +6,13 @@ import { JournalEntryForm } from "@/components/journal/JournalEntryForm";
 import { JournalHistory } from "@/components/journal/JournalHistory";
 import { DEFAULT_FILTERS } from "@/types/journal";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
-import { useToast } from "@/hooks/use-toast";
+import { successToast } from "@/components/ui/toast-extensions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 const Journal = () => {
-  const { getCurrentChild, updateChildProfile, currentChildId } = useUser();
+  const { getCurrentChild, currentChildId } = useUser();
   const currentChild = getCurrentChild();
-  const { toast } = useToast();
   
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [currentTab, setCurrentTab] = useState("new");
@@ -38,20 +38,18 @@ const Journal = () => {
 
   const handleSubmitJournalEntry = async (entry: any) => {
     if (!currentChild) {
-      toast({
+      successToast({
         title: "No child profile selected",
-        description: "Please select a child profile to continue",
-        variant: "destructive",
+        description: "Please select a child profile to continue"
       });
       return null;
     }
     
     // Check if an entry already exists for today before saving
     if (todayEntryExists) {
-      toast({
+      successToast({
         title: "Journal entry limit reached",
-        description: "You've already created a journal entry today. Come back tomorrow!",
-        variant: "destructive",
+        description: "You've already created a journal entry today. Come back tomorrow!"
       });
       return null;
     }
@@ -64,15 +62,64 @@ const Journal = () => {
     if (newEntry) {
       console.log("Journal entry saved, updating XP points");
       
-      if (currentChild && typeof currentChild.xpPoints === 'number') {
-        // Update XP points and mark the Journal Master achievement as completed
-        updateChildProfile(currentChild.id, {
-          xpPoints: currentChild.xpPoints + 15,
-          // If we had a badges field in the child profile, we would add the Journal Master badge here
-        });
-        console.log("XP points updated");
-      } else {
-        console.warn("Cannot update XP points: currentChild or xpPoints is undefined");
+      try {
+        // Log activity with XP earned
+        await supabase
+          .from('user_activity_logs')
+          .insert([{
+            user_id: currentChildId,
+            user_type: 'child',
+            action_type: 'journal_entry_completed',
+            action_details: {
+              date: new Date().toISOString(),
+              xp_earned: 15
+            }
+          }]);
+        
+        // Check if user completed both check-in and journal today for bonus XP
+        const { data: todayCheckIn } = await supabase
+          .from('user_activity_logs')
+          .select('*')
+          .eq('user_id', currentChildId)
+          .eq('action_type', 'daily_checkin_completed')
+          .gte('created_at', new Date().toISOString().split('T')[0])
+          .single();
+          
+        if (todayCheckIn) {
+          // Award bonus XP for completing both activities
+          const { data: progressData } = await supabase
+            .from('child_progress')
+            .select('xp_points')
+            .eq('child_id', currentChildId)
+            .single();
+            
+          if (progressData) {
+            await supabase
+              .from('child_progress')
+              .update({ xp_points: (progressData.xp_points || 0) + 5 })
+              .eq('child_id', currentChildId);
+              
+            // Log the bonus XP
+            await supabase
+              .from('user_activity_logs')
+              .insert([{
+                user_id: currentChildId,
+                user_type: 'child',
+                action_type: 'daily_activities_bonus',
+                action_details: {
+                  date: new Date().toISOString(),
+                  xp_earned: 5
+                }
+              }]);
+              
+            successToast({
+              title: "Daily Bonus Achieved!",
+              description: "You completed both your check-in and journal today! +5 XP bonus awarded!"
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error handling XP rewards:", error);
       }
       
       setTodayEntryExists(true);
@@ -103,7 +150,7 @@ const Journal = () => {
               <div className="sprout-card text-center py-8">
                 <h2 className="text-2xl font-bold text-sprout-purple mb-4">You've completed today's journal entry!</h2>
                 <p className="mb-6 text-lg">
-                  Great job! You can come back tomorrow to write another entry.
+                  Great job! You earned 15 XP. You can come back tomorrow to write another entry.
                 </p>
                 <button 
                   className="sprout-button"

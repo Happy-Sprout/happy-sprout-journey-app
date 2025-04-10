@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { JournalEntry } from "@/types/journal";
-import { Droplet, Clock, HeartPulse, Mic, Save } from "lucide-react";
+import { Droplet, Clock, HeartPulse, Mic, MicOff, Save, Loader2 } from "lucide-react";
+import { warningToast } from "@/components/ui/toast-extensions";
+import { useToast } from "@/hooks/use-toast";
 
 type JournalEntryFormProps = {
   onSubmit: (entry: Omit<JournalEntry, "id" | "childId" | "date" | "completed">) => Promise<JournalEntry | null>;
@@ -15,6 +16,7 @@ type JournalEntryFormProps = {
 };
 
 export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) => {
+  const { toast } = useToast();
   const [mood, setMood] = useState(5);
   const [water, setWater] = useState(4);
   const [sleep, setSleep] = useState(7);
@@ -30,7 +32,11 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
   const [challenge, setChallenge] = useState("");
   const [tomorrowPlan, setTomorrowPlan] = useState("");
   
-  const [isRecording, setIsRecording] = useState(false);
+  const [activeRecordingField, setActiveRecordingField] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
+  
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   
   const resetForm = () => {
     setMood(5);
@@ -73,36 +79,112 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
     }
   };
   
-  const toggleRecording = (field: string) => {
-    setIsRecording(!isRecording);
-    if (isRecording) {
-      setTimeout(() => {
-        const sampleResponses: Record<string, string> = {
-          wentWell: "I had a great time playing with my friends at recess today.",
-          wentBadly: "I got frustrated during math class when I couldn't solve a problem.",
-          gratitude: "I'm thankful for my family and the delicious dinner we had.",
-          challenge: "I found it hard to focus on my homework this evening.",
-          tomorrowPlan: "I want to remember to bring my library book back to school.",
-        };
-        
-        switch (field) {
-          case "wentWell":
-            setWentWell(sampleResponses.wentWell);
-            break;
-          case "wentBadly":
-            setWentBadly(sampleResponses.wentBadly);
-            break;
-          case "gratitude":
-            setGratitude(sampleResponses.gratitude);
-            break;
-          case "challenge":
-            setChallenge(sampleResponses.challenge);
-            break;
-          case "tomorrowPlan":
-            setTomorrowPlan(sampleResponses.tomorrowPlan);
-            break;
+  const startSpeechRecognition = (field: string) => {
+    if (isListening) {
+      stopSpeechRecognition();
+      return;
+    }
+    
+    setIsInitializing(true);
+    setActiveRecordingField(field);
+    
+    try {
+      // Browser support check
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        warningToast({
+          title: "Speech Recognition Not Available",
+          description: "Your browser doesn't support speech recognition."
+        });
+        setIsInitializing(false);
+        setActiveRecordingField(null);
+        return;
+      }
+      
+      // Initialize speech recognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      recognition.onstart = () => {
+        setIsListening(true);
+        setIsInitializing(false);
+        console.log("Speech recognition started");
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+        setActiveRecordingField(null);
+        console.log("Speech recognition ended");
+      };
+      
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+        warningToast({
+          title: "Speech Recognition Error",
+          description: event.error === 'not-allowed' 
+            ? "Microphone access was denied. Please allow microphone access."
+            : `Error: ${event.error}`
+        });
+        setIsListening(false);
+        setIsInitializing(false);
+        setActiveRecordingField(null);
+      };
+      
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
         }
-      }, 1000);
+        
+        console.log("Speech recognition result", transcript);
+        
+        // Update the active field with the transcribed text
+        updateFieldWithTranscript(field, transcript);
+      };
+      
+      // Start listening
+      recognition.start();
+    } catch (error) {
+      console.error("Error starting speech recognition:", error);
+      warningToast({
+        title: "Speech Recognition Error",
+        description: "Could not start speech recognition."
+      });
+      setIsListening(false);
+      setIsInitializing(false);
+      setActiveRecordingField(null);
+    }
+  };
+  
+  const stopSpeechRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+    setActiveRecordingField(null);
+  };
+  
+  const updateFieldWithTranscript = (field: string, transcript: string) => {
+    switch (field) {
+      case "wentWell":
+        setWentWell(transcript);
+        break;
+      case "wentBadly":
+        setWentBadly(transcript);
+        break;
+      case "gratitude":
+        setGratitude(transcript);
+        break;
+      case "challenge":
+        setChallenge(transcript);
+        break;
+      case "tomorrowPlan":
+        setTomorrowPlan(transcript);
+        break;
     }
   };
   
@@ -278,14 +360,22 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
                   onChange={(e) => setWentWell(e.target.value)}
                   placeholder="I'm proud of..."
                   className="min-h-24 sprout-input flex-1"
+                  maxLength={2000}
                 />
                 <Button
                   type="button"
-                  variant="outline"
-                  className="ml-2"
-                  onClick={() => toggleRecording("wentWell")}
+                  variant={activeRecordingField === "wentWell" ? "default" : "outline"}
+                  className={`ml-2 ${activeRecordingField === "wentWell" ? "bg-red-500 hover:bg-red-600" : ""}`}
+                  onClick={() => startSpeechRecognition("wentWell")}
+                  disabled={isListening && activeRecordingField !== "wentWell"}
                 >
-                  <Mic className={`h-4 w-4 ${isRecording ? "text-red-500" : ""}`} />
+                  {isInitializing && activeRecordingField === "wentWell" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isListening && activeRecordingField === "wentWell" ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -301,14 +391,22 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
                   onChange={(e) => setWentBadly(e.target.value)}
                   placeholder="I struggled with..."
                   className="min-h-24 sprout-input flex-1"
+                  maxLength={2000}
                 />
                 <Button
                   type="button"
-                  variant="outline"
-                  className="ml-2"
-                  onClick={() => toggleRecording("wentBadly")}
+                  variant={activeRecordingField === "wentBadly" ? "default" : "outline"}
+                  className={`ml-2 ${activeRecordingField === "wentBadly" ? "bg-red-500 hover:bg-red-600" : ""}`}
+                  onClick={() => startSpeechRecognition("wentBadly")}
+                  disabled={isListening && activeRecordingField !== "wentBadly"}
                 >
-                  <Mic className="h-4 w-4" />
+                  {isInitializing && activeRecordingField === "wentBadly" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isListening && activeRecordingField === "wentBadly" ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -325,14 +423,22 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
                     onChange={(e) => setGratitude(e.target.value)}
                     placeholder="I'm thankful for..."
                     className="min-h-24 sprout-input flex-1"
+                    maxLength={2000}
                   />
                   <Button
                     type="button"
-                    variant="outline"
-                    className="ml-2"
-                    onClick={() => toggleRecording("gratitude")}
+                    variant={activeRecordingField === "gratitude" ? "default" : "outline"}
+                    className={`ml-2 ${activeRecordingField === "gratitude" ? "bg-red-500 hover:bg-red-600" : ""}`}
+                    onClick={() => startSpeechRecognition("gratitude")}
+                    disabled={isListening && activeRecordingField !== "gratitude"}
                   >
-                    <Mic className="h-4 w-4" />
+                    {isInitializing && activeRecordingField === "gratitude" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isListening && activeRecordingField === "gratitude" ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -348,14 +454,22 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
                     onChange={(e) => setChallenge(e.target.value)}
                     placeholder="I found it difficult to..."
                     className="min-h-24 sprout-input flex-1"
+                    maxLength={2000}
                   />
                   <Button
                     type="button"
-                    variant="outline"
-                    className="ml-2"
-                    onClick={() => toggleRecording("challenge")}
+                    variant={activeRecordingField === "challenge" ? "default" : "outline"}
+                    className={`ml-2 ${activeRecordingField === "challenge" ? "bg-red-500 hover:bg-red-600" : ""}`}
+                    onClick={() => startSpeechRecognition("challenge")}
+                    disabled={isListening && activeRecordingField !== "challenge"}
                   >
-                    <Mic className="h-4 w-4" />
+                    {isInitializing && activeRecordingField === "challenge" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isListening && activeRecordingField === "challenge" ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -371,14 +485,22 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
                     onChange={(e) => setTomorrowPlan(e.target.value)}
                     placeholder="Tomorrow I will..."
                     className="min-h-24 sprout-input flex-1"
+                    maxLength={2000}
                   />
                   <Button
                     type="button"
-                    variant="outline"
-                    className="ml-2"
-                    onClick={() => toggleRecording("tomorrowPlan")}
+                    variant={activeRecordingField === "tomorrowPlan" ? "default" : "outline"}
+                    className={`ml-2 ${activeRecordingField === "tomorrowPlan" ? "bg-red-500 hover:bg-red-600" : ""}`}
+                    onClick={() => startSpeechRecognition("tomorrowPlan")}
+                    disabled={isListening && activeRecordingField !== "tomorrowPlan"}
                   >
-                    <Mic className="h-4 w-4" />
+                    {isInitializing && activeRecordingField === "tomorrowPlan" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isListening && activeRecordingField === "tomorrowPlan" ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -391,7 +513,7 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
         <Button variant="outline" type="button" onClick={resetForm}>
           Reset
         </Button>
-        <Button className="sprout-button" type="submit" disabled={loading}>
+        <Button className="sprout-button" type="submit" disabled={loading || isListening}>
           <Save className="mr-2 h-4 w-4" />
           {loading ? "Saving..." : "Save Journal Entry"}
         </Button>

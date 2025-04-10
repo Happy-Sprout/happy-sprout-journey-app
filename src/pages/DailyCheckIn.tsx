@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,35 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import { Smile, Frown, Angry, AlertCircle, Lightbulb, Calendar, ArrowRight } from "lucide-react";
+import { warningToast, successToast } from "@/components/ui/toast-extensions";
+
+const emotionFeelingMap = {
+  "happy": {
+    icon: <Smile size={32} className="text-sprout-green" />,
+    color: "sprout-green",
+    feelings: ["Excited", "Happy", "Proud", "Successful", "Motivated", "Inspired", "Energized", "Fulfilled", "Confident"]
+  },
+  "calm": {
+    icon: <Smile size={32} className="text-sprout-blue" />,
+    color: "sprout-blue",
+    feelings: ["Grateful", "Peaceful", "Included", "Valued", "Optimistic", "Focused", "Curious", "Creative", "Awed"]
+  },
+  "neutral": {
+    icon: <Meh size={32} className="text-gray-500" />,
+    color: "gray-500",
+    feelings: ["Okay", "Fine", "Bored", "Tired", "Indifferent", "Blank", "Numb", "Unsure", "Disconnected"]
+  },
+  "sad": {
+    icon: <Frown size={32} className="text-sprout-blue" />,
+    color: "sprout-blue",
+    feelings: ["Sad", "Worried", "Anxious", "Lonely", "Disappointed", "Embarrassed", "Hurt", "Confused", "Discouraged"]
+  },
+  "angry": {
+    icon: <Angry size={32} className="text-sprout-orange" />,
+    color: "sprout-orange",
+    feelings: ["Angry", "Frustrated", "Annoyed", "Mad", "Jealous", "Impatient", "Overwhelmed", "Resentful", "Defensive"]
+  },
+};
 
 const DailyCheckIn = () => {
   const navigate = useNavigate();
@@ -23,26 +51,62 @@ const DailyCheckIn = () => {
   const [anxiety, setAnxiety] = useState("");
   const [scenarioAnswer, setScenarioAnswer] = useState("");
   const [alreadyCompletedToday, setAlreadyCompletedToday] = useState(false);
+  const [selectedFeeling, setSelectedFeeling] = useState("");
   
   const totalSteps = 4;
 
   useEffect(() => {
-    // Check if the current child has already completed the daily check-in
+    setSelectedFeeling("");
+  }, [mood]);
+
+  useEffect(() => {
     if (currentChild?.dailyCheckInCompleted) {
       console.log("Daily check-in already completed for today");
       setAlreadyCompletedToday(true);
     }
   }, [currentChild]);
   
-  const scenarioQuestion = {
-    question: "Your friend won't let you join their game during recess. What would you do?",
-    options: [
-      { value: "ask", label: "Politely ask why you can't join" },
-      { value: "other", label: "Find another game to play" },
-      { value: "teacher", label: "Tell a teacher" },
-      { value: "upset", label: "Get upset and tell them they're being mean" },
-    ],
+  const scenarioQuestions = [
+    {
+      question: "Your friend won't let you join their game during recess. What would you do?",
+      options: [
+        { value: "ask", label: "Politely ask why you can't join" },
+        { value: "other", label: "Find another game to play" },
+        { value: "teacher", label: "Tell a teacher" },
+        { value: "upset", label: "Get upset and tell them they're being mean" },
+      ],
+    },
+    {
+      question: "Someone in your class is being teased. What would you do?",
+      options: [
+        { value: "support", label: "Go support them and be friendly" },
+        { value: "tell", label: "Tell a teacher about what you saw" },
+        { value: "ignore", label: "Stay out of it to avoid trouble" },
+        { value: "join", label: "Join in if everyone else is doing it" },
+      ],
+    },
+    {
+      question: "You accidentally broke something that belongs to someone else. What would you do?",
+      options: [
+        { value: "admit", label: "Tell them right away and offer to fix it" },
+        { value: "hide", label: "Put it back and hope they don't notice" },
+        { value: "blame", label: "Say someone else did it" },
+        { value: "avoid", label: "Avoid them so you don't have to explain" },
+      ],
+    }
+  ];
+  
+  const getScenarioQuestion = () => {
+    if (!currentChildId) return scenarioQuestions[0];
+    
+    const childIdSum = currentChildId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    
+    const questionIndex = (childIdSum + dayOfYear) % scenarioQuestions.length;
+    return scenarioQuestions[questionIndex];
   };
+  
+  const scenarioQuestion = getScenarioQuestion();
   
   const motivationalQuotes = [
     "Great job! Remember that sharing your feelings helps you grow stronger!",
@@ -58,37 +122,33 @@ const DailyCheckIn = () => {
   
   const nextStep = () => {
     if (step === 1 && !mood) {
-      toast({
+      warningToast({
         title: "Selection needed",
-        description: "Please select how you're feeling today",
-        variant: "destructive",
+        description: "Please select how you're feeling today"
       });
       return;
     }
     
     if (step === 2 && !energyLevel) {
-      toast({
+      warningToast({
         title: "Selection needed",
-        description: "Please select your energy level",
-        variant: "destructive",
+        description: "Please select your energy level"
       });
       return;
     }
     
     if (step === 3 && !anxiety) {
-      toast({
+      warningToast({
         title: "Selection needed",
-        description: "Please select your worry level",
-        variant: "destructive",
+        description: "Please select your worry level"
       });
       return;
     }
     
     if (step === 4 && !scenarioAnswer) {
-      toast({
+      warningToast({
         title: "Selection needed",
-        description: "Please select an answer to the scenario",
-        variant: "destructive",
+        description: "Please select an answer to the scenario"
       });
       return;
     }
@@ -110,19 +170,51 @@ const DailyCheckIn = () => {
     if (currentChildId) {
       markDailyCheckInComplete(currentChildId);
       
-      toast({
+      successToast({
         title: "Check-in Complete!",
-        description: "Great job sharing how you feel today!",
+        description: "Great job sharing how you feel today! You earned 10 XP!"
       });
       
       console.log({
         childId: currentChildId,
         date: new Date().toISOString().split('T')[0],
-        mood,
+        mood: selectedFeeling || mood,
         energyLevel,
         anxiety,
         scenarioAnswer,
       });
+      
+      try {
+        supabase
+          .from('user_activity_logs')
+          .insert([{
+            user_id: currentChildId,
+            user_type: 'child',
+            action_type: 'daily_checkin_completed',
+            action_details: {
+              date: new Date().toISOString(),
+              mood: selectedFeeling || mood,
+              xp_earned: 10
+            }
+          }]);
+          
+        supabase
+          .from('child_progress')
+          .select('xp_points')
+          .eq('child_id', currentChildId)
+          .single()
+          .then(({ data }) => {
+            if (data) {
+              const currentXP = data.xp_points || 0;
+              supabase
+                .from('child_progress')
+                .update({ xp_points: currentXP + 10 })
+                .eq('child_id', currentChildId);
+            }
+          });
+      } catch (error) {
+        console.error("Error logging activity:", error);
+      }
       
       setStep(totalSteps + 1);
       setAlreadyCompletedToday(true);
@@ -200,7 +292,7 @@ const DailyCheckIn = () => {
             Daily Emotion Check-In
           </h1>
           <p className="text-gray-600 mt-2">
-            Hi {currentChild.nickname}! Let's talk about how you're feeling today.
+            Hi {currentChild?.nickname}! Let's talk about how you're feeling today.
           </p>
         </div>
         
@@ -243,6 +335,38 @@ const DailyCheckIn = () => {
                   
                   <div className="flex flex-col items-center">
                     <Label 
+                      htmlFor="calm" 
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                      onClick={() => setMood("calm")}
+                    >
+                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
+                        mood === "calm" ? "bg-sprout-blue/20 border-2 border-sprout-blue" : "bg-gray-100 hover:bg-gray-200"
+                      }`}>
+                        <Smile size={32} className="text-sprout-blue" />
+                      </div>
+                      <span>Calm</span>
+                    </Label>
+                    <RadioGroupItem value="calm" id="calm" className="sr-only" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center">
+                    <Label 
+                      htmlFor="neutral" 
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                      onClick={() => setMood("neutral")}
+                    >
+                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
+                        mood === "neutral" ? "bg-gray-400/20 border-2 border-gray-400" : "bg-gray-100 hover:bg-gray-200"
+                      }`}>
+                        <Meh size={32} className="text-gray-500" />
+                      </div>
+                      <span>Neutral</span>
+                    </Label>
+                    <RadioGroupItem value="neutral" id="neutral" className="sr-only" />
+                  </div>
+                  
+                  <div className="flex flex-col items-center">
+                    <Label 
                       htmlFor="sad" 
                       className="cursor-pointer flex flex-col items-center gap-2"
                       onClick={() => setMood("sad")}
@@ -272,39 +396,29 @@ const DailyCheckIn = () => {
                     </Label>
                     <RadioGroupItem value="angry" id="angry" className="sr-only" />
                   </div>
-                  
-                  <div className="flex flex-col items-center">
-                    <Label 
-                      htmlFor="worried" 
-                      className="cursor-pointer flex flex-col items-center gap-2"
-                      onClick={() => setMood("worried")}
-                    >
-                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
-                        mood === "worried" ? "bg-sprout-yellow/20 border-2 border-sprout-yellow" : "bg-gray-100 hover:bg-gray-200"
-                      }`}>
-                        <AlertCircle size={32} className="text-sprout-yellow" />
-                      </div>
-                      <span>Worried</span>
-                    </Label>
-                    <RadioGroupItem value="worried" id="worried" className="sr-only" />
-                  </div>
-                  
-                  <div className="flex flex-col items-center">
-                    <Label 
-                      htmlFor="surprised" 
-                      className="cursor-pointer flex flex-col items-center gap-2"
-                      onClick={() => setMood("surprised")}
-                    >
-                      <div className={`w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-colors ${
-                        mood === "surprised" ? "bg-sprout-purple/20 border-2 border-sprout-purple" : "bg-gray-100 hover:bg-gray-200"
-                      }`}>
-                        <Lightbulb size={32} className="text-sprout-purple" />
-                      </div>
-                      <span>Surprised</span>
-                    </Label>
-                    <RadioGroupItem value="surprised" id="surprised" className="sr-only" />
-                  </div>
                 </RadioGroup>
+                
+                {mood && (
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg animate-fade-in">
+                    <h3 className="text-lg font-medium mb-3">How would you describe your {mood} feeling?</h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {emotionFeelingMap[mood]?.feelings.map((feeling) => (
+                        <button
+                          key={feeling}
+                          type="button"
+                          className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                            selectedFeeling === feeling
+                              ? `bg-${emotionFeelingMap[mood].color}/20 border border-${emotionFeelingMap[mood].color} text-${emotionFeelingMap[mood].color}`
+                              : "bg-white border border-gray-200 hover:bg-gray-100"
+                          }`}
+                          onClick={() => setSelectedFeeling(feeling)}
+                        >
+                          {feeling}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             

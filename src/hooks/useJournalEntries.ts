@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { successToast, warningToast } from "@/components/ui/toast-extensions";
 import { JournalEntry, DBJournalEntry } from "@/types/journal";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 export const useJournalEntries = (childId: string | undefined) => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (childId) {
@@ -29,10 +29,9 @@ export const useJournalEntries = (childId: string | undefined) => {
         
       if (error) {
         console.error("Error fetching journal entries:", error);
-        toast({
+        warningToast({
           title: "Error",
-          description: "Could not fetch journal entries. Please try again.",
-          variant: "destructive"
+          description: "Could not fetch journal entries. Please try again."
         });
         return;
       }
@@ -66,10 +65,9 @@ export const useJournalEntries = (childId: string | undefined) => {
       }
     } catch (error) {
       console.error("Error in fetchJournalEntries:", error);
-      toast({
+      warningToast({
         title: "Error",
-        description: "Failed to fetch journal entries. Please try again.",
-        variant: "destructive"
+        description: "Failed to fetch journal entries. Please try again."
       });
     }
   };
@@ -128,10 +126,9 @@ export const useJournalEntries = (childId: string | undefined) => {
 
   const saveJournalEntry = async (entry: Omit<JournalEntry, "id" | "childId" | "date" | "completed">) => {
     if (!childId) {
-      toast({
+      warningToast({
         title: "No child profile selected",
-        description: "Please select a child profile to continue",
-        variant: "destructive",
+        description: "Please select a child profile to continue"
       });
       return null;
     }
@@ -178,10 +175,9 @@ export const useJournalEntries = (childId: string | undefined) => {
           
         if (result.error) {
           console.error("Error updating journal entry:", result.error);
-          toast({
+          warningToast({
             title: "Error",
-            description: "Could not update your journal entry. Please try again.",
-            variant: "destructive"
+            description: "Could not update your journal entry. Please try again."
           });
           setLoading(false);
           return null;
@@ -216,7 +212,7 @@ export const useJournalEntries = (childId: string | undefined) => {
           return [updatedEntry, ...filtered];
         });
         
-        toast({
+        successToast({
           title: "Journal Entry Updated!",
           description: "Your journal entry for today has been updated.",
         });
@@ -232,10 +228,9 @@ export const useJournalEntries = (childId: string | undefined) => {
           
         if (result.error) {
           console.error("Error saving journal entry:", result.error);
-          toast({
+          warningToast({
             title: "Error",
-            description: "Could not save your journal entry. Please try again.",
-            variant: "destructive"
+            description: "Could not save your journal entry. Please try again."
           });
           setLoading(false);
           return null;
@@ -282,19 +277,6 @@ export const useJournalEntries = (childId: string | undefined) => {
                 .eq('child_id', childId);
                 
               console.log(`Awarded 15 XP for journal entry. New total: ${newXP}`);
-              
-              // Log activity
-              await supabase
-                .from('user_activity_logs')
-                .insert([{
-                  user_id: childId,
-                  user_type: 'child',
-                  action_type: 'journal_entry_completed',
-                  action_details: {
-                    date: new Date().toISOString(),
-                    xp_earned: 15
-                  }
-                }]);
             }
           } catch (xpError) {
             console.error("Error awarding XP:", xpError);
@@ -302,7 +284,7 @@ export const useJournalEntries = (childId: string | undefined) => {
           }
           
           setJournalEntries(prevEntries => [newEntry, ...prevEntries]);
-          toast({
+          successToast({
             title: "Journal Entry Saved!",
             description: "Great job on completing your journal entry today. You earned 15 XP!",
           });
@@ -314,10 +296,9 @@ export const useJournalEntries = (childId: string | undefined) => {
       return null;
     } catch (error) {
       console.error("Error in saveJournalEntry:", error);
-      toast({
+      warningToast({
         title: "Error",
-        description: "Failed to save your journal entry. Please try again.",
-        variant: "destructive"
+        description: "Failed to save your journal entry. Please try again."
       });
       return null;
     } finally {
