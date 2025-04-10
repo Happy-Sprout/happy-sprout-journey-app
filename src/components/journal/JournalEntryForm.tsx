@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -101,8 +102,8 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
       }
       
       // Initialize speech recognition
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognitionAPI();
       recognitionRef.current = recognition;
       
       recognition.continuous = true;
@@ -121,7 +122,7 @@ export const JournalEntryForm = ({ onSubmit, loading }: JournalEntryFormProps) =
         console.log("Speech recognition ended");
       };
       
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error("Speech recognition error", event.error);
         warningToast({
           title: "Speech Recognition Error",
