@@ -23,6 +23,7 @@ import JournalMonitoring from "@/pages/admin/JournalMonitoring";
 import AssessmentManagement from "@/pages/admin/AssessmentManagement";
 import GamificationManagement from "@/pages/admin/GamificationManagement";
 import NotificationsManagement from "@/pages/admin/NotificationsManagement";
+import SettingsManagement from "@/pages/admin/SettingsManagement";
 
 import "./App.css";
 
@@ -52,10 +53,11 @@ function App() {
               <Route path="/admin/users" element={<UserManagement />} />
               <Route path="/admin/content" element={<ContentManagement />} />
               <Route path="/admin/reports" element={<ReportingAnalytics />} />
-              <Route path="/admin/journal" element={<JournalMonitoring />} />
+              <Route path="/admin/journal-monitoring" element={<JournalMonitoring />} />
               <Route path="/admin/assessments" element={<AssessmentManagement />} />
               <Route path="/admin/gamification" element={<GamificationManagement />} />
               <Route path="/admin/notifications" element={<NotificationsManagement />} />
+              <Route path="/admin/settings" element={<SettingsManagement />} />
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />

@@ -23,21 +23,40 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
 
   const checkAdminStatus = async (): Promise<boolean> => {
-    if (!user) return false;
+    if (!user) {
+      setIsAdmin(false);
+      setLoading(false);
+      return false;
+    }
     
     try {
-      // Use "is_admin" function instead of "is_admin_user" to match Supabase's available RPC functions
+      console.log("Checking admin status for user:", user.id);
+      
+      // Call the is_admin RPC function to check admin status
       const { data, error } = await supabase.rpc('is_admin');
       
       if (error) {
         console.error("Error checking admin status:", error);
+        toast({
+          title: "Error",
+          description: "Could not verify administrator status",
+          variant: "destructive",
+        });
+        setIsAdmin(false);
         return false;
       }
       
+      console.log("Admin status check result:", data);
       setIsAdmin(!!data);
       return !!data;
     } catch (error) {
-      console.error("Error in checkAdminStatus:", error);
+      console.error("Exception in checkAdminStatus:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+      setIsAdmin(false);
       return false;
     } finally {
       setLoading(false);

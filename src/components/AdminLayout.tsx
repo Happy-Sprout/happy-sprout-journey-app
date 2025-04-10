@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import AdminProtectedRoute from "./AdminProtectedRoute";
 
 const menuItems = [
   { name: "Dashboard", path: "/admin", icon: <Home className="h-5 w-5" /> },
@@ -34,7 +35,7 @@ const menuItems = [
   { name: "Settings", path: "/admin/settings", icon: <Settings className="h-5 w-5" /> },
 ];
 
-const AdminLayout = ({ children }: { children: ReactNode }) => {
+const AdminLayoutContent = ({ children }: { children: ReactNode }) => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,6 +55,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
       )}
+      onClick={() => setIsMobileMenuOpen(false)}
     >
       {item.icon}
       <span>{item.name}</span>
@@ -128,6 +130,14 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         </main>
       </div>
     </div>
+  );
+};
+
+const AdminLayout = ({ children }: { children: ReactNode }) => {
+  return (
+    <AdminProtectedRoute>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AdminProtectedRoute>
   );
 };
 
