@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -88,14 +88,15 @@ const SettingsManagement = () => {
   const onGeneralSubmit = async (data: GeneralFormValues) => {
     setIsLoading(true);
     try {
-      // In a real application, this would save to the database
-      console.log("General settings submitted:", data);
+      // Fixed: Using admin_settings table instead of app_settings
+      // Fixed: Using the proper structure for inserting data
       const { error } = await supabase
-        .from('app_settings')
+        .from('admin_settings')
         .upsert([
           {
-            category: 'general',
-            settings: data
+            setting_key: 'general',
+            setting_value: data,
+            description: 'General application settings'
           }
         ]);
       
@@ -120,13 +121,15 @@ const SettingsManagement = () => {
   const onSecuritySubmit = async (data: SecurityFormValues) => {
     setIsLoading(true);
     try {
-      console.log("Security settings submitted:", data);
+      // Fixed: Using admin_settings table instead of app_settings
+      // Fixed: Using the proper structure for inserting data
       const { error } = await supabase
-        .from('app_settings')
+        .from('admin_settings')
         .upsert([
           {
-            category: 'security',
-            settings: data
+            setting_key: 'security',
+            setting_value: data,
+            description: 'Security settings'
           }
         ]);
       
@@ -151,13 +154,15 @@ const SettingsManagement = () => {
   const onNotificationSubmit = async (data: NotificationFormValues) => {
     setIsLoading(true);
     try {
-      console.log("Notification settings submitted:", data);
+      // Fixed: Using admin_settings table instead of app_settings
+      // Fixed: Using the proper structure for inserting data
       const { error } = await supabase
-        .from('app_settings')
+        .from('admin_settings')
         .upsert([
           {
-            category: 'notification',
-            settings: data
+            setting_key: 'notification',
+            setting_value: data,
+            description: 'Notification settings'
           }
         ]);
       
@@ -178,6 +183,50 @@ const SettingsManagement = () => {
       setIsLoading(false);
     }
   };
+
+  // Load existing settings from the database
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        // General settings
+        const { data: generalData, error: generalError } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'general')
+          .single();
+        
+        if (generalData && !generalError) {
+          generalForm.reset(generalData.setting_value);
+        }
+        
+        // Security settings
+        const { data: securityData, error: securityError } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'security')
+          .single();
+        
+        if (securityData && !securityError) {
+          securityForm.reset(securityData.setting_value);
+        }
+        
+        // Notification settings
+        const { data: notificationData, error: notificationError } = await supabase
+          .from('admin_settings')
+          .select('setting_value')
+          .eq('setting_key', 'notification')
+          .single();
+        
+        if (notificationData && !notificationError) {
+          notificationForm.reset(notificationData.setting_value);
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      }
+    };
+    
+    loadSettings();
+  }, []);
 
   return (
     <AdminLayout>

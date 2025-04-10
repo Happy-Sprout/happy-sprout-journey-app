@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Search, UserPlus, Trash2, Edit, Eye } from "lucide-react";
 import { format } from "date-fns";
+import { crypto } from "crypto";
 
 type Parent = {
   id: string;
@@ -98,7 +98,6 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch parents
       const { data: parentsData, error: parentsError } = await supabase
         .from('parents')
         .select('*')
@@ -106,7 +105,6 @@ const UserManagement = () => {
         
       if (parentsError) throw parentsError;
       
-      // Fetch children
       const { data: childrenData, error: childrenError } = await supabase
         .from('children')
         .select('*, parents(name)')
@@ -114,20 +112,17 @@ const UserManagement = () => {
         
       if (childrenError) throw childrenError;
       
-      // Count children per parent
       const childCounts: Record<string, number> = {};
       childrenData?.forEach(child => {
         const parentId = child.parent_id;
         childCounts[parentId] = (childCounts[parentId] || 0) + 1;
       });
       
-      // Format parent data with child count
       const formattedParents = parentsData?.map(parent => ({
         ...parent,
         childCount: childCounts[parent.id] || 0
       })) || [];
       
-      // Format children data with parent name
       const formattedChildren = childrenData?.map(child => ({
         ...child,
         parent_name: child.parents?.name
@@ -155,7 +150,6 @@ const UserManagement = () => {
       let error;
       
       if (type === 'parent') {
-        // Delete parent (cascade will delete children)
         const result = await supabase
           .from('parents')
           .delete()
@@ -163,7 +157,6 @@ const UserManagement = () => {
           
         error = result.error;
       } else {
-        // Delete child
         const result = await supabase
           .from('children')
           .delete()
@@ -266,10 +259,13 @@ const UserManagement = () => {
         throw new Error("Name and email are required");
       }
       
+      const newId = crypto.randomUUID();
+      
       const { data, error } = await supabase
         .from('parents')
         .insert([
           {
+            id: newId,
             name: newParentForm.name,
             email: newParentForm.email,
             relationship: newParentForm.relationship || 'Parent',
@@ -544,7 +540,6 @@ const UserManagement = () => {
           </TabsContent>
         </Tabs>
         
-        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -567,7 +562,6 @@ const UserManagement = () => {
           </DialogContent>
         </Dialog>
         
-        {/* View Details Dialog */}
         <Dialog open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -654,7 +648,6 @@ const UserManagement = () => {
           </DialogContent>
         </Dialog>
         
-        {/* Edit Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -776,7 +769,6 @@ const UserManagement = () => {
           </DialogContent>
         </Dialog>
         
-        {/* Add User Dialog */}
         <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
