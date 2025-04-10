@@ -88,8 +88,6 @@ const SettingsManagement = () => {
   const onGeneralSubmit = async (data: GeneralFormValues) => {
     setIsLoading(true);
     try {
-      // Fixed: Using admin_settings table instead of app_settings
-      // Fixed: Using the proper structure for inserting data
       const { error } = await supabase
         .from('admin_settings')
         .upsert([
@@ -121,8 +119,6 @@ const SettingsManagement = () => {
   const onSecuritySubmit = async (data: SecurityFormValues) => {
     setIsLoading(true);
     try {
-      // Fixed: Using admin_settings table instead of app_settings
-      // Fixed: Using the proper structure for inserting data
       const { error } = await supabase
         .from('admin_settings')
         .upsert([
@@ -154,8 +150,6 @@ const SettingsManagement = () => {
   const onNotificationSubmit = async (data: NotificationFormValues) => {
     setIsLoading(true);
     try {
-      // Fixed: Using admin_settings table instead of app_settings
-      // Fixed: Using the proper structure for inserting data
       const { error } = await supabase
         .from('admin_settings')
         .upsert([
@@ -196,7 +190,9 @@ const SettingsManagement = () => {
           .single();
         
         if (generalData && !generalError) {
-          generalForm.reset(generalData.setting_value);
+          // Parse the jsonb value returned from Supabase
+          const settingsValue = generalData.setting_value as GeneralFormValues;
+          generalForm.reset(settingsValue);
         }
         
         // Security settings
@@ -207,7 +203,9 @@ const SettingsManagement = () => {
           .single();
         
         if (securityData && !securityError) {
-          securityForm.reset(securityData.setting_value);
+          // Parse the jsonb value returned from Supabase
+          const settingsValue = securityData.setting_value as SecurityFormValues;
+          securityForm.reset(settingsValue);
         }
         
         // Notification settings
@@ -218,7 +216,9 @@ const SettingsManagement = () => {
           .single();
         
         if (notificationData && !notificationError) {
-          notificationForm.reset(notificationData.setting_value);
+          // Parse the jsonb value returned from Supabase
+          const settingsValue = notificationData.setting_value as NotificationFormValues;
+          notificationForm.reset(settingsValue);
         }
       } catch (error) {
         console.error("Error loading settings:", error);

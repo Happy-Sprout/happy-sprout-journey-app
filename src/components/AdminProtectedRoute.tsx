@@ -11,14 +11,14 @@ interface AdminProtectedRouteProps {
 
 const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const { isAdmin, loading, checkAdminStatus } = useAdmin();
-  const { user, loading: authLoading } = useAuth(); // Fixed: changed 'isLoading' to 'loading'
+  const { user, loading: authLoading } = useAuth(); // Using 'loading' instead of 'isLoading'
   const location = useLocation();
 
   useEffect(() => {
     if (user && !isAdmin && !loading) {
       checkAdminStatus();
     }
-  }, [user, isAdmin, loading]);
+  }, [user, isAdmin, loading, checkAdminStatus]);
 
   // Show loading state while checking authentication and admin status
   if (authLoading || loading) {

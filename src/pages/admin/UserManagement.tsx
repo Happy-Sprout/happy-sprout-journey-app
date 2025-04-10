@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from "uuid";
 import { 
   Table, 
   TableBody, 
@@ -45,7 +46,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Search, UserPlus, Trash2, Edit, Eye } from "lucide-react";
 import { format } from "date-fns";
-import { crypto } from "crypto";
 
 type Parent = {
   id: string;
@@ -259,7 +259,7 @@ const UserManagement = () => {
         throw new Error("Name and email are required");
       }
       
-      const newId = crypto.randomUUID();
+      const newId = uuidv4();
       
       const { data, error } = await supabase
         .from('parents')
