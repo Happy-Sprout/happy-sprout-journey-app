@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { 
@@ -33,7 +33,7 @@ const menuItems = [
   { name: "Settings", path: "/admin/settings", icon: <Settings className="h-5 w-5" /> },
 ];
 
-const AdminLayout = ({ children }: { children: ReactNode }) => {
+const AdminLayout = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -124,7 +124,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
 
         {/* Main content */}
         <main className="flex-1 p-6 overflow-auto bg-slate-50">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

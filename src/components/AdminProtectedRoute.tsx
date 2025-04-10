@@ -15,7 +15,7 @@ const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Only check admin status once when component mounts or when user changes
+    // Only check admin status if we have a user and don't already know they're an admin
     if (user && !isAdmin && !adminLoading) {
       checkAdminStatus();
     }

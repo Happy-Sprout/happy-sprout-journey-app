@@ -50,70 +50,22 @@ function App() {
               <Route path="/create-profile" element={<CreateProfile />} />
               <Route path="/edit-profile/:id" element={<EditProfile />} />
               
-              {/* Admin routes - simplified structure */}
+              {/* Admin routes - properly nested structure */}
               <Route path="/admin" element={
                 <AdminProtectedRoute>
-                  <AdminLayout>
-                    <AdminDashboard />
-                  </AdminLayout>
+                  <AdminLayout />
                 </AdminProtectedRoute>
-              } />
-              <Route path="/admin/users" element={
-                <AdminProtectedRoute>
-                  <AdminLayout>
-                    <UserManagement />
-                  </AdminLayout>
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/content" element={
-                <AdminProtectedRoute>
-                  <AdminLayout>
-                    <ContentManagement />
-                  </AdminLayout>
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/reports" element={
-                <AdminProtectedRoute>
-                  <AdminLayout>
-                    <ReportingAnalytics />
-                  </AdminLayout>
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/journal-monitoring" element={
-                <AdminProtectedRoute>
-                  <AdminLayout>
-                    <JournalMonitoring />
-                  </AdminLayout>
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/assessments" element={
-                <AdminProtectedRoute>
-                  <AdminLayout>
-                    <AssessmentManagement />
-                  </AdminLayout>
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/gamification" element={
-                <AdminProtectedRoute>
-                  <AdminLayout>
-                    <GamificationManagement />
-                  </AdminLayout>
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/notifications" element={
-                <AdminProtectedRoute>
-                  <AdminLayout>
-                    <NotificationsManagement />
-                  </AdminLayout>
-                </AdminProtectedRoute>
-              } />
-              <Route path="/admin/settings" element={
-                <AdminProtectedRoute>
-                  <AdminLayout>
-                    <SettingsManagement />
-                  </AdminLayout>
-                </AdminProtectedRoute>
-              } />
+              }>
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<UserManagement />} />
+                <Route path="content" element={<ContentManagement />} />
+                <Route path="reports" element={<ReportingAnalytics />} />
+                <Route path="journal-monitoring" element={<JournalMonitoring />} />
+                <Route path="assessments" element={<AssessmentManagement />} />
+                <Route path="gamification" element={<GamificationManagement />} />
+                <Route path="notifications" element={<NotificationsManagement />} />
+                <Route path="settings" element={<SettingsManagement />} />
+              </Route>
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />
