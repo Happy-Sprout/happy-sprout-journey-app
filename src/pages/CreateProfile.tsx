@@ -194,7 +194,7 @@ const CreateProfile = () => {
         toast({
           title: "Age and grade mismatch",
           description: "The selected age doesn't match the typical age for this grade level.",
-          variant: "warning",
+          variant: "default", // Changed from "warning" to "default"
         });
         // Continue anyway - this is just a warning
       }

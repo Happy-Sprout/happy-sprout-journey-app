@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -29,12 +28,10 @@ const EditProfile = () => {
   const { toast } = useToast();
   const { childProfiles, updateChildProfile, calculateAgeFromDOB } = useUser();
   
-  // Find the profile to edit
   const profile = childProfiles.find(p => p.id === id);
   
-  // Form state
   const [nickname, setNickname] = useState("");
-  const [age, setAge] = useState<number | null>(null); // Keep for internal use only
+  const [age, setAge] = useState<number | null>(null);
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [grade, setGrade] = useState("");
@@ -47,7 +44,6 @@ const EditProfile = () => {
   const [otherInterests, setOtherInterests] = useState("");
   const [showOtherInterests, setShowOtherInterests] = useState(false);
   
-  // Load profile data when component mounts
   useEffect(() => {
     if (profile) {
       setNickname(profile.nickname);
@@ -59,7 +55,6 @@ const EditProfile = () => {
       setSelectedLearningStyles(profile.learningStyles || []);
       setSelectedSELStrengths(profile.selStrengths || []);
       
-      // Handle standard and custom interests
       const standardInterestOptions = ["art", "music", "sports", "reading", "videogames", "science", "cooking"];
       const standardInterests = profile.interests.filter(i => standardInterestOptions.includes(i));
       const customInterests = profile.interests.filter(i => !standardInterestOptions.includes(i));
@@ -74,7 +69,6 @@ const EditProfile = () => {
       setSelectedStoryPreferences(profile.storyPreferences);
       setSelectedChallenges(profile.selChallenges);
     } else {
-      // If profile not found, redirect to profiles page
       toast({
         title: "Profile not found",
         description: "The profile you're trying to edit doesn't exist.",
@@ -84,7 +78,6 @@ const EditProfile = () => {
     }
   }, [profile, navigate, toast]);
   
-  // Update age when date of birth changes (internal calculation only)
   useEffect(() => {
     if (dateOfBirth) {
       const calculatedAge = calculateAgeFromDOB(dateOfBirth);
@@ -92,7 +85,6 @@ const EditProfile = () => {
     }
   }, [dateOfBirth, calculateAgeFromDOB]);
   
-  // Toggle handlers for multi-select options
   const toggleLearningStyle = (value: string) => {
     setSelectedLearningStyles(prev => 
       prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
@@ -108,10 +100,8 @@ const EditProfile = () => {
   const toggleInterest = (value: string) => {
     if (value === "other") {
       setShowOtherInterests(!showOtherInterests);
-      // If removing "other", also clear the otherInterests
       if (selectedInterests.includes("other")) {
         const parsedInterests = parseOtherInterests();
-        // Remove custom interests
         setSelectedInterests(prev => 
           prev.filter(i => i !== "other" && !parsedInterests.includes(i))
         );
@@ -138,7 +128,6 @@ const EditProfile = () => {
     );
   };
   
-  // Parse other interests from comma-separated text
   const parseOtherInterests = () => {
     if (!otherInterests) return [];
     return otherInterests.split(',')
@@ -146,7 +135,6 @@ const EditProfile = () => {
       .filter(item => item.length > 0);
   };
   
-  // Options for interests and stories
   const interestOptions = [
     { value: "art", label: "Art", icon: "🎨" },
     { value: "music", label: "Music", icon: "🎵" },
@@ -176,11 +164,9 @@ const EditProfile = () => {
     { value: "peerpressure", label: "Dealing with peer pressure and conflicts" },
   ];
   
-  // Age and grade validation
   const validateAgeAndGrade = () => {
-    if (!age || !grade) return true; // Skip validation if not both set
+    if (!age || !grade) return true;
     
-    // Simple validation examples - can be adjusted based on educational system
     const validCombinations: Record<string, number[]> = {
       'preschool': [3, 4, 5],
       'kindergarten': [5, 6],
@@ -199,13 +185,11 @@ const EditProfile = () => {
     return validCombinations[grade]?.includes(age) || false;
   };
   
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!id) return;
     
-    // Validate form
     if (!nickname || !dateOfBirth || !grade) {
       toast({
         title: "Missing information",
@@ -242,25 +226,21 @@ const EditProfile = () => {
       return;
     }
     
-    // Validate age and grade match
     if (!validateAgeAndGrade()) {
       toast({
         title: "Age and grade mismatch",
         description: "The selected age doesn't match the typical age for this grade level.",
-        variant: "warning",
+        variant: "default",
       });
-      // Continue anyway - this is just a warning
+      return;
     }
     
-    // Combine standard interests with custom "other" interests
     let allInterests = [...selectedInterests];
     if (showOtherInterests) {
-      // Remove the "other" placeholder and add individual items
       allInterests = allInterests.filter(i => i !== "other");
       allInterests = [...allInterests, ...parseOtherInterests()];
     }
     
-    // Update profile
     updateChildProfile(id, {
       nickname,
       age: age || 0,
