@@ -264,10 +264,47 @@ export const useJournalEntries = (childId: string | undefined) => {
             completed: true,
           };
           
+          // Award XP for completing a journal entry (15 XP as per requirements)
+          try {
+            const { data: childData } = await supabase
+              .from('child_progress')
+              .select('xp_points')
+              .eq('child_id', childId)
+              .single();
+              
+            if (childData) {
+              const currentXP = childData.xp_points || 0;
+              const newXP = currentXP + 15; // Award 15 XP for journal entry
+              
+              await supabase
+                .from('child_progress')
+                .update({ xp_points: newXP })
+                .eq('child_id', childId);
+                
+              console.log(`Awarded 15 XP for journal entry. New total: ${newXP}`);
+              
+              // Log activity
+              await supabase
+                .from('user_activity_logs')
+                .insert([{
+                  user_id: childId,
+                  user_type: 'child',
+                  action_type: 'journal_entry_completed',
+                  action_details: {
+                    date: new Date().toISOString(),
+                    xp_earned: 15
+                  }
+                }]);
+            }
+          } catch (xpError) {
+            console.error("Error awarding XP:", xpError);
+            // Continue even if XP award fails
+          }
+          
           setJournalEntries(prevEntries => [newEntry, ...prevEntries]);
           toast({
             title: "Journal Entry Saved!",
-            description: "Great job on completing your journal entry today.",
+            description: "Great job on completing your journal entry today. You earned 15 XP!",
           });
           
           return newEntry;

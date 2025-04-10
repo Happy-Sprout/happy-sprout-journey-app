@@ -34,7 +34,7 @@ const EditProfile = () => {
   
   // Form state
   const [nickname, setNickname] = useState("");
-  const [age, setAge] = useState<number | null>(null);
+  const [age, setAge] = useState<number | null>(null); // Keep for internal use only
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [grade, setGrade] = useState("");
@@ -44,6 +44,8 @@ const EditProfile = () => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedStoryPreferences, setSelectedStoryPreferences] = useState<string[]>([]);
   const [selectedChallenges, setSelectedChallenges] = useState<string[]>([]);
+  const [otherInterests, setOtherInterests] = useState("");
+  const [showOtherInterests, setShowOtherInterests] = useState(false);
   
   // Load profile data when component mounts
   useEffect(() => {
@@ -56,7 +58,19 @@ const EditProfile = () => {
       setSelectedAvatar(profile.avatar || "avatar1");
       setSelectedLearningStyles(profile.learningStyles || []);
       setSelectedSELStrengths(profile.selStrengths || []);
-      setSelectedInterests(profile.interests);
+      
+      // Handle standard and custom interests
+      const standardInterestOptions = ["art", "music", "sports", "reading", "videogames", "science", "cooking"];
+      const standardInterests = profile.interests.filter(i => standardInterestOptions.includes(i));
+      const customInterests = profile.interests.filter(i => !standardInterestOptions.includes(i));
+      
+      setSelectedInterests(standardInterests);
+      if (customInterests.length > 0) {
+        setSelectedInterests(prev => [...prev, "other"]);
+        setOtherInterests(customInterests.join(", "));
+        setShowOtherInterests(true);
+      }
+      
       setSelectedStoryPreferences(profile.storyPreferences);
       setSelectedChallenges(profile.selChallenges);
     } else {
@@ -70,7 +84,7 @@ const EditProfile = () => {
     }
   }, [profile, navigate, toast]);
   
-  // Update age when date of birth changes
+  // Update age when date of birth changes (internal calculation only)
   useEffect(() => {
     if (dateOfBirth) {
       const calculatedAge = calculateAgeFromDOB(dateOfBirth);
@@ -92,9 +106,24 @@ const EditProfile = () => {
   };
   
   const toggleInterest = (value: string) => {
-    setSelectedInterests(prev => 
-      prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
-    );
+    if (value === "other") {
+      setShowOtherInterests(!showOtherInterests);
+      // If removing "other", also clear the otherInterests
+      if (selectedInterests.includes("other")) {
+        const parsedInterests = parseOtherInterests();
+        // Remove custom interests
+        setSelectedInterests(prev => 
+          prev.filter(i => i !== "other" && !parsedInterests.includes(i))
+        );
+        setOtherInterests("");
+      } else {
+        setSelectedInterests(prev => [...prev, "other"]);
+      }
+    } else {
+      setSelectedInterests(prev => 
+        prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
+      );
+    }
   };
   
   const toggleStoryPreference = (value: string) => {
@@ -109,6 +138,14 @@ const EditProfile = () => {
     );
   };
   
+  // Parse other interests from comma-separated text
+  const parseOtherInterests = () => {
+    if (!otherInterests) return [];
+    return otherInterests.split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+  };
+  
   // Options for interests and stories
   const interestOptions = [
     { value: "art", label: "Art", icon: "🎨" },
@@ -118,6 +155,7 @@ const EditProfile = () => {
     { value: "videogames", label: "Video Games", icon: "🎮" },
     { value: "science", label: "Science", icon: "🔬" },
     { value: "cooking", label: "Cooking", icon: "🍳" },
+    { value: "other", label: "Other", icon: "➕" },
   ];
   
   const storyOptions = [
@@ -137,6 +175,29 @@ const EditProfile = () => {
     { value: "speaking", label: "Speaking up and sharing ideas" },
     { value: "peerpressure", label: "Dealing with peer pressure and conflicts" },
   ];
+  
+  // Age and grade validation
+  const validateAgeAndGrade = () => {
+    if (!age || !grade) return true; // Skip validation if not both set
+    
+    // Simple validation examples - can be adjusted based on educational system
+    const validCombinations: Record<string, number[]> = {
+      'preschool': [3, 4, 5],
+      'kindergarten': [5, 6],
+      'grade1': [6, 7],
+      'grade2': [7, 8],
+      'grade3': [8, 9],
+      'grade4': [9, 10],
+      'grade5': [10, 11],
+      'grade6': [11, 12],
+      'grade7': [12, 13],
+      'grade8': [13, 14],
+      'middle': [11, 12, 13, 14],
+      'high': [14, 15, 16, 17, 18]
+    };
+    
+    return validCombinations[grade]?.includes(age) || false;
+  };
   
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
@@ -181,6 +242,24 @@ const EditProfile = () => {
       return;
     }
     
+    // Validate age and grade match
+    if (!validateAgeAndGrade()) {
+      toast({
+        title: "Age and grade mismatch",
+        description: "The selected age doesn't match the typical age for this grade level.",
+        variant: "warning",
+      });
+      // Continue anyway - this is just a warning
+    }
+    
+    // Combine standard interests with custom "other" interests
+    let allInterests = [...selectedInterests];
+    if (showOtherInterests) {
+      // Remove the "other" placeholder and add individual items
+      allInterests = allInterests.filter(i => i !== "other");
+      allInterests = [...allInterests, ...parseOtherInterests()];
+    }
+    
     // Update profile
     updateChildProfile(id, {
       nickname,
@@ -191,7 +270,7 @@ const EditProfile = () => {
       avatar: selectedAvatar,
       learningStyles: selectedLearningStyles,
       selStrengths: selectedSELStrengths,
-      interests: selectedInterests,
+      interests: allInterests,
       storyPreferences: selectedStoryPreferences,
       selChallenges: selectedChallenges,
       creationStatus: 'completed',
@@ -239,29 +318,16 @@ const EditProfile = () => {
                   onChange={setSelectedAvatar} 
                 />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="dob"
-                      type="date"
-                      value={dateOfBirth}
-                      onChange={(e) => setDateOfBirth(e.target.value)}
-                      required
-                      className="sprout-input"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="age">Age</Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      value={age !== null ? age.toString() : ''}
-                      readOnly
-                      className="sprout-input bg-gray-50"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="dob"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    required
+                    className="sprout-input"
+                  />
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -353,6 +419,21 @@ const EditProfile = () => {
                       </div>
                     ))}
                   </div>
+                  
+                  {showOtherInterests && (
+                    <div className="mt-3">
+                      <Label htmlFor="other-interests" className="text-sm">
+                        Enter your other interests (comma-separated)
+                      </Label>
+                      <Input
+                        id="other-interests"
+                        value={otherInterests}
+                        onChange={(e) => setOtherInterests(e.target.value)}
+                        placeholder="Dancing, painting, hiking, etc."
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <div>

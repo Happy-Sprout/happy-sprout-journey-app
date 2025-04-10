@@ -40,11 +40,11 @@ const CreateProfile = () => {
   
   // Basic Information
   const [nickname, setNickname] = useState("");
-  const [age, setAge] = useState<number | null>(null);
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [grade, setGrade] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("avatar1");
+  const [age, setAge] = useState<number | null>(null); // Keep for internal use only
   
   // Learning Preferences
   const [selectedLearningStyles, setSelectedLearningStyles] = useState<string[]>([]);
@@ -54,6 +54,8 @@ const CreateProfile = () => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedStoryPreferences, setSelectedStoryPreferences] = useState<string[]>([]);
   const [selectedChallenges, setSelectedChallenges] = useState<string[]>([]);
+  const [otherInterests, setOtherInterests] = useState("");
+  const [showOtherInterests, setShowOtherInterests] = useState(false);
   
   // Step navigation
   const [currentStep, setCurrentStep] = useState(1);
@@ -68,6 +70,7 @@ const CreateProfile = () => {
     { value: "videogames", label: "Video Games", icon: "🎮" },
     { value: "science", label: "Science", icon: "🔬" },
     { value: "cooking", label: "Cooking", icon: "🍳" },
+    { value: "other", label: "Other", icon: "➕" },
   ];
   
   const storyOptions: Option[] = [
@@ -88,7 +91,7 @@ const CreateProfile = () => {
     { value: "peerpressure", label: "Dealing with peer pressure and conflicts" },
   ];
 
-  // Update age when date of birth changes
+  // Update age when date of birth changes (internal calculation only)
   useEffect(() => {
     if (dateOfBirth) {
       const calculatedAge = calculateAgeFromDOB(dateOfBirth);
@@ -98,9 +101,24 @@ const CreateProfile = () => {
   
   // Toggle selection for multi-select options
   const toggleInterest = (value: string) => {
-    setSelectedInterests(prev => 
-      prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
-    );
+    if (value === "other") {
+      setShowOtherInterests(!showOtherInterests);
+      // If removing "other", also clear the otherInterests
+      if (selectedInterests.includes("other")) {
+        const parsedInterests = parseOtherInterests();
+        // Remove custom interests
+        setSelectedInterests(prev => 
+          prev.filter(i => i !== "other" && !parsedInterests.includes(i))
+        );
+        setOtherInterests("");
+      } else {
+        setSelectedInterests(prev => [...prev, "other"]);
+      }
+    } else {
+      setSelectedInterests(prev => 
+        prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
+      );
+    }
   };
   
   const toggleStoryPreference = (value: string) => {
@@ -127,6 +145,37 @@ const CreateProfile = () => {
     );
   };
   
+  // Parse other interests from comma-separated text
+  const parseOtherInterests = () => {
+    if (!otherInterests) return [];
+    return otherInterests.split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+  };
+  
+  // Age and grade validation
+  const validateAgeAndGrade = () => {
+    if (!age || !grade) return true; // Skip validation if not both set
+    
+    // Simple validation examples - can be adjusted based on educational system
+    const validCombinations: Record<string, number[]> = {
+      'preschool': [3, 4, 5],
+      'kindergarten': [5, 6],
+      'grade1': [6, 7],
+      'grade2': [7, 8],
+      'grade3': [8, 9],
+      'grade4': [9, 10],
+      'grade5': [10, 11],
+      'grade6': [11, 12],
+      'grade7': [12, 13],
+      'grade8': [13, 14],
+      'middle': [11, 12, 13, 14],
+      'high': [14, 15, 16, 17, 18]
+    };
+    
+    return validCombinations[grade]?.includes(age) || false;
+  };
+  
   // Step navigation
   const nextStep = () => {
     if (currentStep === 1) {
@@ -138,6 +187,16 @@ const CreateProfile = () => {
           variant: "destructive",
         });
         return;
+      }
+      
+      // Validate age and grade match
+      if (!validateAgeAndGrade()) {
+        toast({
+          title: "Age and grade mismatch",
+          description: "The selected age doesn't match the typical age for this grade level.",
+          variant: "warning",
+        });
+        // Continue anyway - this is just a warning
       }
     } else if (currentStep === 2) {
       // Validate learning preferences
@@ -172,6 +231,14 @@ const CreateProfile = () => {
       return;
     }
     
+    // Combine standard interests with custom "other" interests
+    let allInterests = [...selectedInterests];
+    if (showOtherInterests) {
+      // Remove the "other" placeholder and add individual items
+      allInterests = allInterests.filter(i => i !== "other");
+      allInterests = [...allInterests, ...parseOtherInterests()];
+    }
+    
     // Create profile
     const newProfile = {
       id: uuidv4(),
@@ -183,7 +250,7 @@ const CreateProfile = () => {
       learningStyles: selectedLearningStyles,
       selStrengths: selectedSELStrengths,
       avatar: selectedAvatar,
-      interests: selectedInterests,
+      interests: allInterests,
       storyPreferences: selectedStoryPreferences,
       selChallenges: selectedChallenges,
       streakCount: 0,
@@ -268,30 +335,16 @@ const CreateProfile = () => {
                   onChange={setSelectedAvatar} 
                 />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="dob"
-                      type="date"
-                      value={dateOfBirth}
-                      onChange={(e) => setDateOfBirth(e.target.value)}
-                      required
-                      className="sprout-input"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="age">Age</Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      value={age !== null ? age.toString() : ''}
-                      readOnly
-                      className="sprout-input bg-gray-50"
-                      placeholder="Auto-calculated from DOB"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="dob"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    required
+                    className="sprout-input"
+                  />
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -391,6 +444,21 @@ const CreateProfile = () => {
                         </div>
                       ))}
                     </div>
+                    
+                    {showOtherInterests && (
+                      <div className="mt-3">
+                        <Label htmlFor="other-interests" className="text-sm">
+                          Enter your other interests (comma-separated)
+                        </Label>
+                        <Input
+                          id="other-interests"
+                          value={otherInterests}
+                          onChange={(e) => setOtherInterests(e.target.value)}
+                          placeholder="Dancing, painting, hiking, etc."
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
                   </div>
                   
                   <div>
