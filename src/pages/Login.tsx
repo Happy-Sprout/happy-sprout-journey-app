@@ -37,11 +37,13 @@ const Login = () => {
       console.log("Login attempt with:", email);
       await loginWithEmail(email, password);
       
-      // If we get here, login was successful
+      // Login was successful if we reached here
       setLoading(false);
       
       // Check if the user is an admin and redirect accordingly
       const isAdmin = await checkAdminStatus();
+      console.log("User is admin:", isAdmin);
+      
       if (isAdmin) {
         navigate("/admin");
       } else {
