@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import AdminLayout from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
@@ -39,7 +38,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -311,541 +309,539 @@ const UserManagement = () => {
   );
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">User Management</h1>
-            <p className="text-muted-foreground">
-              Manage parent and child accounts
-            </p>
-          </div>
-          <Button onClick={() => setAddUserDialogOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">User Management</h1>
+          <p className="text-muted-foreground">
+            Manage parent and child accounts
+          </p>
         </div>
+        <Button onClick={() => setAddUserDialogOpen(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Add User
+        </Button>
+      </div>
+      
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search users by name or email..."
+          className="pl-10"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      
+      <Tabs defaultValue="parents">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="parents">Parents ({parents.length})</TabsTrigger>
+          <TabsTrigger value="children">Children ({children.length})</TabsTrigger>
+        </TabsList>
         
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users by name or email..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        
-        <Tabs defaultValue="parents">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="parents">Parents ({parents.length})</TabsTrigger>
-            <TabsTrigger value="children">Children ({children.length})</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="parents">
-            <Card>
-              <CardHeader>
-                <CardTitle>Parent Accounts</CardTitle>
-                <CardDescription>
-                  Manage parent accounts in the system
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
+        <TabsContent value="parents">
+          <Card>
+            <CardHeader>
+              <CardTitle>Parent Accounts</CardTitle>
+              <CardDescription>
+                Manage parent accounts in the system
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Relationship</TableHead>
+                    <TableHead>Children</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Relationship</TableHead>
-                      <TableHead>Children</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableCell colSpan={6} className="text-center py-10">
+                        Loading users...
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-10">
-                          Loading users...
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredParents.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-10">
-                          No parents found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredParents.map((parent) => (
-                        <TableRow key={parent.id}>
-                          <TableCell>{parent.name}</TableCell>
-                          <TableCell>{parent.email}</TableCell>
-                          <TableCell>{parent.relationship}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{parent.childCount}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(parent.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedParent(parent);
-                                    setViewDetailsOpen(true);
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedParent(parent);
-                                    setEditParentForm({
-                                      name: parent.name,
-                                      email: parent.email,
-                                      relationship: parent.relationship,
-                                      emergency_contact: parent.emergency_contact,
-                                      additional_info: parent.additional_info
-                                    });
-                                    setEditDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => {
-                                    setItemToDelete({ id: parent.id, type: 'parent' });
-                                    setDeleteDialogOpen(true);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="children">
-            <Card>
-              <CardHeader>
-                <CardTitle>Child Profiles</CardTitle>
-                <CardDescription>
-                  Manage child profiles in the system
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
+                  ) : filteredParents.length === 0 ? (
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Age</TableHead>
-                      <TableHead>Grade</TableHead>
-                      <TableHead>Parent</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableCell colSpan={6} className="text-center py-10">
+                        No parents found
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-10">
-                          Loading profiles...
+                  ) : (
+                    filteredParents.map((parent) => (
+                      <TableRow key={parent.id}>
+                        <TableCell>{parent.name}</TableCell>
+                        <TableCell>{parent.email}</TableCell>
+                        <TableCell>{parent.relationship}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{parent.childCount}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(parent.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedParent(parent);
+                                  setViewDetailsOpen(true);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedParent(parent);
+                                  setEditParentForm({
+                                    name: parent.name,
+                                    email: parent.email,
+                                    relationship: parent.relationship,
+                                    emergency_contact: parent.emergency_contact,
+                                    additional_info: parent.additional_info
+                                  });
+                                  setEditDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => {
+                                  setItemToDelete({ id: parent.id, type: 'parent' });
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
-                    ) : filteredChildren.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-10">
-                          No children found
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="children">
+          <Card>
+            <CardHeader>
+              <CardTitle>Child Profiles</CardTitle>
+              <CardDescription>
+                Manage child profiles in the system
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Age</TableHead>
+                    <TableHead>Grade</TableHead>
+                    <TableHead>Parent</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-10">
+                        Loading profiles...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredChildren.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-10">
+                        No children found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredChildren.map((child) => (
+                      <TableRow key={child.id}>
+                        <TableCell>{child.nickname}</TableCell>
+                        <TableCell>{child.age}</TableCell>
+                        <TableCell>{child.grade}</TableCell>
+                        <TableCell>{child.parent_name}</TableCell>
+                        <TableCell>
+                          {new Date(child.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedChild(child);
+                                  setViewDetailsOpen(true);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Profile
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedChild(child);
+                                  setEditChildForm({
+                                    nickname: child.nickname,
+                                    age: child.age,
+                                    gender: child.gender,
+                                    grade: child.grade
+                                  });
+                                  setEditDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => {
+                                  setItemToDelete({ id: child.id, type: 'child' });
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      filteredChildren.map((child) => (
-                        <TableRow key={child.id}>
-                          <TableCell>{child.nickname}</TableCell>
-                          <TableCell>{child.age}</TableCell>
-                          <TableCell>{child.grade}</TableCell>
-                          <TableCell>{child.parent_name}</TableCell>
-                          <TableCell>
-                            {new Date(child.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedChild(child);
-                                    setViewDetailsOpen(true);
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Profile
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedChild(child);
-                                    setEditChildForm({
-                                      nickname: child.nickname,
-                                      age: child.age,
-                                      gender: child.gender,
-                                      grade: child.grade
-                                    });
-                                    setEditDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600"
-                                  onClick={() => {
-                                    setItemToDelete({ id: child.id, type: 'child' });
-                                    setDeleteDialogOpen(true);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-        
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this {itemToDelete?.type} account? This action cannot be undone.
-                {itemToDelete?.type === 'parent' && (
-                  <p className="mt-2 text-red-500 font-semibold">Warning: This will also delete all associated child profiles.</p>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteUser}>
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        <Dialog open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedParent ? 'Parent Details' : selectedChild ? 'Child Profile' : 'User Details'}
-              </DialogTitle>
-              <DialogDescription>
-                View detailed information about this user.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              {selectedParent && (
-                <>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    <div>
-                      <Label>Name</Label>
-                      <p className="font-medium">{selectedParent.name}</p>
-                    </div>
-                    <div>
-                      <Label>Email</Label>
-                      <p className="font-medium">{selectedParent.email}</p>
-                    </div>
-                    <div>
-                      <Label>Relationship</Label>
-                      <p>{selectedParent.relationship}</p>
-                    </div>
-                    <div>
-                      <Label>Children</Label>
-                      <p>{selectedParent.childCount || 0}</p>
-                    </div>
-                    <div>
-                      <Label>Emergency Contact</Label>
-                      <p>{selectedParent.emergency_contact || 'None provided'}</p>
-                    </div>
-                    <div>
-                      <Label>Joined</Label>
-                      <p>{format(new Date(selectedParent.created_at), "MMM d, yyyy")}</p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label>Additional Information</Label>
-                    <p className="mt-1">{selectedParent.additional_info || 'No additional information provided.'}</p>
-                  </div>
-                </>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this {itemToDelete?.type} account? This action cannot be undone.
+              {itemToDelete?.type === 'parent' && (
+                <p className="mt-2 text-red-500 font-semibold">Warning: This will also delete all associated child profiles.</p>
               )}
-              
-              {selectedChild && (
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedParent ? 'Parent Details' : selectedChild ? 'Child Profile' : 'User Details'}
+            </DialogTitle>
+            <DialogDescription>
+              View detailed information about this user.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {selectedParent && (
+              <>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <div>
                     <Label>Name</Label>
-                    <p className="font-medium">{selectedChild.nickname}</p>
+                    <p className="font-medium">{selectedParent.name}</p>
                   </div>
                   <div>
-                    <Label>Age</Label>
-                    <p>{selectedChild.age}</p>
+                    <Label>Email</Label>
+                    <p className="font-medium">{selectedParent.email}</p>
                   </div>
                   <div>
-                    <Label>Gender</Label>
-                    <p>{selectedChild.gender || 'Not specified'}</p>
+                    <Label>Relationship</Label>
+                    <p>{selectedParent.relationship}</p>
                   </div>
                   <div>
-                    <Label>Grade</Label>
-                    <p>{selectedChild.grade}</p>
+                    <Label>Children</Label>
+                    <p>{selectedParent.childCount || 0}</p>
                   </div>
                   <div>
-                    <Label>Parent</Label>
-                    <p>{selectedChild.parent_name}</p>
+                    <Label>Emergency Contact</Label>
+                    <p>{selectedParent.emergency_contact || 'None provided'}</p>
                   </div>
                   <div>
-                    <Label>Created</Label>
-                    <p>{format(new Date(selectedChild.created_at), "MMM d, yyyy")}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <DialogFooter>
-              <Button onClick={() => setViewDetailsOpen(false)}>
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedParent ? 'Edit Parent' : 'Edit Child Profile'}
-              </DialogTitle>
-              <DialogDescription>
-                Update information for this user.
-              </DialogDescription>
-            </DialogHeader>
-            
-            {selectedParent && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <Label htmlFor="parentName">Name</Label>
-                    <Input 
-                      id="parentName" 
-                      value={editParentForm.name || ''} 
-                      onChange={(e) => setEditParentForm(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="parentEmail">Email</Label>
-                    <Input 
-                      id="parentEmail" 
-                      type="email" 
-                      value={editParentForm.email || ''} 
-                      onChange={(e) => setEditParentForm(prev => ({ ...prev, email: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="parentRelationship">Relationship</Label>
-                    <Input 
-                      id="parentRelationship" 
-                      value={editParentForm.relationship || ''} 
-                      onChange={(e) => setEditParentForm(prev => ({ ...prev, relationship: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergencyContact">Emergency Contact</Label>
-                    <Input 
-                      id="emergencyContact" 
-                      value={editParentForm.emergency_contact || ''} 
-                      onChange={(e) => setEditParentForm(prev => ({ ...prev, emergency_contact: e.target.value }))}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="additionalInfo">Additional Information</Label>
-                    <Textarea 
-                      id="additionalInfo" 
-                      rows={3}
-                      value={editParentForm.additional_info || ''} 
-                      onChange={(e) => setEditParentForm(prev => ({ ...prev, additional_info: e.target.value }))}
-                    />
+                    <Label>Joined</Label>
+                    <p>{format(new Date(selectedParent.created_at), "MMM d, yyyy")}</p>
                   </div>
                 </div>
                 
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleEditParent}>
-                    Save Changes
-                  </Button>
-                </DialogFooter>
-              </div>
+                <div>
+                  <Label>Additional Information</Label>
+                  <p className="mt-1">{selectedParent.additional_info || 'No additional information provided.'}</p>
+                </div>
+              </>
             )}
             
             {selectedChild && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <Label htmlFor="childName">Name</Label>
-                    <Input 
-                      id="childName" 
-                      value={editChildForm.nickname || ''} 
-                      onChange={(e) => setEditChildForm(prev => ({ ...prev, nickname: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="childAge">Age</Label>
-                    <Input 
-                      id="childAge" 
-                      type="number" 
-                      min={1}
-                      value={editChildForm.age || ''} 
-                      onChange={(e) => setEditChildForm(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="childGender">Gender</Label>
-                    <Input 
-                      id="childGender" 
-                      value={editChildForm.gender || ''} 
-                      onChange={(e) => setEditChildForm(prev => ({ ...prev, gender: e.target.value }))}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="childGrade">Grade</Label>
-                    <Input 
-                      id="childGrade" 
-                      value={editChildForm.grade || ''} 
-                      onChange={(e) => setEditChildForm(prev => ({ ...prev, grade: e.target.value }))}
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div>
+                  <Label>Name</Label>
+                  <p className="font-medium">{selectedChild.nickname}</p>
                 </div>
-                
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleEditChild}>
-                    Save Changes
-                  </Button>
-                </DialogFooter>
+                <div>
+                  <Label>Age</Label>
+                  <p>{selectedChild.age}</p>
+                </div>
+                <div>
+                  <Label>Gender</Label>
+                  <p>{selectedChild.gender || 'Not specified'}</p>
+                </div>
+                <div>
+                  <Label>Grade</Label>
+                  <p>{selectedChild.grade}</p>
+                </div>
+                <div>
+                  <Label>Parent</Label>
+                  <p>{selectedChild.parent_name}</p>
+                </div>
+                <div>
+                  <Label>Created</Label>
+                  <p>{format(new Date(selectedChild.created_at), "MMM d, yyyy")}</p>
+                </div>
               </div>
             )}
-          </DialogContent>
-        </Dialog>
-        
-        <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Parent</DialogTitle>
-              <DialogDescription>
-                Create a new parent account in the system.
-              </DialogDescription>
-            </DialogHeader>
-            
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setViewDetailsOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedParent ? 'Edit Parent' : 'Edit Child Profile'}
+            </DialogTitle>
+            <DialogDescription>
+              Update information for this user.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedParent && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="newParentName">Name *</Label>
-                <Input 
-                  id="newParentName" 
-                  value={newParentForm.name || ''} 
-                  onChange={(e) => setNewParentForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Full Name"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label htmlFor="parentName">Name</Label>
+                  <Input 
+                    id="parentName" 
+                    value={editParentForm.name || ''} 
+                    onChange={(e) => setEditParentForm(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="parentEmail">Email</Label>
+                  <Input 
+                    id="parentEmail" 
+                    type="email" 
+                    value={editParentForm.email || ''} 
+                    onChange={(e) => setEditParentForm(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="parentRelationship">Relationship</Label>
+                  <Input 
+                    id="parentRelationship" 
+                    value={editParentForm.relationship || ''} 
+                    onChange={(e) => setEditParentForm(prev => ({ ...prev, relationship: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="emergencyContact">Emergency Contact</Label>
+                  <Input 
+                    id="emergencyContact" 
+                    value={editParentForm.emergency_contact || ''} 
+                    onChange={(e) => setEditParentForm(prev => ({ ...prev, emergency_contact: e.target.value }))}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="additionalInfo">Additional Information</Label>
+                  <Textarea 
+                    id="additionalInfo" 
+                    rows={3}
+                    value={editParentForm.additional_info || ''} 
+                    onChange={(e) => setEditParentForm(prev => ({ ...prev, additional_info: e.target.value }))}
+                  />
+                </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="newParentEmail">Email *</Label>
-                <Input 
-                  id="newParentEmail" 
-                  type="email" 
-                  value={newParentForm.email || ''} 
-                  onChange={(e) => setNewParentForm(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="email@example.com"
-                  required
-                />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleEditParent}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+          
+          {selectedChild && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label htmlFor="childName">Name</Label>
+                  <Input 
+                    id="childName" 
+                    value={editChildForm.nickname || ''} 
+                    onChange={(e) => setEditChildForm(prev => ({ ...prev, nickname: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="childAge">Age</Label>
+                  <Input 
+                    id="childAge" 
+                    type="number" 
+                    min={1}
+                    value={editChildForm.age || ''} 
+                    onChange={(e) => setEditChildForm(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="childGender">Gender</Label>
+                  <Input 
+                    id="childGender" 
+                    value={editChildForm.gender || ''} 
+                    onChange={(e) => setEditChildForm(prev => ({ ...prev, gender: e.target.value }))}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="childGrade">Grade</Label>
+                  <Input 
+                    id="childGrade" 
+                    value={editChildForm.grade || ''} 
+                    onChange={(e) => setEditChildForm(prev => ({ ...prev, grade: e.target.value }))}
+                  />
+                </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="newParentRelationship">Relationship</Label>
-                <Input 
-                  id="newParentRelationship" 
-                  value={newParentForm.relationship || ''} 
-                  onChange={(e) => setNewParentForm(prev => ({ ...prev, relationship: e.target.value }))}
-                  placeholder="Parent, Guardian, etc."
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="newEmergencyContact">Emergency Contact</Label>
-                <Input 
-                  id="newEmergencyContact" 
-                  value={newParentForm.emergency_contact || ''} 
-                  onChange={(e) => setNewParentForm(prev => ({ ...prev, emergency_contact: e.target.value }))}
-                  placeholder="Phone number"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="newAdditionalInfo">Additional Information</Label>
-                <Textarea 
-                  id="newAdditionalInfo" 
-                  rows={3}
-                  value={newParentForm.additional_info || ''} 
-                  onChange={(e) => setNewParentForm(prev => ({ ...prev, additional_info: e.target.value }))}
-                  placeholder="Any additional notes about this parent"
-                />
-              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleEditChild}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Parent</DialogTitle>
+            <DialogDescription>
+              Create a new parent account in the system.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newParentName">Name *</Label>
+              <Input 
+                id="newParentName" 
+                value={newParentForm.name || ''} 
+                onChange={(e) => setNewParentForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Full Name"
+                required
+              />
             </div>
             
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAddUserDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddParent}>
-                Add Parent
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </AdminLayout>
+            <div className="space-y-2">
+              <Label htmlFor="newParentEmail">Email *</Label>
+              <Input 
+                id="newParentEmail" 
+                type="email" 
+                value={newParentForm.email || ''} 
+                onChange={(e) => setNewParentForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="email@example.com"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="newParentRelationship">Relationship</Label>
+              <Input 
+                id="newParentRelationship" 
+                value={newParentForm.relationship || ''} 
+                onChange={(e) => setNewParentForm(prev => ({ ...prev, relationship: e.target.value }))}
+                placeholder="Parent, Guardian, etc."
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="newEmergencyContact">Emergency Contact</Label>
+              <Input 
+                id="newEmergencyContact" 
+                value={newParentForm.emergency_contact || ''} 
+                onChange={(e) => setNewParentForm(prev => ({ ...prev, emergency_contact: e.target.value }))}
+                placeholder="Phone number"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="newAdditionalInfo">Additional Information</Label>
+              <Textarea 
+                id="newAdditionalInfo" 
+                rows={3}
+                value={newParentForm.additional_info || ''} 
+                onChange={(e) => setNewParentForm(prev => ({ ...prev, additional_info: e.target.value }))}
+                placeholder="Any additional notes about this parent"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddUserDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddParent}>
+              Add Parent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
