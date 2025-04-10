@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +21,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const statusChecked = useRef<boolean>(false);
 
   const checkAdminStatus = useCallback(async (): Promise<boolean> => {
     if (!user) {
@@ -49,6 +50,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       
       console.log("Admin status check result:", data);
       setIsAdmin(!!data);
+      statusChecked.current = true;
       return !!data;
     } catch (error) {
       console.error("Exception in checkAdminStatus:", error);
@@ -65,11 +67,14 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   }, [user, toast]);
   
   useEffect(() => {
-    if (user) {
-      checkAdminStatus();
-    } else {
+    // Reset status check flag when user changes
+    if (!user) {
+      statusChecked.current = false;
       setIsAdmin(false);
       setLoading(false);
+    } else if (!statusChecked.current) {
+      // Only check admin status if we haven't already checked for this user
+      checkAdminStatus();
     }
   }, [user, checkAdminStatus]);
 

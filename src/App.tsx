@@ -50,7 +50,7 @@ function App() {
               <Route path="/create-profile" element={<CreateProfile />} />
               <Route path="/edit-profile/:id" element={<EditProfile />} />
               
-              {/* Admin routes - using AdminProtectedRoute directly */}
+              {/* Admin routes - simplified structure */}
               <Route path="/admin" element={
                 <AdminProtectedRoute>
                   <AdminLayout>

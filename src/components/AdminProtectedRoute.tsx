@@ -15,10 +15,11 @@ const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const location = useLocation();
 
   useEffect(() => {
-    if (user && !adminLoading) {
+    // Only check admin status once when component mounts or when user changes
+    if (user && !isAdmin && !adminLoading) {
       checkAdminStatus();
     }
-  }, [user, adminLoading, checkAdminStatus]);
+  }, [user, isAdmin, adminLoading, checkAdminStatus]);
 
   // Show loading state while checking authentication and admin status
   if (authLoading || adminLoading) {

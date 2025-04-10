@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,22 +23,11 @@ const Login = () => {
 
   // Check if already logged in
   useEffect(() => {
-    const checkLoginAndAdmin = async () => {
-      if (isLoggedIn && user) {
-        // Check if the user is an admin and redirect accordingly
-        const isAdmin = await checkAdminStatus();
-        console.log("Admin check on login page:", isAdmin);
-        
-        if (isAdmin) {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
-      }
-    };
-
-    checkLoginAndAdmin();
-  }, [isLoggedIn, user, navigate, checkAdminStatus]);
+    if (isLoggedIn && user) {
+      // Don't check admin status here, wait for the login handler to do it
+      navigate("/dashboard");
+    }
+  }, [isLoggedIn, user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,17 +40,23 @@ const Login = () => {
       
       // Wait briefly to ensure auth state has updated
       setTimeout(async () => {
-        // Check if the user is an admin and redirect accordingly
-        const isAdmin = await checkAdminStatus();
-        console.log("User is admin after login:", isAdmin);
-        
-        if (isAdmin) {
-          navigate("/admin");
-        } else {
+        try {
+          // Check if the user is an admin and redirect accordingly
+          const isAdmin = await checkAdminStatus();
+          console.log("User is admin after login:", isAdmin);
+          
+          if (isAdmin) {
+            navigate("/admin");
+          } else {
+            navigate("/dashboard");
+          }
+        } catch (error) {
+          console.error("Error checking admin status:", error);
+          // Default to dashboard on error
           navigate("/dashboard");
+        } finally {
+          setLoading(false);
         }
-        
-        setLoading(false);
       }, 500);
     } catch (error: any) {
       console.error("Login error in component:", error);
