@@ -25,6 +25,7 @@ import GamificationManagement from "@/pages/admin/GamificationManagement";
 import NotificationsManagement from "@/pages/admin/NotificationsManagement";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
 import AdminLayout from "@/components/AdminLayout";
+import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 
 import "./App.css";
 
@@ -49,16 +50,70 @@ function App() {
               <Route path="/create-profile" element={<CreateProfile />} />
               <Route path="/edit-profile/:id" element={<EditProfile />} />
               
-              {/* Admin routes */}
-              <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
-              <Route path="/admin/users" element={<AdminLayout><UserManagement /></AdminLayout>} />
-              <Route path="/admin/content" element={<AdminLayout><ContentManagement /></AdminLayout>} />
-              <Route path="/admin/reports" element={<AdminLayout><ReportingAnalytics /></AdminLayout>} />
-              <Route path="/admin/journal-monitoring" element={<AdminLayout><JournalMonitoring /></AdminLayout>} />
-              <Route path="/admin/assessments" element={<AdminLayout><AssessmentManagement /></AdminLayout>} />
-              <Route path="/admin/gamification" element={<AdminLayout><GamificationManagement /></AdminLayout>} />
-              <Route path="/admin/notifications" element={<AdminLayout><NotificationsManagement /></AdminLayout>} />
-              <Route path="/admin/settings" element={<AdminLayout><SettingsManagement /></AdminLayout>} />
+              {/* Admin routes - using AdminProtectedRoute directly */}
+              <Route path="/admin" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/users" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <UserManagement />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/content" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <ContentManagement />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/reports" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <ReportingAnalytics />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/journal-monitoring" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <JournalMonitoring />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/assessments" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <AssessmentManagement />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/gamification" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <GamificationManagement />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/notifications" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <NotificationsManagement />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/settings" element={
+                <AdminProtectedRoute>
+                  <AdminLayout>
+                    <SettingsManagement />
+                  </AdminLayout>
+                </AdminProtectedRoute>
+              } />
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />

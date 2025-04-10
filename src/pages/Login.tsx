@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,16 +16,28 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { loginWithEmail, isLoggedIn } = useAuth();
+  const { loginWithEmail, isLoggedIn, user } = useAuth();
   const { checkAdminStatus } = useAdmin();
   const { toast } = useToast();
 
   // Check if already logged in
   useEffect(() => {
-    if (isLoggedIn) {
-      navigate("/dashboard");
-    }
-  }, [isLoggedIn, navigate]);
+    const checkLoginAndAdmin = async () => {
+      if (isLoggedIn && user) {
+        // Check if the user is an admin and redirect accordingly
+        const isAdmin = await checkAdminStatus();
+        console.log("Admin check on login page:", isAdmin);
+        
+        if (isAdmin) {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
+      }
+    };
+
+    checkLoginAndAdmin();
+  }, [isLoggedIn, user, navigate, checkAdminStatus]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,18 +48,20 @@ const Login = () => {
       console.log("Login attempt with:", email);
       await loginWithEmail(email, password);
       
-      // Login was successful if we reached here
-      setLoading(false);
-      
-      // Check if the user is an admin and redirect accordingly
-      const isAdmin = await checkAdminStatus();
-      console.log("User is admin:", isAdmin);
-      
-      if (isAdmin) {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard");
-      }
+      // Wait briefly to ensure auth state has updated
+      setTimeout(async () => {
+        // Check if the user is an admin and redirect accordingly
+        const isAdmin = await checkAdminStatus();
+        console.log("User is admin after login:", isAdmin);
+        
+        if (isAdmin) {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
+        
+        setLoading(false);
+      }, 500);
     } catch (error: any) {
       console.error("Login error in component:", error);
       setError(error.message || "Login failed. Please check your credentials.");

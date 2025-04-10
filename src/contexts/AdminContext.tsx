@@ -31,6 +31,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       console.log("Checking admin status for user:", user.id);
+      setLoading(true);
       
       // Call the is_admin RPC function to check admin status
       const { data, error } = await supabase.rpc('is_admin');

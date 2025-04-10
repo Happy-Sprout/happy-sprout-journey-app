@@ -10,19 +10,18 @@ interface AdminProtectedRouteProps {
 }
 
 const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
-  const { isAdmin, loading, checkAdminStatus } = useAdmin();
+  const { isAdmin, loading: adminLoading, checkAdminStatus } = useAdmin();
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
-    // Only check admin status when user is logged in and status needs to be verified
-    if (user && !loading) {
+    if (user && !adminLoading) {
       checkAdminStatus();
     }
-  }, [user, loading, checkAdminStatus]);
+  }, [user, adminLoading, checkAdminStatus]);
 
   // Show loading state while checking authentication and admin status
-  if (authLoading || loading) {
+  if (authLoading || adminLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="w-full max-w-md space-y-4">
@@ -45,11 +44,13 @@ const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   }
 
   // If authenticated but not admin, redirect to dashboard
-  if (user && !isAdmin) {
+  if (!isAdmin) {
+    console.log("User is not an admin, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 
   // If admin, render the protected content
+  console.log("User is admin, allowing access to admin content");
   return <>{children}</>;
 };
 

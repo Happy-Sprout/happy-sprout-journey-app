@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
-import AdminProtectedRoute from "./AdminProtectedRoute";
 
 const menuItems = [
   { name: "Dashboard", path: "/admin", icon: <Home className="h-5 w-5" /> },
@@ -34,7 +33,7 @@ const menuItems = [
   { name: "Settings", path: "/admin/settings", icon: <Settings className="h-5 w-5" /> },
 ];
 
-const AdminLayoutContent = ({ children }: { children: ReactNode }) => {
+const AdminLayout = ({ children }: { children: ReactNode }) => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,14 +128,6 @@ const AdminLayoutContent = ({ children }: { children: ReactNode }) => {
         </main>
       </div>
     </div>
-  );
-};
-
-const AdminLayout = ({ children }: { children: ReactNode }) => {
-  return (
-    <AdminProtectedRoute>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
-    </AdminProtectedRoute>
   );
 };
 
