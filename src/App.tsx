@@ -49,7 +49,7 @@ function App() {
               <Route path="/create-profile" element={<CreateProfile />} />
               <Route path="/edit-profile/:id" element={<EditProfile />} />
               
-              {/* Admin routes - wrapped with AdminLayout which contains AdminProtectedRoute */}
+              {/* Admin routes */}
               <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
               <Route path="/admin/users" element={<AdminLayout><UserManagement /></AdminLayout>} />
               <Route path="/admin/content" element={<AdminLayout><ContentManagement /></AdminLayout>} />

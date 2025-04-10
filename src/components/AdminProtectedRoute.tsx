@@ -15,7 +15,7 @@ const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Only check admin status when user is logged in and status is unknown
+    // Only check admin status when user is logged in and status needs to be verified
     if (user && !loading) {
       checkAdminStatus();
     }
