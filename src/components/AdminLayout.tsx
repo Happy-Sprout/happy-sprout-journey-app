@@ -14,8 +14,7 @@ import {
   Settings, 
   LogOut, 
   Home,
-  Menu,
-  X
+  Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

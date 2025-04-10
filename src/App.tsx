@@ -24,6 +24,7 @@ import AssessmentManagement from "@/pages/admin/AssessmentManagement";
 import GamificationManagement from "@/pages/admin/GamificationManagement";
 import NotificationsManagement from "@/pages/admin/NotificationsManagement";
 import SettingsManagement from "@/pages/admin/SettingsManagement";
+import AdminLayout from "@/components/AdminLayout";
 
 import "./App.css";
 
@@ -48,16 +49,16 @@ function App() {
               <Route path="/create-profile" element={<CreateProfile />} />
               <Route path="/edit-profile/:id" element={<EditProfile />} />
               
-              {/* Admin routes */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<UserManagement />} />
-              <Route path="/admin/content" element={<ContentManagement />} />
-              <Route path="/admin/reports" element={<ReportingAnalytics />} />
-              <Route path="/admin/journal-monitoring" element={<JournalMonitoring />} />
-              <Route path="/admin/assessments" element={<AssessmentManagement />} />
-              <Route path="/admin/gamification" element={<GamificationManagement />} />
-              <Route path="/admin/notifications" element={<NotificationsManagement />} />
-              <Route path="/admin/settings" element={<SettingsManagement />} />
+              {/* Admin routes - wrapped with AdminLayout which contains AdminProtectedRoute */}
+              <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+              <Route path="/admin/users" element={<AdminLayout><UserManagement /></AdminLayout>} />
+              <Route path="/admin/content" element={<AdminLayout><ContentManagement /></AdminLayout>} />
+              <Route path="/admin/reports" element={<AdminLayout><ReportingAnalytics /></AdminLayout>} />
+              <Route path="/admin/journal-monitoring" element={<AdminLayout><JournalMonitoring /></AdminLayout>} />
+              <Route path="/admin/assessments" element={<AdminLayout><AssessmentManagement /></AdminLayout>} />
+              <Route path="/admin/gamification" element={<AdminLayout><GamificationManagement /></AdminLayout>} />
+              <Route path="/admin/notifications" element={<AdminLayout><NotificationsManagement /></AdminLayout>} />
+              <Route path="/admin/settings" element={<AdminLayout><SettingsManagement /></AdminLayout>} />
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />

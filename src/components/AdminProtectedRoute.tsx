@@ -11,7 +11,7 @@ interface AdminProtectedRouteProps {
 
 const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const { isAdmin, loading, checkAdminStatus } = useAdmin();
-  const { user, loading: authLoading } = useAuth(); // Using 'loading' instead of 'isLoading'
+  const { user, loading: authLoading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -44,7 +44,7 @@ const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   }
 
   // If authenticated but not admin, redirect to dashboard
-  if (!isAdmin) {
+  if (user && !isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,7 +22,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const checkAdminStatus = async (): Promise<boolean> => {
+  const checkAdminStatus = useCallback(async (): Promise<boolean> => {
     if (!user) {
       setIsAdmin(false);
       setLoading(false);
@@ -61,7 +61,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
   
   useEffect(() => {
     if (user) {
@@ -70,7 +70,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(false);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, checkAdminStatus]);
 
   return (
     <AdminContext.Provider
