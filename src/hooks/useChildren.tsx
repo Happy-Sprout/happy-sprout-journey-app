@@ -1,10 +1,9 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from "@/hooks/useAuth";
 import { useParent } from "./useParent";
+import * as childrenDb from "@/utils/childrenDb";
 
 export type ChildProfile = {
   id: string;
@@ -96,74 +95,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      console.log("Fetching child profiles for parent:", parentId);
-      const { data: childrenData, error: childrenError } = await supabase
-        .from('children')
-        .select('*')
-        .eq('parent_id', parentId);
-        
-      if (childrenError) {
-        console.error("Error fetching children:", childrenError);
-        return;
-      }
-      
-      if (!childrenData || childrenData.length === 0) {
-        console.log("No child profiles found for parent:", parentId);
-        setChildProfiles([]);
-        return;
-      }
-      
-      console.log("Children data found:", childrenData);
-      const profiles: ChildProfile[] = [];
-      
-      for (const child of childrenData) {
-        if (!child || !child.id) continue;
-
-        const { data: preferencesData, error: preferencesError } = await supabase
-          .from('child_preferences')
-          .select('*')
-          .eq('child_id', child.id)
-          .maybeSingle();
-
-        if (preferencesError) {
-          console.error("Error fetching preferences:", preferencesError);
-        }
-          
-        const { data: progressData, error: progressError } = await supabase
-          .from('child_progress')
-          .select('*')
-          .eq('child_id', child.id)
-          .maybeSingle();
-          
-        if (progressError) {
-          console.error("Error fetching progress:", progressError);
-        }
-
-        profiles.push({
-          id: child.id,
-          nickname: child.nickname || '',
-          age: child.age || 0,
-          dateOfBirth: child.date_of_birth || '',
-          gender: child.gender,
-          grade: child.grade || '',
-          avatar: child.avatar,
-          creationStatus: (child.creation_status as 'completed' | 'pending') || 'pending',
-          createdAt: child.created_at,
-          relationshipToParent: child.relationship_to_parent,
-          learningStyles: preferencesData?.learning_styles || [],
-          selStrengths: preferencesData?.strengths || [],
-          interests: preferencesData?.interests || [],
-          storyPreferences: preferencesData?.story_preferences || [],
-          selChallenges: preferencesData?.challenges || [],
-          streakCount: progressData?.streak_count || 0,
-          xpPoints: progressData?.xp_points || 0,
-          badges: progressData?.badges || [],
-          dailyCheckInCompleted: progressData?.daily_check_in_completed || false,
-          lastCheckInDate: progressData?.last_check_in || '',
-        });
-      }
-      
-      console.log("Processed child profiles:", profiles);
+      const profiles = await childrenDb.fetchChildrenProfiles(parentId);
       setChildProfiles(profiles);
       
       if (!currentChildId && profiles.length > 0) {
@@ -187,96 +119,13 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      const childId = uuidv4();
-      console.log("Adding child profile with ID:", childId);
+      // Create child profile in the database
+      const childId = await childrenDb.createChildProfile(user.id, profile);
       
-      const { error: childError } = await supabase
-        .from('children')
-        .insert({
-          id: childId,
-          parent_id: user.id,
-          nickname: profile.nickname,
-          age: profile.age,
-          date_of_birth: profile.dateOfBirth,
-          gender: profile.gender || null,
-          grade: profile.grade,
-          avatar: profile.avatar || null,
-          creation_status: profile.creationStatus || 'pending',
-          relationship_to_parent: profile.relationshipToParent || null
-        });
-        
-      if (childError) {
-        console.error("Error adding child:", childError);
-        toast({
-          title: "Error",
-          description: "Could not add child profile. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
+      // Refresh child profiles
       try {
-        const { error: prefError } = await supabase
-          .from('child_preferences')
-          .insert({
-            child_id: childId,
-            learning_styles: profile.learningStyles || [],
-            strengths: profile.selStrengths || [],
-            interests: profile.interests || [],
-            story_preferences: profile.storyPreferences || [],
-            challenges: profile.selChallenges || []
-          });
-          
-        if (prefError) {
-          console.error("Error adding preferences:", prefError);
-        }
-      } catch (error) {
-        console.error("Error inserting preferences:", error);
-      }
-      
-      try {
-        const { error: progressError } = await supabase
-          .from('child_progress')
-          .insert({
-            child_id: childId,
-            streak_count: 0,
-            xp_points: 0,
-            badges: [],
-            daily_check_in_completed: false
-          });
-        
-        if (progressError) {
-          console.error("Error adding progress:", progressError);
-        }
-      } catch (error) {
-        console.error("Error inserting progress:", error);
-      }
-      
-      // Here's the fix for line 481 - We need to properly handle the activity log Promise
-      try {
-        // First fetch updated profiles
         if (user.id) {
           await fetchChildProfiles(user.id);
-        }
-        
-        // Log the activity
-        try {
-          await supabase
-            .from('user_activity_logs')
-            .insert([
-              {
-                user_id: user.id,
-                user_type: 'parent', 
-                action_type: 'child_profile_created',
-                action_details: {
-                  child_id: childId,
-                  nickname: profile.nickname
-                }
-              }
-            ]);
-        } catch (logError) {
-          console.error("Error logging profile creation:", logError);
-          // Non-blocking error, continue with the flow
         }
         
         // Show success message
@@ -290,7 +139,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error("Error fetching updated profiles:", error);
       }
-      
     } catch (error) {
       console.error("Error in addChildProfile:", error);
       toast({
@@ -306,92 +154,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       const childIndex = childProfiles.findIndex((profile) => profile.id === id);
       if (childIndex === -1) return;
       
-      const currentChild = childProfiles[childIndex];
-      const updatedChild = { ...currentChild, ...updatedInfo };
-      
-      if (
-        updatedInfo.nickname !== undefined ||
-        updatedInfo.age !== undefined ||
-        updatedInfo.dateOfBirth !== undefined ||
-        updatedInfo.gender !== undefined ||
-        updatedInfo.grade !== undefined ||
-        updatedInfo.avatar !== undefined ||
-        updatedInfo.creationStatus !== undefined ||
-        updatedInfo.relationshipToParent !== undefined
-      ) {
-        const childUpdate: any = {};
-        if (updatedInfo.nickname !== undefined) childUpdate.nickname = updatedInfo.nickname;
-        if (updatedInfo.age !== undefined) childUpdate.age = updatedInfo.age;
-        if (updatedInfo.dateOfBirth !== undefined) childUpdate.date_of_birth = updatedInfo.dateOfBirth;
-        if (updatedInfo.gender !== undefined) childUpdate.gender = updatedInfo.gender;
-        if (updatedInfo.grade !== undefined) childUpdate.grade = updatedInfo.grade;
-        if (updatedInfo.avatar !== undefined) childUpdate.avatar = updatedInfo.avatar;
-        if (updatedInfo.creationStatus !== undefined) childUpdate.creation_status = updatedInfo.creationStatus;
-        if (updatedInfo.relationshipToParent !== undefined) childUpdate.relationship_to_parent = updatedInfo.relationshipToParent;
-        
-        const { error } = await supabase
-          .from('children')
-          .update(childUpdate)
-          .eq('id', id);
-          
-        if (error) {
-          console.error("Error updating child:", error);
-          toast({
-            title: "Error",
-            description: "Could not update profile. Please try again.",
-            variant: "destructive"
-          });
-          return;
-        }
-      }
-      
-      if (
-        updatedInfo.learningStyles !== undefined ||
-        updatedInfo.selStrengths !== undefined ||
-        updatedInfo.interests !== undefined ||
-        updatedInfo.storyPreferences !== undefined ||
-        updatedInfo.selChallenges !== undefined
-      ) {
-        const prefUpdate: any = {};
-        if (updatedInfo.learningStyles !== undefined) prefUpdate.learning_styles = updatedInfo.learningStyles;
-        if (updatedInfo.selStrengths !== undefined) prefUpdate.strengths = updatedInfo.selStrengths;
-        if (updatedInfo.interests !== undefined) prefUpdate.interests = updatedInfo.interests;
-        if (updatedInfo.storyPreferences !== undefined) prefUpdate.story_preferences = updatedInfo.storyPreferences;
-        if (updatedInfo.selChallenges !== undefined) prefUpdate.challenges = updatedInfo.selChallenges;
-        
-        const { error } = await supabase
-          .from('child_preferences')
-          .update(prefUpdate)
-          .eq('child_id', id);
-          
-        if (error) {
-          console.error("Error updating preferences:", error);
-        }
-      }
-      
-      if (
-        updatedInfo.streakCount !== undefined ||
-        updatedInfo.xpPoints !== undefined ||
-        updatedInfo.badges !== undefined ||
-        updatedInfo.dailyCheckInCompleted !== undefined ||
-        updatedInfo.lastCheckInDate !== undefined
-      ) {
-        const progressUpdate: any = {};
-        if (updatedInfo.streakCount !== undefined) progressUpdate.streak_count = updatedInfo.streakCount;
-        if (updatedInfo.xpPoints !== undefined) progressUpdate.xp_points = updatedInfo.xpPoints;
-        if (updatedInfo.badges !== undefined) progressUpdate.badges = updatedInfo.badges;
-        if (updatedInfo.dailyCheckInCompleted !== undefined) progressUpdate.daily_check_in_completed = updatedInfo.dailyCheckInCompleted;
-        if (updatedInfo.lastCheckInDate !== undefined) progressUpdate.last_check_in = updatedInfo.lastCheckInDate;
-        
-        const { error } = await supabase
-          .from('child_progress')
-          .update(progressUpdate)
-          .eq('child_id', id);
-          
-        if (error) {
-          console.error("Error updating progress:", error);
-        }
-      }
+      await childrenDb.updateChildProfile(id, updatedInfo);
       
       setChildProfiles((prev) =>
         prev.map((profile) =>
@@ -415,20 +178,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteChildProfile = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('children')
-        .delete()
-        .eq('id', id);
-        
-      if (error) {
-        console.error("Error deleting child:", error);
-        toast({
-          title: "Error",
-          description: "Could not delete profile. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
+      await childrenDb.deleteChildProfile(id);
       
       setChildProfiles((prev) => prev.filter((profile) => profile.id !== id));
       
@@ -477,39 +227,13 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      const streakIncrement = currentChild.dailyCheckInCompleted ? 0 : 1;
-      const xpIncrement = currentChild.dailyCheckInCompleted ? 0 : 10;
-      
-      updateChildProfile(childId, { 
-        dailyCheckInCompleted: true,
-        lastCheckInDate: date,
-        streakCount: (currentChild.streakCount || 0) + streakIncrement,
-        xpPoints: (currentChild.xpPoints || 0) + xpIncrement
-      });
-      
-      // Fix for the activity log Promise by using async/await properly
-      (async () => {
-        try {
-          await supabase
-            .from('user_activity_logs')
-            .insert([
-              {
-                user_id: childId,
-                user_type: 'child',
-                action_type: 'daily_check_in_completed',
-                action_details: {
-                  date: date,
-                  streakCount: (currentChild.streakCount || 0) + streakIncrement
-                }
-              }
-            ]);
-          console.log("Daily check-in logged successfully");
-        } catch (error) {
-          console.error("Error logging check-in:", error);
-        }
-      })();
-        
-      console.log("Daily check-in marked as complete successfully");
+      childrenDb.markDailyCheckInComplete(childId, currentChild, date)
+        .then(() => {
+          console.log("Daily check-in marked as complete successfully");
+        })
+        .catch(error => {
+          console.error("Error marking daily check-in:", error);
+        });
     } catch (error) {
       console.error("Error in markDailyCheckInComplete:", error);
     }
