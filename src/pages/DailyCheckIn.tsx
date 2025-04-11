@@ -61,9 +61,21 @@ const DailyCheckIn = () => {
   }, [mood]);
 
   useEffect(() => {
-    if (currentChild?.dailyCheckInCompleted) {
-      console.log("Daily check-in already completed for today");
-      setAlreadyCompletedToday(true);
+    if (currentChild) {
+      const isToday = (date) => {
+        if (!date) return false;
+        const checkInDate = new Date(date);
+        const today = new Date();
+        return checkInDate.toDateString() === today.toDateString();
+      };
+      
+      if (currentChild.dailyCheckInCompleted && currentChild.lastCheckInDate && 
+          isToday(currentChild.lastCheckInDate)) {
+        console.log("Daily check-in already completed for today");
+        setAlreadyCompletedToday(true);
+      } else {
+        setAlreadyCompletedToday(false);
+      }
     }
   }, [currentChild]);
   
@@ -169,7 +181,8 @@ const DailyCheckIn = () => {
   
   const completeCheckIn = () => {
     if (currentChildId) {
-      markDailyCheckInComplete(currentChildId);
+      const currentDate = new Date().toISOString();
+      markDailyCheckInComplete(currentChildId, currentDate);
       
       successToast({
         title: "Check-in Complete!",
@@ -193,7 +206,7 @@ const DailyCheckIn = () => {
             user_type: 'child',
             action_type: 'daily_checkin_completed',
             action_details: {
-              date: new Date().toISOString(),
+              date: currentDate,
               mood: selectedFeeling || mood,
               xp_earned: 10
             }
@@ -264,7 +277,7 @@ const DailyCheckIn = () => {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button
-                    className="sprout-button"
+                    className="bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full"
                     onClick={() => navigate("/dashboard")}
                   >
                     Return to Dashboard
@@ -570,7 +583,7 @@ const DailyCheckIn = () => {
                 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button
-                    className="sprout-button"
+                    className="bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full"
                     onClick={() => navigate("/dashboard")}
                   >
                     Return to Dashboard
@@ -598,7 +611,7 @@ const DailyCheckIn = () => {
                 
                 <Button
                   type="button"
-                  className="sprout-button"
+                  className="bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full"
                   onClick={nextStep}
                 >
                   {step === totalSteps ? "Complete" : "Next"}

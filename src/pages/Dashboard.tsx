@@ -11,12 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { avatarOptions } from "@/constants/profileOptions";
 import { useEffect, useState } from "react";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
+import { format } from "date-fns";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { childProfiles, getCurrentChild, currentChildId, setCurrentChildId } = useUser();
   const currentChild = getCurrentChild();
   const [journalCompleted, setJournalCompleted] = useState(false);
+  const [dailyCheckInCompleted, setDailyCheckInCompleted] = useState(false);
   
   // Get journal entries to check if today's entry exists
   const { getTodayEntry } = useJournalEntries(currentChildId);
@@ -31,6 +33,24 @@ const Dashboard = () => {
     
     checkTodayJournalEntry();
   }, [currentChildId, getTodayEntry]);
+  
+  // Check if daily check-in was done today
+  useEffect(() => {
+    if (currentChild) {
+      // Compare the date of the latest check-in with today's date
+      const isToday = (date) => {
+        if (!date) return false;
+        const checkInDate = new Date(date);
+        const today = new Date();
+        return checkInDate.toDateString() === today.toDateString();
+      };
+      
+      setDailyCheckInCompleted(
+        currentChild.dailyCheckInCompleted && 
+        isToday(currentChild.lastCheckInDate)
+      );
+    }
+  }, [currentChild]);
   
   // Mock quotes for demo
   const motivationalQuotes = [
@@ -206,24 +226,24 @@ const Dashboard = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          <div className={`flex items-center p-3 ${currentChild.dailyCheckInCompleted ? 'bg-sprout-green/10' : 'bg-sprout-orange/10'} rounded-lg`}>
-                            <div className={`mr-4 ${currentChild.dailyCheckInCompleted ? 'bg-sprout-green' : 'bg-sprout-orange'} text-white p-2 rounded-full`}>
-                              {currentChild.dailyCheckInCompleted ? <Check className="h-5 w-5" /> : <CalendarDays className="h-5 w-5" />}
+                          <div className={`flex items-center p-3 ${dailyCheckInCompleted ? 'bg-sprout-green/10' : 'bg-sprout-orange/10'} rounded-lg`}>
+                            <div className={`mr-4 ${dailyCheckInCompleted ? 'bg-sprout-green' : 'bg-sprout-orange'} text-white p-2 rounded-full`}>
+                              {dailyCheckInCompleted ? <Check className="h-5 w-5" /> : <CalendarDays className="h-5 w-5" />}
                             </div>
                             <div>
                               <h3 className="font-medium">Daily Check-In</h3>
                               <p className="text-sm text-gray-600">
-                                {currentChild.dailyCheckInCompleted 
+                                {dailyCheckInCompleted 
                                   ? "You've completed today's check-in!" 
                                   : "Share how you're feeling today!"}
                               </p>
                             </div>
                             <Button 
-                              className={`ml-auto ${currentChild.dailyCheckInCompleted ? 'bg-sprout-green' : 'sprout-button'}`}
+                              className="ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full"
                               onClick={() => navigate("/daily-check-in")}
-                              disabled={currentChild.dailyCheckInCompleted}
+                              disabled={dailyCheckInCompleted}
                             >
-                              {currentChild.dailyCheckInCompleted ? 'Completed' : 'Start'}
+                              {dailyCheckInCompleted ? 'Completed' : 'Start'}
                             </Button>
                           </div>
                           
@@ -240,7 +260,7 @@ const Dashboard = () => {
                               </p>
                             </div>
                             <Button 
-                              className={`ml-auto ${journalCompleted ? 'bg-sprout-green' : 'bg-sprout-purple text-white hover:bg-sprout-purple/90'} rounded-full`}
+                              className="ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full"
                               onClick={() => navigate("/journal")}
                               disabled={journalCompleted}
                             >
