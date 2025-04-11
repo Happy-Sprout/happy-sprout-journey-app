@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -251,16 +252,40 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error inserting progress:", error);
       }
       
+      // Here's the fix for line 481 - We need to properly handle the activity log Promise
       try {
+        // First fetch updated profiles
         if (user.id) {
           await fetchChildProfiles(user.id);
         }
         
+        // Log the activity
+        try {
+          await supabase
+            .from('user_activity_logs')
+            .insert([
+              {
+                user_id: user.id,
+                user_type: 'parent', 
+                action_type: 'child_profile_created',
+                action_details: {
+                  child_id: childId,
+                  nickname: profile.nickname
+                }
+              }
+            ]);
+        } catch (logError) {
+          console.error("Error logging profile creation:", logError);
+          // Non-blocking error, continue with the flow
+        }
+        
+        // Show success message
         toast({
           title: "Success",
           description: `Profile for ${profile.nickname} created successfully!`
         });
         
+        // Set the newly created profile as current
         setCurrentChildId(childId);
       } catch (error) {
         console.error("Error fetching updated profiles:", error);
@@ -462,25 +487,27 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         xpPoints: (currentChild.xpPoints || 0) + xpIncrement
       });
       
-      supabase
-        .from('user_activity_logs')
-        .insert([
-          {
-            user_id: childId,
-            user_type: 'child',
-            action_type: 'daily_check_in_completed',
-            action_details: {
-              date: date,
-              streakCount: (currentChild.streakCount || 0) + streakIncrement
-            }
-          }
-        ])
-        .then(() => {
+      // Fix for the activity log Promise by using async/await properly
+      (async () => {
+        try {
+          await supabase
+            .from('user_activity_logs')
+            .insert([
+              {
+                user_id: childId,
+                user_type: 'child',
+                action_type: 'daily_check_in_completed',
+                action_details: {
+                  date: date,
+                  streakCount: (currentChild.streakCount || 0) + streakIncrement
+                }
+              }
+            ]);
           console.log("Daily check-in logged successfully");
-        })
-        .catch(error => {
+        } catch (error) {
           console.error("Error logging check-in:", error);
-        });
+        }
+      })();
         
       console.log("Daily check-in marked as complete successfully");
     } catch (error) {
