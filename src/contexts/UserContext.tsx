@@ -108,42 +108,76 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
+      // First, fetch the basic child data
+      const { data: childrenData, error: childrenError } = await supabase
         .from("children")
         .select("*")
         .eq("parent_id", user.id)
         .order("created_at", { ascending: false });
         
-      if (error) {
-        console.error("Error fetching child profiles:", error);
+      if (childrenError) {
+        console.error("Error fetching child profiles:", childrenError);
         return;
       }
       
-      // Transform the data to match the ChildProfile type
-      const formattedProfiles = data.map(profile => ({
-        id: profile.id,
-        nickname: profile.nickname,
-        age: profile.age,
-        gender: profile.gender,
-        grade: profile.grade,
-        school: profile.school,
-        interests: profile.interests,
-        challenges: profile.challenges,
-        avatar: profile.avatar,
-        creationStatus: profile.creation_status,
-        createdAt: profile.created_at,
-        dailyCheckInCompleted: profile.daily_check_in_completed,
-        lastCheckInDate: profile.last_check_in_date,
-        dateOfBirth: profile.date_of_birth,
-        relationshipToParent: profile.relationship_to_parent,
-        xpPoints: profile.xp_points || 0,
-        streakCount: profile.streak_count || 0,
-        badges: profile.badges || [],
-        learningStyles: profile.learning_styles || [],
-        selStrengths: profile.sel_strengths || [],
-        storyPreferences: profile.story_preferences || [],
-        selChallenges: profile.sel_challenges || [],
-      }));
+      if (!childrenData || childrenData.length === 0) {
+        setChildProfiles([]);
+        return;
+      }
+      
+      // Now prepare to fetch additional data for each child
+      const formattedProfiles: ChildProfile[] = [];
+      
+      for (const child of childrenData) {
+        // Fetch preferences data
+        const { data: preferencesData, error: preferencesError } = await supabase
+          .from("child_preferences")
+          .select("*")
+          .eq("child_id", child.id)
+          .maybeSingle();
+          
+        if (preferencesError) {
+          console.error("Error fetching preferences:", preferencesError);
+        }
+        
+        // Fetch progress data
+        const { data: progressData, error: progressError } = await supabase
+          .from("child_progress")
+          .select("*")
+          .eq("child_id", child.id)
+          .maybeSingle();
+          
+        if (progressError) {
+          console.error("Error fetching progress:", progressError);
+        }
+        
+        // Build the profile by combining data from different tables
+        formattedProfiles.push({
+          id: child.id,
+          nickname: child.nickname,
+          age: child.age,
+          gender: child.gender,
+          grade: child.grade,
+          avatar: child.avatar,
+          creationStatus: child.creation_status as "pending" | "completed",
+          createdAt: child.created_at,
+          dateOfBirth: child.date_of_birth,
+          relationshipToParent: child.relationship_to_parent,
+          // Data from child_preferences table
+          interests: preferencesData?.interests || [],
+          challenges: preferencesData?.challenges || [],
+          learningStyles: preferencesData?.learning_styles || [],
+          selStrengths: preferencesData?.strengths || [],
+          storyPreferences: preferencesData?.story_preferences || [],
+          selChallenges: preferencesData?.challenges || [],
+          // Data from child_progress table
+          dailyCheckInCompleted: progressData?.daily_check_in_completed || false,
+          lastCheckInDate: progressData?.last_check_in || "",
+          xpPoints: progressData?.xp_points || 0,
+          streakCount: progressData?.streak_count || 0,
+          badges: progressData?.badges || []
+        });
+      }
       
       setChildProfiles(formattedProfiles);
       
@@ -191,7 +225,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
+      // 1. Insert into children table
+      const { data: childData, error: childError } = await supabase
         .from("children")
         .insert([
           {
@@ -200,35 +235,57 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             age: profile.age,
             gender: profile.gender,
             grade: profile.grade,
-            school: profile.school,
-            interests: profile.interests,
-            challenges: profile.challenges,
             avatar: profile.avatar,
             creation_status: profile.creationStatus,
-            daily_check_in_completed: false,
-            xp_points: 0,
-            streak_count: 0,
-            badges: [],
             date_of_birth: profile.dateOfBirth,
-            relationship_to_parent: profile.relationshipToParent,
-            learning_styles: profile.learningStyles,
-            sel_strengths: profile.selStrengths,
-            story_preferences: profile.storyPreferences,
-            sel_challenges: profile.selChallenges,
-          },
+            relationship_to_parent: profile.relationshipToParent
+          }
         ])
         .select();
         
-      if (error) {
-        console.error("Error adding child profile:", error);
+      if (childError || !childData || childData.length === 0) {
+        console.error("Error adding child profile:", childError);
         return;
+      }
+      
+      const childId = childData[0].id;
+      
+      // 2. Insert into child_preferences table
+      const { error: prefError } = await supabase
+        .from("child_preferences")
+        .insert([{
+          child_id: childId,
+          interests: profile.interests || [],
+          challenges: profile.challenges || [],
+          learning_styles: profile.learningStyles || [],
+          strengths: profile.selStrengths || [],
+          story_preferences: profile.storyPreferences || []
+        }]);
+        
+      if (prefError) {
+        console.error("Error adding preferences:", prefError);
+      }
+      
+      // 3. Insert into child_progress table
+      const { error: progressError } = await supabase
+        .from("child_progress")
+        .insert([{
+          child_id: childId,
+          daily_check_in_completed: false,
+          xp_points: 0,
+          streak_count: 0,
+          badges: []
+        }]);
+        
+      if (progressError) {
+        console.error("Error adding progress:", progressError);
       }
       
       await refreshChildProfiles();
       
       // Set the newly created profile as current
-      if (data && data.length > 0) {
-        setCurrentChildId(data[0].id);
+      if (childId) {
+        setCurrentChildId(childId);
       }
       
     } catch (error) {
@@ -240,42 +297,104 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
-      // Convert the profile object to the database schema
-      const dbProfile: any = {};
+      // Update different tables based on what properties are being updated
       
-      if (profile.nickname !== undefined) dbProfile.nickname = profile.nickname;
-      if (profile.age !== undefined) dbProfile.age = profile.age;
-      if (profile.gender !== undefined) dbProfile.gender = profile.gender;
-      if (profile.grade !== undefined) dbProfile.grade = profile.grade;
-      if (profile.school !== undefined) dbProfile.school = profile.school;
-      if (profile.interests !== undefined) dbProfile.interests = profile.interests;
-      if (profile.challenges !== undefined) dbProfile.challenges = profile.challenges;
-      if (profile.avatar !== undefined) dbProfile.avatar = profile.avatar;
-      if (profile.creationStatus !== undefined) dbProfile.creation_status = profile.creationStatus;
-      if (profile.dailyCheckInCompleted !== undefined) dbProfile.daily_check_in_completed = profile.dailyCheckInCompleted;
-      if (profile.lastCheckInDate !== undefined) dbProfile.last_check_in_date = profile.lastCheckInDate;
-      if (profile.xpPoints !== undefined) dbProfile.xp_points = profile.xpPoints;
-      if (profile.streakCount !== undefined) dbProfile.streak_count = profile.streakCount;
-      if (profile.badges !== undefined) dbProfile.badges = profile.badges;
-      if (profile.dateOfBirth !== undefined) dbProfile.date_of_birth = profile.dateOfBirth;
-      if (profile.relationshipToParent !== undefined) dbProfile.relationship_to_parent = profile.relationshipToParent;
-      if (profile.learningStyles !== undefined) dbProfile.learning_styles = profile.learningStyles;
-      if (profile.selStrengths !== undefined) dbProfile.sel_strengths = profile.selStrengths;
-      if (profile.storyPreferences !== undefined) dbProfile.story_preferences = profile.storyPreferences;
-      if (profile.selChallenges !== undefined) dbProfile.sel_challenges = profile.selChallenges;
-      
-      const { error } = await supabase
-        .from("children")
-        .update(dbProfile)
-        .eq("id", id)
-        .eq("parent_id", user.id);
+      // 1. Update children table if needed
+      if (
+        profile.nickname !== undefined ||
+        profile.age !== undefined ||
+        profile.gender !== undefined ||
+        profile.grade !== undefined ||
+        profile.avatar !== undefined ||
+        profile.creationStatus !== undefined ||
+        profile.dateOfBirth !== undefined ||
+        profile.relationshipToParent !== undefined
+      ) {
+        const childUpdate: any = {};
         
-      if (error) {
-        console.error("Error updating child profile:", error);
-        return;
+        if (profile.nickname !== undefined) childUpdate.nickname = profile.nickname;
+        if (profile.age !== undefined) childUpdate.age = profile.age;
+        if (profile.gender !== undefined) childUpdate.gender = profile.gender;
+        if (profile.grade !== undefined) childUpdate.grade = profile.grade;
+        if (profile.avatar !== undefined) childUpdate.avatar = profile.avatar;
+        if (profile.creationStatus !== undefined) childUpdate.creation_status = profile.creationStatus;
+        if (profile.dateOfBirth !== undefined) childUpdate.date_of_birth = profile.dateOfBirth;
+        if (profile.relationshipToParent !== undefined) childUpdate.relationship_to_parent = profile.relationshipToParent;
+        
+        const { error } = await supabase
+          .from("children")
+          .update(childUpdate)
+          .eq("id", id)
+          .eq("parent_id", user.id);
+          
+        if (error) {
+          console.error("Error updating child:", error);
+          return;
+        }
       }
       
-      await refreshChildProfiles();
+      // 2. Update child_preferences table if needed
+      if (
+        profile.interests !== undefined ||
+        profile.challenges !== undefined ||
+        profile.learningStyles !== undefined ||
+        profile.selStrengths !== undefined ||
+        profile.storyPreferences !== undefined ||
+        profile.selChallenges !== undefined
+      ) {
+        const prefUpdate: any = {};
+        
+        if (profile.interests !== undefined) prefUpdate.interests = profile.interests;
+        if (profile.challenges !== undefined) prefUpdate.challenges = profile.challenges;
+        if (profile.learningStyles !== undefined) prefUpdate.learning_styles = profile.learningStyles;
+        if (profile.selStrengths !== undefined) prefUpdate.strengths = profile.selStrengths;
+        if (profile.storyPreferences !== undefined) prefUpdate.story_preferences = profile.storyPreferences;
+        if (profile.selChallenges !== undefined) prefUpdate.challenges = profile.selChallenges;
+        
+        const { error } = await supabase
+          .from("child_preferences")
+          .update(prefUpdate)
+          .eq("child_id", id);
+          
+        if (error) {
+          console.error("Error updating preferences:", error);
+        }
+      }
+      
+      // 3. Update child_progress table if needed
+      if (
+        profile.dailyCheckInCompleted !== undefined ||
+        profile.lastCheckInDate !== undefined ||
+        profile.xpPoints !== undefined ||
+        profile.streakCount !== undefined ||
+        profile.badges !== undefined
+      ) {
+        const progressUpdate: any = {};
+        
+        if (profile.dailyCheckInCompleted !== undefined) progressUpdate.daily_check_in_completed = profile.dailyCheckInCompleted;
+        if (profile.lastCheckInDate !== undefined) progressUpdate.last_check_in = profile.lastCheckInDate;
+        if (profile.xpPoints !== undefined) progressUpdate.xp_points = profile.xpPoints;
+        if (profile.streakCount !== undefined) progressUpdate.streak_count = profile.streakCount;
+        if (profile.badges !== undefined) progressUpdate.badges = profile.badges;
+        
+        const { error } = await supabase
+          .from("child_progress")
+          .update(progressUpdate)
+          .eq("child_id", id);
+          
+        if (error) {
+          console.error("Error updating progress:", error);
+        }
+      }
+      
+      // Update local state
+      setChildProfiles(prev => 
+        prev.map(child => 
+          child.id === id 
+            ? { ...child, ...profile } 
+            : child
+        )
+      );
       
     } catch (error) {
       console.error("Error in updateChildProfile:", error);
