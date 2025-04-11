@@ -1,0 +1,50 @@
+
+import { useUser } from "@/contexts/UserContext";
+import { motion } from "framer-motion";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { avatarOptions } from "@/constants/profileOptions";
+
+const ChildProfileSelector = () => {
+  const { childProfiles, setCurrentChildId } = useUser();
+
+  const getAvatarImage = (avatarId?: string) => {
+    if (!avatarId) return avatarOptions[0].src;
+    const avatar = avatarOptions.find(a => a.id === avatarId);
+    return avatar ? avatar.src : avatarOptions[0].src;
+  };
+
+  return (
+    <div className="mb-8 sprout-card">
+      <h2 className="text-xl font-bold mb-4">Select a Child Profile</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {childProfiles.map(profile => (
+          <motion.div 
+            key={profile.id}
+            className="p-4 bg-white rounded-lg border-2 border-sprout-purple/20 hover:border-sprout-purple cursor-pointer transition-all hover:shadow-md"
+            onClick={() => setCurrentChildId(profile.id)}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="flex flex-col items-center text-center">
+              <Avatar className="h-16 w-16 mb-2">
+                <AvatarImage src={getAvatarImage(profile.avatar)} alt={profile.nickname} />
+                <AvatarFallback>{profile.nickname.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+              <h3 className="font-bold text-lg">{profile.nickname}</h3>
+              <p className="text-sm text-gray-500">Age: {profile.age}</p>
+              <p className="text-sm text-gray-500">Grade: {profile.grade}</p>
+              {profile.creationStatus && (
+                <Badge className={profile.creationStatus === 'completed' ? 'bg-green-500' : 'bg-amber-500'}>
+                  {profile.creationStatus === 'completed' ? 'Complete' : 'Pending'}
+                </Badge>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default ChildProfileSelector;
