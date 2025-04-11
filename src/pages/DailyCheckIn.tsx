@@ -43,7 +43,7 @@ const emotionFeelingMap = {
 const DailyCheckIn = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getCurrentChild, currentChildId, markDailyCheckInComplete } = useUser();
+  const { getCurrentChild, currentChildId, markDailyCheckInComplete, childProfiles, setChildProfiles } = useUser();
   const currentChild = getCurrentChild();
   
   const [step, setStep] = useState(1);
@@ -71,9 +71,10 @@ const DailyCheckIn = () => {
       
       if (currentChild.dailyCheckInCompleted && currentChild.lastCheckInDate && 
           isToday(currentChild.lastCheckInDate)) {
-        console.log("Daily check-in already completed for today");
+        console.log("Daily check-in already completed for today", currentChild.lastCheckInDate);
         setAlreadyCompletedToday(true);
       } else {
+        console.log("Daily check-in not completed today", currentChild);
         setAlreadyCompletedToday(false);
       }
     }
@@ -182,6 +183,8 @@ const DailyCheckIn = () => {
   const completeCheckIn = () => {
     if (currentChildId) {
       const currentDate = new Date().toISOString();
+      console.log("Marking daily check-in as complete with date:", currentDate);
+      
       markDailyCheckInComplete(currentChildId, currentDate);
       
       successToast({
@@ -189,7 +192,7 @@ const DailyCheckIn = () => {
         description: "Great job sharing how you feel today! You earned 10 XP!"
       });
       
-      console.log({
+      console.log("Check-in data:", {
         childId: currentChildId,
         date: new Date().toISOString().split('T')[0],
         mood: selectedFeeling || mood,
@@ -228,6 +231,21 @@ const DailyCheckIn = () => {
           });
       } catch (error) {
         console.error("Error logging activity:", error);
+      }
+      
+      // Update local state to show completion immediately
+      if (childProfiles.length > 0 && currentChildId) {
+        const updatedProfiles = childProfiles.map(profile => {
+          if (profile.id === currentChildId) {
+            return {
+              ...profile,
+              dailyCheckInCompleted: true,
+              lastCheckInDate: currentDate
+            };
+          }
+          return profile;
+        });
+        setChildProfiles(updatedProfiles);
       }
       
       setStep(totalSteps + 1);

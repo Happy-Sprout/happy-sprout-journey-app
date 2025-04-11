@@ -280,34 +280,54 @@ export async function markDailyCheckInComplete(
   date = new Date().toISOString()
 ) {
   try {
+    console.log("markDailyCheckInComplete called with:", { childId, date });
     const streakIncrement = currentChild.dailyCheckInCompleted ? 0 : 1;
     const xpIncrement = currentChild.dailyCheckInCompleted ? 0 : 10;
     
-    await updateChildProfile(childId, { 
+    const updateData = { 
       dailyCheckInCompleted: true,
       lastCheckInDate: date,
       streakCount: (currentChild.streakCount || 0) + streakIncrement,
       xpPoints: (currentChild.xpPoints || 0) + xpIncrement
-    });
+    };
+    
+    console.log("Updating child profile with:", updateData);
+    
+    const { data, error } = await supabase
+      .from('child_progress')
+      .update({ 
+        daily_check_in_completed: true,
+        last_check_in: date,
+        streak_count: (currentChild.streakCount || 0) + streakIncrement,
+        xp_points: (currentChild.xpPoints || 0) + xpIncrement
+      })
+      .eq('child_id', childId);
+      
+    if (error) {
+      console.error("Error updating child progress:", error);
+      throw error;
+    }
+    
+    console.log("Child progress updated successfully:", data);
     
     try {
       await supabase
         .from('user_activity_logs')
-        .insert([
-          {
-            user_id: childId,
-            user_type: 'child',
-            action_type: 'daily_check_in_completed',
-            action_details: {
-              date: date,
-              streakCount: (currentChild.streakCount || 0) + streakIncrement
-            }
+        .insert([{
+          user_id: childId,
+          user_type: 'child',
+          action_type: 'daily_check_in_completed',
+          action_details: {
+            date: date,
+            streakCount: (currentChild.streakCount || 0) + streakIncrement
           }
-        ]);
+        }]);
       console.log("Daily check-in logged successfully");
     } catch (error) {
       console.error("Error logging check-in:", error);
     }
+    
+    return data;
   } catch (error) {
     console.error("Error in markDailyCheckInComplete:", error);
     throw error;

@@ -39,10 +39,17 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
         return checkInDate.toDateString() === today.toDateString();
       };
       
-      setDailyCheckInCompleted(
-        currentChild.dailyCheckInCompleted && 
-        isToday(currentChild.lastCheckInDate)
-      );
+      const isCompleted = currentChild.dailyCheckInCompleted && 
+                         isToday(currentChild.lastCheckInDate);
+                         
+      console.log("Daily check-in status:", {
+        isCompleted,
+        dailyCheckInCompleted: currentChild.dailyCheckInCompleted,
+        lastCheckInDate: currentChild.lastCheckInDate,
+        isToday: isToday(currentChild.lastCheckInDate)
+      });
+      
+      setDailyCheckInCompleted(isCompleted);
     }
   }, [currentChild]);
 

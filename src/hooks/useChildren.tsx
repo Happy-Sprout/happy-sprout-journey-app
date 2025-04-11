@@ -230,6 +230,21 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       childrenDb.markDailyCheckInComplete(childId, currentChild, date)
         .then(() => {
           console.log("Daily check-in marked as complete successfully");
+          
+          // Update the local state as well
+          setChildProfiles(prevProfiles => 
+            prevProfiles.map(profile => 
+              profile.id === childId 
+                ? { 
+                    ...profile, 
+                    dailyCheckInCompleted: true, 
+                    lastCheckInDate: date,
+                    streakCount: profile.streakCount + 1,
+                    xpPoints: profile.xpPoints + 10
+                  } 
+                : profile
+            )
+          );
         })
         .catch(error => {
           console.error("Error marking daily check-in:", error);
