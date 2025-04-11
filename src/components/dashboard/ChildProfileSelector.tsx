@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { avatarOptions } from "@/constants/profileOptions";
-import { Bear, Bird, Dog, Fox, Sprout, User } from "lucide-react";
+import { Cat, Bird, Dog, Rabbit, Sprout, User } from "lucide-react";
 
 const ChildProfileSelector = () => {
   const { childProfiles, setCurrentChildId } = useUser();
@@ -26,9 +26,9 @@ const ChildProfileSelector = () => {
       case 'sprout':
         return <Sprout className="h-6 w-6 text-sprout-green" />;
       case 'bear':
-        return <Bear className="h-6 w-6 text-amber-700" />;
+        return <Cat className="h-6 w-6 text-amber-700" />; // Using Cat instead of Bear
       case 'fox':
-        return <Fox className="h-6 w-6 text-orange-500" />;
+        return <Rabbit className="h-6 w-6 text-orange-500" />; // Using Rabbit instead of Fox
       case 'lion':
         return <Bird className="h-6 w-6 text-yellow-600" />; // Using Bird as Lion is not in Lucide
       case 'bird':

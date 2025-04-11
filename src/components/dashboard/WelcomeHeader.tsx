@@ -2,7 +2,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { avatarOptions } from "@/constants/profileOptions";
 import { ChildProfile } from "@/contexts/UserContext";
-import { Bear, Bird, Dog, Fox, Sprout, User } from "lucide-react";
+import { Cat, Dog, Bird, Sprout, User, Rabbit } from "lucide-react";
 
 interface WelcomeHeaderProps {
   currentChild: ChildProfile;
@@ -26,9 +26,9 @@ const WelcomeHeader = ({ currentChild }: WelcomeHeaderProps) => {
       case 'sprout':
         return <Sprout className="h-8 w-8 text-sprout-green" />;
       case 'bear':
-        return <Bear className="h-8 w-8 text-amber-700" />;
+        return <Cat className="h-8 w-8 text-amber-700" />; // Using Cat instead of Bear
       case 'fox':
-        return <Fox className="h-8 w-8 text-orange-500" />;
+        return <Rabbit className="h-8 w-8 text-orange-500" />; // Using Rabbit instead of Fox
       case 'lion':
         return <Bird className="h-8 w-8 text-yellow-600" />; // Using Bird as Lion is not in Lucide
       case 'bird':
