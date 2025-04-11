@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { avatarOptions } from "@/constants/profileOptions";
+import { Bear, Bird, Dog, Fox, Sprout } from "lucide-react";
 
 interface AvatarSelectorProps {
   selectedAvatar: string;
@@ -10,6 +11,26 @@ interface AvatarSelectorProps {
 }
 
 const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
+  // Function to render the appropriate icon based on avatar type
+  const getAvatarFallbackIcon = (iconName?: string) => {
+    switch (iconName) {
+      case 'sprout':
+        return <Sprout className="h-8 w-8 text-sprout-green" />;
+      case 'bear':
+        return <Bear className="h-8 w-8 text-amber-700" />;
+      case 'fox':
+        return <Fox className="h-8 w-8 text-orange-500" />;
+      case 'lion':
+        return <Bird className="h-8 w-8 text-yellow-600" />; // Using Bird as Lion is not in Lucide
+      case 'bird':
+        return <Bird className="h-8 w-8 text-blue-500" />;
+      case 'dog':
+        return <Dog className="h-8 w-8 text-amber-500" />;
+      default:
+        return <Sprout className="h-8 w-8 text-sprout-green" />;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Label className="text-base font-medium block">Choose Your Avatar</Label>
@@ -25,8 +46,13 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
             }`}
           >
             <Avatar className="h-16 w-16 mb-2">
-              <AvatarImage src={avatar.src} alt={avatar.name} />
-              <AvatarFallback>{avatar.name.substring(0, 2)}</AvatarFallback>
+              <AvatarImage 
+                src={avatar.src} 
+                alt={avatar.name} 
+              />
+              <AvatarFallback className="bg-gray-100">
+                {getAvatarFallbackIcon(avatar.icon)}
+              </AvatarFallback>
             </Avatar>
             <span className="text-xs text-center">{avatar.name}</span>
           </div>

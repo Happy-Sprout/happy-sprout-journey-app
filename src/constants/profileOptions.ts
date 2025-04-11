@@ -1,12 +1,11 @@
-
 // Avatar options for profile creation
 export const avatarOptions = [
-  { id: 'avatar1', name: 'Happy Plant', src: '/lovable-uploads/c1e8ccec-8b46-4a25-853f-255a861762d1.png' },
-  { id: 'avatar2', name: 'Friendly Bear', src: '/placeholder.svg' },
-  { id: 'avatar3', name: 'Clever Fox', src: '/placeholder.svg' },
-  { id: 'avatar4', name: 'Brave Lion', src: '/placeholder.svg' },
-  { id: 'avatar5', name: 'Wise Owl', src: '/placeholder.svg' },
-  { id: 'avatar6', name: 'Playful Puppy', src: '/placeholder.svg' },
+  { id: 'avatar1', name: 'Happy Plant', src: '/lovable-uploads/c1e8ccec-8b46-4a25-853f-255a861762d1.png', icon: 'sprout' },
+  { id: 'avatar2', name: 'Friendly Bear', src: '/placeholder.svg', icon: 'bear' },
+  { id: 'avatar3', name: 'Clever Fox', src: '/placeholder.svg', icon: 'fox' },
+  { id: 'avatar4', name: 'Brave Lion', src: '/placeholder.svg', icon: 'lion' },
+  { id: 'avatar5', name: 'Wise Owl', src: '/placeholder.svg', icon: 'bird' },
+  { id: 'avatar6', name: 'Playful Puppy', src: '/placeholder.svg', icon: 'dog' },
 ];
 
 // Grade options for dropdown selection

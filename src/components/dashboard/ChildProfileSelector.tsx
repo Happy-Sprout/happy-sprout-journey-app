@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { avatarOptions } from "@/constants/profileOptions";
+import { Bear, Bird, Dog, Fox, Sprout, User } from "lucide-react";
 
 const ChildProfileSelector = () => {
   const { childProfiles, setCurrentChildId } = useUser();
@@ -12,6 +13,31 @@ const ChildProfileSelector = () => {
     if (!avatarId) return avatarOptions[0].src;
     const avatar = avatarOptions.find(a => a.id === avatarId);
     return avatar ? avatar.src : avatarOptions[0].src;
+  };
+
+  const getAvatarIcon = (avatarId?: string) => {
+    if (!avatarId) return 'sprout';
+    const avatar = avatarOptions.find(a => a.id === avatarId);
+    return avatar?.icon || 'sprout';
+  };
+
+  const getFallbackIcon = (iconName?: string) => {
+    switch (iconName) {
+      case 'sprout':
+        return <Sprout className="h-6 w-6 text-sprout-green" />;
+      case 'bear':
+        return <Bear className="h-6 w-6 text-amber-700" />;
+      case 'fox':
+        return <Fox className="h-6 w-6 text-orange-500" />;
+      case 'lion':
+        return <Bird className="h-6 w-6 text-yellow-600" />; // Using Bird as Lion is not in Lucide
+      case 'bird':
+        return <Bird className="h-6 w-6 text-blue-500" />;
+      case 'dog':
+        return <Dog className="h-6 w-6 text-amber-500" />;
+      default:
+        return <User className="h-6 w-6 text-gray-500" />;
+    }
   };
 
   return (
@@ -29,7 +55,9 @@ const ChildProfileSelector = () => {
             <div className="flex flex-col items-center text-center">
               <Avatar className="h-16 w-16 mb-2">
                 <AvatarImage src={getAvatarImage(profile.avatar)} alt={profile.nickname} />
-                <AvatarFallback>{profile.nickname.substring(0, 2)}</AvatarFallback>
+                <AvatarFallback className="bg-gray-100">
+                  {getFallbackIcon(getAvatarIcon(profile.avatar))}
+                </AvatarFallback>
               </Avatar>
               <h3 className="font-bold text-lg">{profile.nickname}</h3>
               <p className="text-sm text-gray-500">Age: {profile.age}</p>
