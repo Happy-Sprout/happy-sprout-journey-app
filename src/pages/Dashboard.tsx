@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { format } from "date-fns";
 import NoActiveChildPrompt from "@/components/dashboard/NoActiveChildPrompt";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -21,7 +21,6 @@ const Dashboard = () => {
   const [journalCompleted, setJournalCompleted] = useState(false);
   const [dailyCheckInCompleted, setDailyCheckInCompleted] = useState(false);
   
-  // Get journal entries to check if today's entry exists
   const { getTodayEntry } = useJournalEntries(currentChildId);
   
   useEffect(() => {
@@ -35,10 +34,8 @@ const Dashboard = () => {
     checkTodayJournalEntry();
   }, [currentChildId, getTodayEntry]);
   
-  // Check if daily check-in was done today
   useEffect(() => {
     if (currentChild) {
-      // Compare the date of the latest check-in with today's date
       const isToday = (date) => {
         if (!date) return false;
         const checkInDate = new Date(date);
@@ -53,7 +50,6 @@ const Dashboard = () => {
     }
   }, [currentChild]);
   
-  // Mock quotes for demo
   const motivationalQuotes = [
     "Believe you can and you're halfway there.",
     "You are braver than you believe, stronger than you seem, and smarter than you think.",
@@ -64,14 +60,12 @@ const Dashboard = () => {
   
   const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
 
-  // Get avatar image for the child
   const getAvatarImage = (avatarId?: string) => {
     if (!avatarId) return avatarOptions[0].src;
     const avatar = avatarOptions.find(a => a.id === avatarId);
     return avatar ? avatar.src : avatarOptions[0].src;
   };
 
-  // Mockup achievements and what's next
   const achievements = [
     { 
       title: "First Login", 
@@ -291,7 +285,6 @@ const Dashboard = () => {
                   </Card>
                 </div>
 
-                {/* New Achievements Section */}
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                     <Trophy className="h-6 w-6 text-sprout-orange" />
