@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -74,7 +73,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, parentInfo]);
   
-  // Load currentChildId from localStorage on initial load
   useEffect(() => {
     const savedChildId = localStorage.getItem("currentChildId");
     if (savedChildId) {
@@ -82,7 +80,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Save currentChildId to localStorage
   useEffect(() => {
     if (currentChildId) {
       localStorage.setItem("currentChildId", currentChildId);
@@ -189,7 +186,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      // Generate a new ID for the child
       const childId = uuidv4();
       console.log("Adding child profile with ID:", childId);
       
@@ -218,8 +214,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Fix for line 476 - We need to properly handle the Promise
-      // Using async/await properly here
       try {
         const { error: prefError } = await supabase
           .from('child_preferences')
@@ -239,7 +233,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error inserting preferences:", error);
       }
       
-      // Same fix for progress insertion
       try {
         const { error: progressError } = await supabase
           .from('child_progress')
@@ -258,18 +251,20 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error inserting progress:", error);
       }
       
-      // Fetch the updated child profiles after adding the new one
-      if (user.id) {
-        await fetchChildProfiles(user.id);
+      try {
+        if (user.id) {
+          await fetchChildProfiles(user.id);
+        }
+        
+        toast({
+          title: "Success",
+          description: `Profile for ${profile.nickname} created successfully!`
+        });
+        
+        setCurrentChildId(childId);
+      } catch (error) {
+        console.error("Error fetching updated profiles:", error);
       }
-      
-      toast({
-        title: "Success",
-        description: `Profile for ${profile.nickname} created successfully!`
-      });
-      
-      // Set the newly created profile as current
-      setCurrentChildId(childId);
       
     } catch (error) {
       console.error("Error in addChildProfile:", error);
@@ -467,7 +462,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         xpPoints: (currentChild.xpPoints || 0) + xpIncrement
       });
       
-      // Log completion to the database
       supabase
         .from('user_activity_logs')
         .insert([
