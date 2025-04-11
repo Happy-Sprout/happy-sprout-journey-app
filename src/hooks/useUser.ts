@@ -1,9 +1,7 @@
 
 import { useAuth } from "./useAuth";
-import { useParent } from "./useParent";
-import { useChildren } from "./useChildren";
-import { ParentInfo } from "./useParent";
-import { ChildProfile } from "./useChildren";
+import { useParent, ParentInfo } from "./useParent";
+import { useChildren, ChildProfile } from "./useChildren";
 
 // This hook combines all the functionality from the separate contexts
 // for backwards compatibility
@@ -29,15 +27,16 @@ export const useUser = () => {
     
     // Children properties
     childProfiles: children.childProfiles,
-    setChildProfiles: children.setChildProfiles,
     addChildProfile: children.addChildProfile,
     updateChildProfile: children.updateChildProfile,
+    removeChildProfile: children.deleteChildProfile,
     deleteChildProfile: children.deleteChildProfile,
     currentChildId: children.currentChildId,
     setCurrentChildId: children.setCurrentChildId,
     getCurrentChild: children.getCurrentChild,
     calculateAgeFromDOB: children.calculateAgeFromDOB,
     markDailyCheckInComplete: children.markDailyCheckInComplete,
+    refreshChildProfiles: children.fetchChildProfiles,
     setRelationshipToParent: children.setRelationshipToParent
   };
 };

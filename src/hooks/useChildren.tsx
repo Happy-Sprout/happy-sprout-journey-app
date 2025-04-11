@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,51 +10,55 @@ export type ChildProfile = {
   id: string;
   nickname: string;
   age: number;
-  dateOfBirth: string;
   gender?: string;
-  grade: string;
+  grade?: string;
+  school?: string;
+  interests?: string[];
+  challenges?: string[];
+  avatar?: string;
+  creationStatus?: "pending" | "completed";
+  createdAt: string;
+  dailyCheckInCompleted?: boolean;
+  lastCheckInDate?: string;
+  xpPoints: number;
+  streakCount: number;
+  badges: string[];
+  dateOfBirth?: string;
   learningStyles?: string[];
   selStrengths?: string[];
-  avatar?: string;
-  interests: string[];
-  storyPreferences: string[];
-  selChallenges: string[];
-  streakCount: number;
-  xpPoints: number;
-  badges: string[];
-  creationStatus?: 'completed' | 'pending';
-  dailyCheckInCompleted?: boolean;
+  storyPreferences?: string[];
+  selChallenges?: string[];
   relationshipToParent?: string;
 };
 
 type ChildrenContextType = {
   childProfiles: ChildProfile[];
   setChildProfiles: (profiles: ChildProfile[]) => void;
-  addChildProfile: (profile: ChildProfile) => void;
-  updateChildProfile: (id: string, profile: Partial<ChildProfile>) => void;
-  deleteChildProfile: (id: string) => void;
+  addChildProfile: (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">) => Promise<void>;
+  updateChildProfile: (id: string, profile: Partial<ChildProfile>) => Promise<void>;
+  deleteChildProfile: (id: string) => Promise<void>;
   currentChildId: string | null;
   setCurrentChildId: (id: string | null) => void;
   getCurrentChild: () => ChildProfile | undefined;
   calculateAgeFromDOB: (dob: string) => number;
-  markDailyCheckInComplete: (id: string) => void;
-  setRelationshipToParent: (childId: string, relationship: string) => void;
-  fetchChildProfiles: (parentId: string) => Promise<void>;
+  markDailyCheckInComplete: (childId: string, date?: string) => void;
+  fetchChildProfiles: (userId: string) => Promise<void>;
+  setRelationshipToParent: (childId: string, relationship: string) => Promise<void>;
 };
 
 const ChildrenContext = createContext<ChildrenContextType>({
   childProfiles: [],
   setChildProfiles: () => {},
-  addChildProfile: () => {},
-  updateChildProfile: () => {},
-  deleteChildProfile: () => {},
+  addChildProfile: async () => {},
+  updateChildProfile: async () => {},
+  deleteChildProfile: async () => {},
   currentChildId: null,
   setCurrentChildId: () => {},
   getCurrentChild: () => undefined,
   calculateAgeFromDOB: () => 0,
   markDailyCheckInComplete: () => {},
-  setRelationshipToParent: () => {},
   fetchChildProfiles: async () => {},
+  setRelationshipToParent: async () => {},
 });
 
 export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
@@ -68,6 +73,23 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       fetchChildProfiles(user.id);
     }
   }, [user, parentInfo]);
+  
+  // Load currentChildId from localStorage on initial load
+  useEffect(() => {
+    const savedChildId = localStorage.getItem("currentChildId");
+    if (savedChildId) {
+      setCurrentChildId(savedChildId);
+    }
+  }, []);
+
+  // Save currentChildId to localStorage
+  useEffect(() => {
+    if (currentChildId) {
+      localStorage.setItem("currentChildId", currentChildId);
+    } else {
+      localStorage.removeItem("currentChildId");
+    }
+  }, [currentChildId]);
   
   const fetchChildProfiles = async (parentId: string) => {
     if (!parentInfo) {
@@ -128,6 +150,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
           grade: child.grade || '',
           avatar: child.avatar,
           creationStatus: (child.creation_status as 'completed' | 'pending') || 'pending',
+          createdAt: child.created_at,
           relationshipToParent: child.relationship_to_parent,
           learningStyles: preferencesData?.learning_styles || [],
           selStrengths: preferencesData?.strengths || [],
@@ -137,7 +160,8 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
           streakCount: progressData?.streak_count || 0,
           xpPoints: progressData?.xp_points || 0,
           badges: progressData?.badges || [],
-          dailyCheckInCompleted: progressData?.daily_check_in_completed || false
+          dailyCheckInCompleted: progressData?.daily_check_in_completed || false,
+          lastCheckInDate: progressData?.last_check_in || '',
         });
       }
       
@@ -153,7 +177,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const addChildProfile = async (profile: ChildProfile) => {
+  const addChildProfile = async (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">) => {
     if (!user || !parentInfo) {
       console.error("Cannot add child profile: no user logged in or parent profile not created");
       toast({
@@ -165,12 +189,13 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      const childId = profile.id || uuidv4();
+      // Generate a new ID for the child
+      const childId = uuidv4();
       console.log("Adding child profile with ID:", childId);
       
       const { error: childError } = await supabase
         .from('children')
-        .insert([{
+        .insert({
           id: childId,
           parent_id: user.id,
           nickname: profile.nickname,
@@ -181,7 +206,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
           avatar: profile.avatar || null,
           creation_status: profile.creationStatus || 'pending',
           relationship_to_parent: profile.relationshipToParent || null
-        }]);
+        });
         
       if (childError) {
         console.error("Error adding child:", childError);
@@ -195,14 +220,14 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       
       const { error: prefError } = await supabase
         .from('child_preferences')
-        .insert([{
+        .insert({
           child_id: childId,
           learning_styles: profile.learningStyles || [],
           strengths: profile.selStrengths || [],
           interests: profile.interests || [],
           story_preferences: profile.storyPreferences || [],
           challenges: profile.selChallenges || []
-        }]);
+        });
         
       if (prefError) {
         console.error("Error adding preferences:", prefError);
@@ -210,30 +235,31 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         
       const { error: progressError } = await supabase
         .from('child_progress')
-        .insert([{
+        .insert({
           child_id: childId,
-          streak_count: profile.streakCount || 0,
-          xp_points: profile.xpPoints || 0,
-          badges: profile.badges || [],
-          daily_check_in_completed: profile.dailyCheckInCompleted || false
-        }]);
+          streak_count: 0,
+          xp_points: 0,
+          badges: [],
+          daily_check_in_completed: false
+        });
       
       if (progressError) {
         console.error("Error adding progress:", progressError);
       }
       
-      const newProfile = {...profile, id: childId};
-      setChildProfiles((prev) => [...prev, newProfile]);
+      // Fetch the updated child profiles after adding the new one
+      if (user.id) {
+        await fetchChildProfiles(user.id);
+      }
       
       toast({
         title: "Success",
         description: `Profile for ${profile.nickname} created successfully!`
       });
       
-      if (childProfiles.length === 0) {
-        console.log("Setting current child to newly created profile:", childId);
-        setCurrentChildId(childId);
-      }
+      // Set the newly created profile as current
+      setCurrentChildId(childId);
+      
     } catch (error) {
       console.error("Error in addChildProfile:", error);
       toast({
@@ -316,18 +342,15 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         updatedInfo.streakCount !== undefined ||
         updatedInfo.xpPoints !== undefined ||
         updatedInfo.badges !== undefined ||
-        updatedInfo.dailyCheckInCompleted !== undefined
+        updatedInfo.dailyCheckInCompleted !== undefined ||
+        updatedInfo.lastCheckInDate !== undefined
       ) {
         const progressUpdate: any = {};
         if (updatedInfo.streakCount !== undefined) progressUpdate.streak_count = updatedInfo.streakCount;
         if (updatedInfo.xpPoints !== undefined) progressUpdate.xp_points = updatedInfo.xpPoints;
         if (updatedInfo.badges !== undefined) progressUpdate.badges = updatedInfo.badges;
-        if (updatedInfo.dailyCheckInCompleted !== undefined) {
-          progressUpdate.daily_check_in_completed = updatedInfo.dailyCheckInCompleted;
-          if (updatedInfo.dailyCheckInCompleted) {
-            progressUpdate.last_check_in = new Date().toISOString();
-          }
-        }
+        if (updatedInfo.dailyCheckInCompleted !== undefined) progressUpdate.daily_check_in_completed = updatedInfo.dailyCheckInCompleted;
+        if (updatedInfo.lastCheckInDate !== undefined) progressUpdate.last_check_in = updatedInfo.lastCheckInDate;
         
         const { error } = await supabase
           .from('child_progress')
@@ -414,38 +437,45 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     return age;
   };
 
-  const markDailyCheckInComplete = async (id: string) => {
+  const markDailyCheckInComplete = (childId: string, date = new Date().toISOString()) => {
     try {
-      console.log("Marking daily check-in as complete for child:", id);
-      const currentChild = childProfiles.find(child => child.id === id);
+      console.log("Marking daily check-in as complete for child:", childId);
+      const currentChild = childProfiles.find(child => child.id === childId);
       if (!currentChild) {
-        console.error("Child not found:", id);
+        console.error("Child not found:", childId);
         return;
       }
       
       const streakIncrement = currentChild.dailyCheckInCompleted ? 0 : 1;
       const xpIncrement = currentChild.dailyCheckInCompleted ? 0 : 10;
       
-      updateChildProfile(id, { 
+      updateChildProfile(childId, { 
         dailyCheckInCompleted: true,
+        lastCheckInDate: date,
         streakCount: (currentChild.streakCount || 0) + streakIncrement,
         xpPoints: (currentChild.xpPoints || 0) + xpIncrement
       });
       
       // Log completion to the database
-      await supabase
+      supabase
         .from('user_activity_logs')
         .insert([
           {
-            user_id: id,
+            user_id: childId,
             user_type: 'child',
             action_type: 'daily_check_in_completed',
             action_details: {
-              date: new Date().toISOString(),
+              date: date,
               streakCount: (currentChild.streakCount || 0) + streakIncrement
             }
           }
-        ]);
+        ])
+        .then(() => {
+          console.log("Daily check-in logged successfully");
+        })
+        .catch(error => {
+          console.error("Error logging check-in:", error);
+        });
         
       console.log("Daily check-in marked as complete successfully");
     } catch (error) {
@@ -453,8 +483,8 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const setRelationshipToParent = (childId: string, relationship: string) => {
-    updateChildProfile(childId, { relationshipToParent: relationship });
+  const setRelationshipToParent = async (childId: string, relationship: string) => {
+    await updateChildProfile(childId, { relationshipToParent: relationship });
   };
 
   return (
