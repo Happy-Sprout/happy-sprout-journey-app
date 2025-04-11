@@ -42,6 +42,15 @@ const MultipleCheckboxGroup = ({
                 : "bg-white hover:bg-gray-50"
             }`}
             onClick={() => toggleOption(option.value)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleOption(option.value);
+              }
+            }}
+            aria-checked={selectedValues.includes(option.value)}
           >
             <Checkbox
               id={`option-${option.value}`}

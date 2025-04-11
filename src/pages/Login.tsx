@@ -9,17 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, AlertTriangleIcon } from "lucide-react";
+import { InfoIcon, AlertTriangleIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { loginWithEmail, isLoggedIn, user } = useAuth();
   const { checkAdminStatus } = useAdmin();
   const { toast } = useToast();
+
+  // Email validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // Check if already logged in
   useEffect(() => {
@@ -33,6 +39,13 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    
+    // Validate email format
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address (e.g., name@example.com)");
+      setLoading(false);
+      return;
+    }
     
     try {
       console.log("Login attempt with:", email);
@@ -62,6 +75,52 @@ const Login = () => {
       console.error("Login error in component:", error);
       setError(error.message || "Login failed. Please check your credentials.");
       setLoading(false);
+    }
+  };
+  
+  const handleResetPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address to reset your password.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address (e.g., name@example.com).",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setResetLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your email for a link to reset your password.",
+      });
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      toast({
+        title: "Password Reset Failed",
+        description: error.message || "Could not send password reset email. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -110,23 +169,39 @@ const Login = () => {
                 />
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    to="/forgot-password"
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={resetLoading}
                     className="text-sm text-sprout-purple hover:underline"
                   >
-                    Forgot Password?
-                  </Link>
+                    {resetLoading ? "Sending..." : "Forgot Password?"}
+                  </button>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">

@@ -7,6 +7,7 @@ import { AdminProvider } from "@/contexts/AdminContext";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import DailyCheckIn from "@/pages/DailyCheckIn";
@@ -40,6 +41,7 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Protected parent routes */}
               <Route path="/dashboard" element={<Dashboard />} />
