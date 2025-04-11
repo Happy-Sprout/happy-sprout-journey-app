@@ -27,7 +27,7 @@ export const useUser = () => {
     
     // Children properties
     childProfiles: children.childProfiles,
-    setChildProfiles: children.setChildProfiles,  // Added this line to expose setChildProfiles
+    setChildProfiles: children.setChildProfiles,
     addChildProfile: children.addChildProfile,
     updateChildProfile: children.updateChildProfile,
     removeChildProfile: children.deleteChildProfile,

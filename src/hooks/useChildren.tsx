@@ -4,46 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useParent } from "./useParent";
 import * as childrenDb from "@/utils/childrenDb";
-
-export type ChildProfile = {
-  id: string;
-  nickname: string;
-  age: number;
-  gender?: string;
-  grade?: string;
-  school?: string;
-  interests?: string[];
-  challenges?: string[];
-  avatar?: string;
-  creationStatus?: "pending" | "completed";
-  createdAt: string;
-  dailyCheckInCompleted?: boolean;
-  lastCheckInDate?: string;
-  xpPoints: number;
-  streakCount: number;
-  badges: string[];
-  dateOfBirth?: string;
-  learningStyles?: string[];
-  selStrengths?: string[];
-  storyPreferences?: string[];
-  selChallenges?: string[];
-  relationshipToParent?: string;
-};
-
-type ChildrenContextType = {
-  childProfiles: ChildProfile[];
-  setChildProfiles: (profiles: ChildProfile[]) => void;
-  addChildProfile: (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">) => Promise<void>;
-  updateChildProfile: (id: string, profile: Partial<ChildProfile>) => Promise<void>;
-  deleteChildProfile: (id: string) => Promise<void>;
-  currentChildId: string | null;
-  setCurrentChildId: (id: string | null) => void;
-  getCurrentChild: () => ChildProfile | undefined;
-  calculateAgeFromDOB: (dob: string) => number;
-  markDailyCheckInComplete: (childId: string, date?: string) => void;
-  fetchChildProfiles: (userId: string) => Promise<void>;
-  setRelationshipToParent: (childId: string, relationship: string) => Promise<void>;
-};
+import { getCurrentChild, calculateAgeFromDOB, markDailyCheckInComplete } from "@/utils/childUtils";
+import { setRelationshipToParent as setChildRelationship } from "@/utils/childRelationshipUtils";
+import { ChildProfile, ChildrenContextType } from "@/types/childProfile";
 
 const ChildrenContext = createContext<ChildrenContextType>({
   childProfiles: [],
@@ -201,61 +164,14 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const getCurrentChild = () => {
-    return childProfiles.find((profile) => profile.id === currentChildId);
+  const getChildById = () => getCurrentChild(childProfiles, currentChildId);
+
+  const handleMarkDailyCheckInComplete = (childId: string, date = new Date().toISOString()) => {
+    markDailyCheckInComplete(childId, childProfiles, setChildProfiles, date);
   };
 
-  const calculateAgeFromDOB = (dob: string): number => {
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
-  const markDailyCheckInComplete = (childId: string, date = new Date().toISOString()) => {
-    try {
-      console.log("Marking daily check-in as complete for child:", childId);
-      const currentChild = childProfiles.find(child => child.id === childId);
-      if (!currentChild) {
-        console.error("Child not found:", childId);
-        return;
-      }
-      
-      childrenDb.markDailyCheckInComplete(childId, currentChild, date)
-        .then(() => {
-          console.log("Daily check-in marked as complete successfully");
-          
-          // Update the local state as well
-          setChildProfiles(prevProfiles => 
-            prevProfiles.map(profile => 
-              profile.id === childId 
-                ? { 
-                    ...profile, 
-                    dailyCheckInCompleted: true, 
-                    lastCheckInDate: date,
-                    streakCount: profile.streakCount + 1,
-                    xpPoints: profile.xpPoints + 10
-                  } 
-                : profile
-            )
-          );
-        })
-        .catch(error => {
-          console.error("Error marking daily check-in:", error);
-        });
-    } catch (error) {
-      console.error("Error in markDailyCheckInComplete:", error);
-    }
-  };
-
-  const setRelationshipToParent = async (childId: string, relationship: string) => {
-    await updateChildProfile(childId, { relationshipToParent: relationship });
+  const handleSetRelationshipToParent = async (childId: string, relationship: string) => {
+    await setChildRelationship(childId, relationship, updateChildProfile);
   };
 
   return (
@@ -268,10 +184,10 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         deleteChildProfile,
         currentChildId,
         setCurrentChildId,
-        getCurrentChild,
+        getCurrentChild: getChildById,
         calculateAgeFromDOB,
-        markDailyCheckInComplete,
-        setRelationshipToParent,
+        markDailyCheckInComplete: handleMarkDailyCheckInComplete,
+        setRelationshipToParent: handleSetRelationshipToParent,
         fetchChildProfiles
       }}
     >
@@ -281,3 +197,4 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useChildren = () => useContext(ChildrenContext);
+export type { ChildProfile };
