@@ -132,13 +132,13 @@ const Login = () => {
           <p className="text-gray-600">Nurturing Social-Emotional Growth</p>
         </div>
         
-        <Alert className="mb-6 bg-blue-50 border-blue-200">
+        {/* <Alert className="mb-6 bg-blue-50 border-blue-200">
           <InfoIcon className="h-4 w-4 text-blue-500" />
           <AlertTitle>Admin Access</AlertTitle>
           <AlertDescription>
             To access the admin panel, register a normal user account, and then use the Supabase dashboard to set them as an admin.
           </AlertDescription>
-        </Alert>
+        </Alert> */}
         
         {error && (
           <Alert className="mb-6 bg-red-50 border-red-200">
