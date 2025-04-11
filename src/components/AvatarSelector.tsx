@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { avatarOptions } from "@/constants/profileOptions";
-import { Cat, Bird, Dog, Rabbit, Sprout } from "lucide-react";
+import { Cat, Bird, Dog, Rabbit, Sprout, User } from "lucide-react";
 
 interface AvatarSelectorProps {
   selectedAvatar: string;
@@ -16,12 +16,10 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
     switch (iconName) {
       case 'sprout':
         return <Sprout className="h-8 w-8 text-sprout-green" />;
-      case 'bear':
+      case 'cat':
         return <Cat className="h-8 w-8 text-amber-700" />; // Using Cat instead of Bear
-      case 'fox':
+      case 'rabbit':
         return <Rabbit className="h-8 w-8 text-orange-500" />; // Using Rabbit instead of Fox
-      case 'lion':
-        return <Bird className="h-8 w-8 text-yellow-600" />; // Using Bird as Lion is not in Lucide
       case 'bird':
         return <Bird className="h-8 w-8 text-blue-500" />;
       case 'dog':
@@ -50,10 +48,6 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
                 src={avatar.src} 
                 alt={avatar.name} 
                 className="object-cover"
-                onError={(e) => {
-                  // When image fails to load, we display the fallback
-                  e.currentTarget.style.display = 'none';
-                }}
               />
               <AvatarFallback className="bg-gray-100">
                 {getAvatarFallbackIcon(avatar.icon)}

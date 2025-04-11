@@ -25,12 +25,10 @@ const ChildProfileSelector = () => {
     switch (iconName) {
       case 'sprout':
         return <Sprout className="h-6 w-6 text-sprout-green" />;
-      case 'bear':
-        return <Cat className="h-6 w-6 text-amber-700" />; // Using Cat instead of Bear
-      case 'fox':
-        return <Rabbit className="h-6 w-6 text-orange-500" />; // Using Rabbit instead of Fox
-      case 'lion':
-        return <Bird className="h-6 w-6 text-yellow-600" />; // Using Bird as Lion is not in Lucide
+      case 'cat':
+        return <Cat className="h-6 w-6 text-amber-700" />;
+      case 'rabbit':
+        return <Rabbit className="h-6 w-6 text-orange-500" />;
       case 'bird':
         return <Bird className="h-6 w-6 text-blue-500" />;
       case 'dog':
@@ -58,10 +56,6 @@ const ChildProfileSelector = () => {
                   src={getAvatarImage(profile.avatar)} 
                   alt={profile.nickname} 
                   className="object-cover"
-                  onError={(e) => {
-                    // When image fails to load, we display the fallback
-                    e.currentTarget.style.display = 'none';
-                  }}
                 />
                 <AvatarFallback className="bg-gray-100">
                   {getFallbackIcon(getAvatarIcon(profile.avatar))}

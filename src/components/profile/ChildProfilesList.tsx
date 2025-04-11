@@ -41,10 +41,6 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
                     src={getAvatarImage(profile.avatar)} 
                     alt={profile.nickname}
                     className="object-cover"
-                    onError={(e) => {
-                      // When image fails to load, we display the fallback
-                      e.currentTarget.style.display = 'none';
-                    }}
                   />
                   <AvatarFallback>
                     {profile.nickname.substring(0, 2)}
