@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { User } from "@supabase/supabase-js";
+import { v4 as uuidv4 } from "uuid";
 
 // Types for child profiles
 export type ChildProfile = {
@@ -225,22 +226,24 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
-      // 1. Insert into children table
+      // Generate a new ID for the child
+      const childId = uuidv4();
+      
+      // 1. Insert into children table - fixed to match the database structure
       const { data: childData, error: childError } = await supabase
         .from("children")
-        .insert([
-          {
-            parent_id: user.id,
-            nickname: profile.nickname,
-            age: profile.age,
-            gender: profile.gender,
-            grade: profile.grade,
-            avatar: profile.avatar,
-            creation_status: profile.creationStatus,
-            date_of_birth: profile.dateOfBirth,
-            relationship_to_parent: profile.relationshipToParent
-          }
-        ])
+        .insert({
+          id: childId,
+          parent_id: user.id,
+          nickname: profile.nickname,
+          age: profile.age,
+          gender: profile.gender,
+          grade: profile.grade,
+          avatar: profile.avatar,
+          creation_status: profile.creationStatus,
+          date_of_birth: profile.dateOfBirth,
+          relationship_to_parent: profile.relationshipToParent
+        })
         .select();
         
       if (childError || !childData || childData.length === 0) {
@@ -248,19 +251,17 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      const childId = childData[0].id;
-      
       // 2. Insert into child_preferences table
       const { error: prefError } = await supabase
         .from("child_preferences")
-        .insert([{
+        .insert({
           child_id: childId,
           interests: profile.interests || [],
           challenges: profile.challenges || [],
           learning_styles: profile.learningStyles || [],
           strengths: profile.selStrengths || [],
           story_preferences: profile.storyPreferences || []
-        }]);
+        });
         
       if (prefError) {
         console.error("Error adding preferences:", prefError);
@@ -269,13 +270,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       // 3. Insert into child_progress table
       const { error: progressError } = await supabase
         .from("child_progress")
-        .insert([{
+        .insert({
           child_id: childId,
           daily_check_in_completed: false,
           xp_points: 0,
           streak_count: 0,
           badges: []
-        }]);
+        });
         
       if (progressError) {
         console.error("Error adding progress:", progressError);
