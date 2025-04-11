@@ -1,3 +1,4 @@
+
 // Avatar options for profile creation
 export const avatarOptions = [
   { id: 'avatar1', name: 'Happy Plant', src: '/lovable-uploads/c1e8ccec-8b46-4a25-853f-255a861762d1.png', icon: 'sprout' },

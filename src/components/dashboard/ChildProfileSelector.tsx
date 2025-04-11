@@ -57,16 +57,13 @@ const ChildProfileSelector = () => {
                 <AvatarImage 
                   src={getAvatarImage(profile.avatar)} 
                   alt={profile.nickname} 
+                  className="object-cover"
                   onError={(e) => {
-                    // When image fails to load, we manually show the fallback
-                    const fallbackEl = e.currentTarget.nextElementSibling;
-                    if (fallbackEl) {
-                      fallbackEl.setAttribute('data-state', 'visible');
-                      e.currentTarget.style.display = 'none';
-                    }
+                    // When image fails to load, we display the fallback
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
-                <AvatarFallback className="bg-gray-100" data-state="hidden">
+                <AvatarFallback className="bg-gray-100">
                   {getFallbackIcon(getAvatarIcon(profile.avatar))}
                 </AvatarFallback>
               </Avatar>

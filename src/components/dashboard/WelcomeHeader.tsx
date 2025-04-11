@@ -47,16 +47,13 @@ const WelcomeHeader = ({ currentChild }: WelcomeHeaderProps) => {
           <AvatarImage 
             src={getAvatarImage(currentChild.avatar)} 
             alt={currentChild.nickname}
+            className="object-cover"
             onError={(e) => {
-              // When image fails to load, we manually show the fallback
-              const fallbackEl = e.currentTarget.nextElementSibling;
-              if (fallbackEl) {
-                fallbackEl.setAttribute('data-state', 'visible');
-                e.currentTarget.style.display = 'none';
-              }
+              // When image fails to load, we display the fallback
+              e.currentTarget.style.display = 'none';
             }}
           />
-          <AvatarFallback className="bg-gray-100" data-state="hidden">
+          <AvatarFallback className="bg-gray-100">
             {getFallbackIcon(getAvatarIcon(currentChild.avatar))}
           </AvatarFallback>
         </Avatar>

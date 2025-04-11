@@ -40,16 +40,15 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
                   <AvatarImage 
                     src={getAvatarImage(profile.avatar)} 
                     alt={profile.nickname}
+                    className="object-cover"
                     onError={(e) => {
-                      // When image fails to load, we manually show the fallback
-                      const fallbackEl = e.currentTarget.nextElementSibling;
-                      if (fallbackEl) {
-                        fallbackEl.setAttribute('data-state', 'visible');
-                        e.currentTarget.style.display = 'none';
-                      }
+                      // When image fails to load, we display the fallback
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
-                  <AvatarFallback data-state="hidden">{profile.nickname.substring(0, 2)}</AvatarFallback>
+                  <AvatarFallback>
+                    {profile.nickname.substring(0, 2)}
+                  </AvatarFallback>
                 </Avatar>
                 {profile.nickname}
               </CardTitle>
