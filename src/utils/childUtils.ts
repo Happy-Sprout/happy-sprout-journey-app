@@ -38,19 +38,19 @@ export const markDailyCheckInComplete = (
         console.log("Daily check-in marked as complete successfully");
         
         // Update the local state as well
-        setChildProfiles(prevProfiles => 
-          prevProfiles.map(profile => 
-            profile.id === childId 
-              ? { 
-                  ...profile, 
-                  dailyCheckInCompleted: true, 
-                  lastCheckInDate: date,
-                  streakCount: profile.streakCount + 1,
-                  xpPoints: profile.xpPoints + 10
-                } 
-              : profile
-          )
+        const updatedProfiles = childProfiles.map(profile => 
+          profile.id === childId 
+            ? { 
+                ...profile, 
+                dailyCheckInCompleted: true, 
+                lastCheckInDate: date,
+                streakCount: profile.streakCount + 1,
+                xpPoints: profile.xpPoints + 10
+              } 
+            : profile
         );
+        
+        setChildProfiles(updatedProfiles);
       })
       .catch(error => {
         console.error("Error marking daily check-in:", error);
