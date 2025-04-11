@@ -218,33 +218,44 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      const { error: prefError } = await supabase
-        .from('child_preferences')
-        .insert({
-          child_id: childId,
-          learning_styles: profile.learningStyles || [],
-          strengths: profile.selStrengths || [],
-          interests: profile.interests || [],
-          story_preferences: profile.storyPreferences || [],
-          challenges: profile.selChallenges || []
-        });
-        
-      if (prefError) {
-        console.error("Error adding preferences:", prefError);
+      // Fix for line 476 - We need to properly handle the Promise
+      // Using async/await properly here
+      try {
+        const { error: prefError } = await supabase
+          .from('child_preferences')
+          .insert({
+            child_id: childId,
+            learning_styles: profile.learningStyles || [],
+            strengths: profile.selStrengths || [],
+            interests: profile.interests || [],
+            story_preferences: profile.storyPreferences || [],
+            challenges: profile.selChallenges || []
+          });
+          
+        if (prefError) {
+          console.error("Error adding preferences:", prefError);
+        }
+      } catch (error) {
+        console.error("Error inserting preferences:", error);
       }
-        
-      const { error: progressError } = await supabase
-        .from('child_progress')
-        .insert({
-          child_id: childId,
-          streak_count: 0,
-          xp_points: 0,
-          badges: [],
-          daily_check_in_completed: false
-        });
       
-      if (progressError) {
-        console.error("Error adding progress:", progressError);
+      // Same fix for progress insertion
+      try {
+        const { error: progressError } = await supabase
+          .from('child_progress')
+          .insert({
+            child_id: childId,
+            streak_count: 0,
+            xp_points: 0,
+            badges: [],
+            daily_check_in_completed: false
+          });
+        
+        if (progressError) {
+          console.error("Error adding progress:", progressError);
+        }
+      } catch (error) {
+        console.error("Error inserting progress:", error);
       }
       
       // Fetch the updated child profiles after adding the new one
