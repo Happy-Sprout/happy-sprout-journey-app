@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { User } from "@supabase/supabase-js";
 
 // Types for child profiles
-type ChildProfile = {
+export type ChildProfile = {
   id: string;
   nickname: string;
   age: number;
@@ -19,39 +19,47 @@ type ChildProfile = {
   creationStatus?: "pending" | "completed";
   createdAt: string;
   dailyCheckInCompleted?: boolean;
-  lastCheckInDate?: string; // Add lastCheckInDate property
+  lastCheckInDate?: string;
   xpPoints: number;
   streakCount: number;
   badges: string[];
+  dateOfBirth?: string;
+  learningStyles?: string[];
+  selStrengths?: string[];
+  storyPreferences?: string[];
+  selChallenges?: string[];
+  relationshipToParent?: string;
 };
 
 // Types for parent profiles
-type ParentProfile = {
+export type ParentInfo = {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
+  relationship: string;
   email: string;
-  phone?: string;
-  preferences?: {
-    notifications?: boolean;
-    emailUpdates?: boolean;
-    childProgressReports?: boolean;
-  };
+  emergencyContact: string;
+  additionalInfo?: string;
 };
 
 type UserContextType = {
   user: User | null;
   childProfiles: ChildProfile[];
-  parentProfile: ParentProfile | null;
+  parentInfo: ParentInfo | null;
   currentChildId: string | null;
+  isLoggedIn: boolean;
   addChildProfile: (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">) => Promise<void>;
   updateChildProfile: (id: string, profile: Partial<ChildProfile>) => Promise<void>;
   removeChildProfile: (id: string) => Promise<void>;
-  setParentProfile: (profile: ParentProfile) => void;
+  setParentInfo: (profile: ParentInfo) => void;
+  updateParentInfo: (info: Partial<ParentInfo>) => void;
   setCurrentChildId: (id: string | null) => void;
   getCurrentChild: () => ChildProfile | null;
   markDailyCheckInComplete: (childId: string, date?: string) => void;
   refreshChildProfiles: () => Promise<void>;
+  logout: () => Promise<void>;
+  calculateAgeFromDOB: (dob: string) => number;
+  deleteChildProfile: (id: string) => Promise<void>;
+  setRelationshipToParent: (childId: string, relationship: string) => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -62,17 +70,19 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   
   const [childProfiles, setChildProfiles] = useState<ChildProfile[]>([]);
-  const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
+  const [parentInfo, setParentInfo] = useState<ParentInfo | null>(null);
   const [currentChildId, setCurrentChildId] = useState<string | null>(null);
+  
+  const isLoggedIn = !!user;
   
   // Load child profiles when user changes
   useEffect(() => {
     if (user) {
       refreshChildProfiles();
-      fetchParentProfile();
+      fetchParentInfo();
     } else {
       setChildProfiles([]);
-      setParentProfile(null);
+      setParentInfo(null);
       setCurrentChildId(null);
     }
   }, [user]);
@@ -99,7 +109,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       const { data, error } = await supabase
-        .from("child_profiles")
+        .from("children")
         .select("*")
         .eq("parent_id", user.id)
         .order("created_at", { ascending: false });
@@ -124,9 +134,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         createdAt: profile.created_at,
         dailyCheckInCompleted: profile.daily_check_in_completed,
         lastCheckInDate: profile.last_check_in_date,
+        dateOfBirth: profile.date_of_birth,
+        relationshipToParent: profile.relationship_to_parent,
         xpPoints: profile.xp_points || 0,
         streakCount: profile.streak_count || 0,
         badges: profile.badges || [],
+        learningStyles: profile.learning_styles || [],
+        selStrengths: profile.sel_strengths || [],
+        storyPreferences: profile.story_preferences || [],
+        selChallenges: profile.sel_challenges || [],
       }));
       
       setChildProfiles(formattedProfiles);
@@ -141,12 +157,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  const fetchParentProfile = async () => {
+  const fetchParentInfo = async () => {
     if (!user) return;
     
     try {
       const { data, error } = await supabase
-        .from("parent_profiles")
+        .from("parents")
         .select("*")
         .eq("id", user.id)
         .single();
@@ -157,17 +173,17 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       if (data) {
-        setParentProfile({
+        setParentInfo({
           id: data.id,
-          firstName: data.first_name,
-          lastName: data.last_name,
+          name: data.name,
+          relationship: data.relationship,
           email: data.email,
-          phone: data.phone,
-          preferences: data.preferences,
+          emergencyContact: data.emergency_contact,
+          additionalInfo: data.additional_info,
         });
       }
     } catch (error) {
-      console.error("Error in fetchParentProfile:", error);
+      console.error("Error in fetchParentInfo:", error);
     }
   };
 
@@ -176,7 +192,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       const { data, error } = await supabase
-        .from("child_profiles")
+        .from("children")
         .insert([
           {
             parent_id: user.id,
@@ -193,6 +209,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             xp_points: 0,
             streak_count: 0,
             badges: [],
+            date_of_birth: profile.dateOfBirth,
+            relationship_to_parent: profile.relationshipToParent,
+            learning_styles: profile.learningStyles,
+            sel_strengths: profile.selStrengths,
+            story_preferences: profile.storyPreferences,
+            sel_challenges: profile.selChallenges,
           },
         ])
         .select();
@@ -235,9 +257,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       if (profile.xpPoints !== undefined) dbProfile.xp_points = profile.xpPoints;
       if (profile.streakCount !== undefined) dbProfile.streak_count = profile.streakCount;
       if (profile.badges !== undefined) dbProfile.badges = profile.badges;
+      if (profile.dateOfBirth !== undefined) dbProfile.date_of_birth = profile.dateOfBirth;
+      if (profile.relationshipToParent !== undefined) dbProfile.relationship_to_parent = profile.relationshipToParent;
+      if (profile.learningStyles !== undefined) dbProfile.learning_styles = profile.learningStyles;
+      if (profile.selStrengths !== undefined) dbProfile.sel_strengths = profile.selStrengths;
+      if (profile.storyPreferences !== undefined) dbProfile.story_preferences = profile.storyPreferences;
+      if (profile.selChallenges !== undefined) dbProfile.sel_challenges = profile.selChallenges;
       
       const { error } = await supabase
-        .from("child_profiles")
+        .from("children")
         .update(dbProfile)
         .eq("id", id)
         .eq("parent_id", user.id);
@@ -259,7 +287,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       const { error } = await supabase
-        .from("child_profiles")
+        .from("children")
         .delete()
         .eq("id", id)
         .eq("parent_id", user.id);
@@ -281,6 +309,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const deleteChildProfile = removeChildProfile; // Alias for compatibility
+
   const getCurrentChild = () => {
     return childProfiles.find(child => child.id === currentChildId) || null;
   };
@@ -293,7 +323,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           ? { 
               ...child, 
               dailyCheckInCompleted: true,
-              lastCheckInDate: date // Store the date of completion
+              lastCheckInDate: date
             } 
           : child
       )
@@ -306,19 +336,83 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  const calculateAgeFromDOB = (dob: string): number => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  const updateParentInfo = async (info: Partial<ParentInfo>) => {
+    if (!user || !parentInfo) return;
+    
+    try {
+      const dbProfile: any = {};
+      
+      if (info.name !== undefined) dbProfile.name = info.name;
+      if (info.relationship !== undefined) dbProfile.relationship = info.relationship;
+      if (info.email !== undefined) dbProfile.email = info.email;
+      if (info.emergencyContact !== undefined) dbProfile.emergency_contact = info.emergencyContact;
+      if (info.additionalInfo !== undefined) dbProfile.additional_info = info.additionalInfo;
+      
+      const { error } = await supabase
+        .from("parents")
+        .update(dbProfile)
+        .eq("id", parentInfo.id);
+        
+      if (error) {
+        console.error("Error updating parent info:", error);
+        return;
+      }
+      
+      setParentInfo(prev => prev ? { ...prev, ...info } : null);
+      
+    } catch (error) {
+      console.error("Error in updateParentInfo:", error);
+    }
+  };
+
+  const setRelationshipToParent = async (childId: string, relationship: string) => {
+    await updateChildProfile(childId, { relationshipToParent: relationship });
+  };
+
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error);
+    } else {
+      setChildProfiles([]);
+      setParentInfo(null);
+      setCurrentChildId(null);
+      navigate("/");
+    }
+  };
+
   const value = {
     user,
     childProfiles,
-    parentProfile,
+    parentInfo,
     currentChildId,
+    isLoggedIn,
     addChildProfile,
     updateChildProfile,
     removeChildProfile,
-    setParentProfile,
+    deleteChildProfile,
+    setParentInfo,
+    updateParentInfo,
     setCurrentChildId,
     getCurrentChild,
     markDailyCheckInComplete,
     refreshChildProfiles,
+    logout,
+    calculateAgeFromDOB,
+    setRelationshipToParent,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
@@ -331,4 +425,3 @@ export const useUser = () => {
   }
   return context;
 };
-
