@@ -49,8 +49,16 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
               <AvatarImage 
                 src={avatar.src} 
                 alt={avatar.name} 
+                onError={(e) => {
+                  // When image fails to load, we manually show the fallback
+                  const fallbackEl = e.currentTarget.nextElementSibling;
+                  if (fallbackEl) {
+                    fallbackEl.setAttribute('data-state', 'visible');
+                    e.currentTarget.style.display = 'none';
+                  }
+                }}
               />
-              <AvatarFallback className="bg-gray-100">
+              <AvatarFallback className="bg-gray-100" data-state="hidden">
                 {getAvatarFallbackIcon(avatar.icon)}
               </AvatarFallback>
             </Avatar>

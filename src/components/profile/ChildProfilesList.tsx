@@ -37,8 +37,19 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <CardTitle className="flex items-center">
                 <Avatar className="h-8 w-8 mr-2">
-                  <AvatarImage src={getAvatarImage(profile.avatar)} alt={profile.nickname} />
-                  <AvatarFallback>{profile.nickname.substring(0, 2)}</AvatarFallback>
+                  <AvatarImage 
+                    src={getAvatarImage(profile.avatar)} 
+                    alt={profile.nickname}
+                    onError={(e) => {
+                      // When image fails to load, we manually show the fallback
+                      const fallbackEl = e.currentTarget.nextElementSibling;
+                      if (fallbackEl) {
+                        fallbackEl.setAttribute('data-state', 'visible');
+                        e.currentTarget.style.display = 'none';
+                      }
+                    }}
+                  />
+                  <AvatarFallback data-state="hidden">{profile.nickname.substring(0, 2)}</AvatarFallback>
                 </Avatar>
                 {profile.nickname}
               </CardTitle>
