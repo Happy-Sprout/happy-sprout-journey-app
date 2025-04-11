@@ -12,6 +12,7 @@ import { avatarOptions } from "@/constants/profileOptions";
 import { useEffect, useState } from "react";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { format } from "date-fns";
+import NoActiveChildPrompt from "@/components/dashboard/NoActiveChildPrompt";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -121,15 +122,21 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
+            {(!currentChildId || !getCurrentChild()) && childProfiles.length > 0 ? (
+              <NoActiveChildPrompt />
+            ) : null}
+            
             {!currentChildId && childProfiles.length > 0 && (
               <div className="mb-8 sprout-card">
                 <h2 className="text-xl font-bold mb-4">Select a Child Profile</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {childProfiles.map(profile => (
-                    <div 
+                    <motion.div 
                       key={profile.id}
                       className="p-4 bg-white rounded-lg border-2 border-sprout-purple/20 hover:border-sprout-purple cursor-pointer transition-all hover:shadow-md"
                       onClick={() => setCurrentChildId(profile.id)}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
                     >
                       <div className="flex flex-col items-center text-center">
                         <Avatar className="h-16 w-16 mb-2">
@@ -145,7 +152,7 @@ const Dashboard = () => {
                           </Badge>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>

@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { useUser } from "@/contexts/UserContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { avatarOptions } from "@/constants/profileOptions";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, UserCheck } from "lucide-react";
 import ChildProfileDetails from "./ChildProfileDetails";
+import { motion } from "framer-motion";
 
 interface ChildProfilesListProps {
   onDeleteProfile: (id: string) => void;
@@ -67,13 +68,25 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4 mt-2">
               {profile.id !== currentChildId && (
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentChildId(profile.id)}
-                  className="text-sprout-purple border-sprout-purple hover:bg-sprout-purple/10"
+                <motion.div
+                  initial={profile.id === currentChildId ? {} : { scale: 1.05 }}
+                  animate={profile.id === currentChildId ? {} : { scale: 1 }}
+                  transition={{ 
+                    repeat: profile.id === currentChildId ? 0 : 2,
+                    repeatType: "reverse",
+                    duration: 0.5
+                  }}
+                  whileHover={{ scale: 1.05 }}
                 >
-                  Make Active
-                </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentChildId(profile.id)}
+                    className="text-sprout-green border-sprout-green hover:bg-sprout-green/10 w-full sm:w-auto"
+                  >
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    Make Active
+                  </Button>
+                </motion.div>
               )}
               <Button
                 variant="outline"
