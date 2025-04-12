@@ -15,20 +15,20 @@ export type ParentInfo = {
 
 type ParentContextType = {
   parentInfo: ParentInfo | null;
-  setParentInfo: (info: ParentInfo | null) => void;
-  updateParentInfo: (info: Partial<ParentInfo>) => void;
+  setParentInfo: (info: ParentInfo | null) => Promise<void>;
+  updateParentInfo: (info: Partial<ParentInfo>) => Promise<void>;
   fetchParentInfo: (userId: string) => Promise<void>;
 };
 
 const ParentContext = createContext<ParentContextType>({
   parentInfo: null,
-  setParentInfo: () => {},
-  updateParentInfo: () => {},
+  setParentInfo: async () => {},
+  updateParentInfo: async () => {},
   fetchParentInfo: async () => {},
 });
 
 export const ParentProvider = ({ children }: { children: ReactNode }) => {
-  const [parentInfo, setParentInfo] = useState<ParentInfo | null>(null);
+  const [parentInfo, setParentInfoState] = useState<ParentInfo | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -54,7 +54,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       
       if (data) {
         console.log("Parent data found:", data);
-        setParentInfo({
+        setParentInfoState({
           id: data.id,
           name: data.name,
           relationship: data.relationship,
@@ -87,7 +87,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           
           console.log("Parent record created successfully");
           // Make sure we match the ParentInfo type when setting state
-          setParentInfo({
+          setParentInfoState({
             id: newParent.id,
             name: newParent.name,
             relationship: newParent.relationship,
@@ -99,6 +99,51 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Error in fetchParentInfo:", error);
+    }
+  };
+
+  const setParentInfo = async (info: ParentInfo | null) => {
+    if (!info) {
+      setParentInfoState(null);
+      return;
+    }
+    
+    try {
+      console.log("Setting parent info:", info);
+      const { error } = await supabase
+        .from('parents')
+        .upsert({
+          id: info.id,
+          name: info.name,
+          relationship: info.relationship,
+          email: info.email,
+          emergency_contact: info.emergencyContact,
+          additional_info: info.additionalInfo
+        });
+        
+      if (error) {
+        console.error("Error setting parent info:", error);
+        toast({
+          title: "Error",
+          description: "Could not save profile. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setParentInfoState(info);
+      
+      toast({
+        title: "Success",
+        description: "Profile saved successfully!"
+      });
+    } catch (error) {
+      console.error("Error in setParentInfo:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -132,7 +177,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      setParentInfo((prev) => {
+      setParentInfoState((prev) => {
         if (!prev) {
           if (
             !updatedInfo.name ||

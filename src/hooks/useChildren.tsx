@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -71,7 +72,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const addChildProfile = async (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">) => {
+  const addChildProfile = async (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">): Promise<string | undefined> => {
     if (!user || !parentInfo) {
       console.error("Cannot add child profile: no user logged in or parent profile not created");
       toast({

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -33,15 +34,48 @@ const ChildProfilesTab = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (profileToDelete) {
-      deleteChildProfile(profileToDelete);
+      await deleteChildProfile(profileToDelete);
       toast({
         title: "Profile Deleted",
         description: "The child profile has been successfully deleted.",
       });
       setDeleteDialogOpen(false);
       setProfileToDelete(null);
+      
+      // Refresh profiles after deletion
+      if (user?.id) {
+        refreshChildProfiles(user.id);
+      }
+    }
+  };
+
+  const handleSaveRelationship = async () => {
+    if (editChildRelationship && relationshipValue) {
+      try {
+        await setRelationshipToParent(editChildRelationship, relationshipValue);
+        
+        toast({
+          title: "Relationship Updated",
+          description: "The relationship has been successfully updated.",
+        });
+        
+        // Refresh profiles after update
+        if (user?.id) {
+          refreshChildProfiles(user.id);
+        }
+        
+        setEditChildRelationship(null);
+        setRelationshipValue("");
+      } catch (error) {
+        console.error("Error updating relationship:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update relationship. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -96,19 +130,7 @@ const ChildProfilesTab = () => {
         onOpenChange={(open) => !open && setEditChildRelationship(null)}
         relationshipValue={relationshipValue}
         setRelationshipValue={setRelationshipValue}
-        onSave={() => {
-          if (editChildRelationship && relationshipValue) {
-            setRelationshipToParent(editChildRelationship, relationshipValue);
-            
-            toast({
-              title: "Relationship Updated",
-              description: "The relationship has been successfully updated.",
-            });
-            
-            setEditChildRelationship(null);
-            setRelationshipValue("");
-          }
-        }}
+        onSave={handleSaveRelationship}
       />
     </>
   );

@@ -2,10 +2,9 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
-import { Edit, Save } from "lucide-react";
+import { Edit } from "lucide-react";
 import ParentInfoForm from "./ParentInfoForm";
 import ParentInfoView from "./ParentInfoView";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,28 +34,37 @@ const ParentInfoTab = () => {
     },
   });
 
-  const saveParentProfile = (data: z.infer<typeof parentProfileSchema>) => {
-    if (parentInfo) {
-      updateParentInfo({
-        ...data,
-        id: parentInfo.id,
+  const saveParentProfile = async (data: z.infer<typeof parentProfileSchema>) => {
+    try {
+      if (parentInfo) {
+        await updateParentInfo({
+          ...data,
+          id: parentInfo.id,
+        });
+      } else {
+        await setParentInfo({
+          id: uuidv4(),
+          name: data.name,
+          email: data.email,
+          relationship: data.relationship || "Parent",
+          emergencyContact: data.emergencyContact || "",
+        });
+      }
+      
+      toast({
+        title: "Profile Updated",
+        description: "Your parent profile has been successfully updated.",
       });
-    } else {
-      setParentInfo({
-        id: uuidv4(),
-        name: data.name,
-        email: data.email,
-        relationship: data.relationship || "Parent",
-        emergencyContact: data.emergencyContact || "",
+      
+      setEditParentMode(false);
+    } catch (error) {
+      console.error("Error saving parent profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive"
       });
     }
-    
-    toast({
-      title: "Profile Updated",
-      description: "Your parent profile has been successfully updated.",
-    });
-    
-    setEditParentMode(false);
   };
 
   return (
