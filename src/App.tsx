@@ -9,13 +9,13 @@ import Index from "@/pages/Index";
 // Import critical pages normally to prevent lazy loading issues
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
+import Journal from "@/pages/Journal";
 // Lazy load less critical pages
 const Register = lazy(() => import("@/pages/Register"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const DailyCheckIn = lazy(() => import("@/pages/DailyCheckIn"));
-const Journal = lazy(() => import("@/pages/Journal"));
 const SELAssessment = lazy(() => import("@/pages/SELAssessment"));
 const CreateProfile = lazy(() => import("@/pages/CreateProfile"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));

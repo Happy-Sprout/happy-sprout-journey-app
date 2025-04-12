@@ -14,14 +14,16 @@ const ProfileLayout = () => {
     setActiveTab(value);
   }, []);
   
-  // Only render the tab content when it's active - prevents unnecessary fetch calls
+  // Use memo to prevent unnecessary re-renders
   const tabContent = useMemo(() => {
-    if (activeTab === "children") {
-      return <ChildProfilesTab key="children-tab" />;
-    } else if (activeTab === "parent") {
-      return <ParentInfoTab key="parent-tab" />;
+    switch (activeTab) {
+      case "children":
+        return <ChildProfilesTab key="children-tab" />;
+      case "parent":
+        return <ParentInfoTab key="parent-tab" />;
+      default:
+        return null;
     }
-    return null;
   }, [activeTab]);
   
   return (
@@ -42,7 +44,6 @@ const ProfileLayout = () => {
             <TabsTrigger value="parent">Parent Information</TabsTrigger>
           </TabsList>
 
-          {/* Simplified tab content rendering with single element */}
           <div className="space-y-6 focus-visible:outline-none focus-visible:ring-0">
             {tabContent}
           </div>

@@ -26,14 +26,18 @@ const Journal = () => {
   } = useJournalEntries(currentChildId);
 
   useEffect(() => {
+    if (!currentChildId) return;
+    
     const checkTodayEntry = async () => {
-      const entry = await getTodayEntry();
-      setTodayEntryExists(!!entry);
+      try {
+        const entry = await getTodayEntry();
+        setTodayEntryExists(!!entry);
+      } catch (error) {
+        console.error("Error checking today's entry:", error);
+      }
     };
     
-    if (currentChildId) {
-      checkTodayEntry();
-    }
+    checkTodayEntry();
   }, [currentChildId, getTodayEntry]);
 
   const handleSubmitJournalEntry = async (entry: any) => {
@@ -45,7 +49,6 @@ const Journal = () => {
       return null;
     }
     
-    // Check if an entry already exists for today before saving
     if (todayEntryExists) {
       successToast({
         title: "Journal entry limit reached",
@@ -54,81 +57,79 @@ const Journal = () => {
       return null;
     }
     
-    console.log("Handling journal entry submission:", entry);
-    console.log("Current child:", currentChild);
-    
-    const newEntry = await saveJournalEntry(entry);
-    
-    if (newEntry) {
-      console.log("Journal entry saved, updating XP points");
+    try {
+      const newEntry = await saveJournalEntry(entry);
       
-      try {
-        // Log activity with XP earned
-        await supabase
-          .from('user_activity_logs')
-          .insert([{
-            user_id: currentChildId,
-            user_type: 'child',
-            action_type: 'journal_entry_completed',
-            action_details: {
-              date: new Date().toISOString(),
-              xp_earned: 15
-            }
-          }]);
-        
-        // Check if user completed both check-in and journal today for bonus XP
-        const { data: todayCheckIn } = await supabase
-          .from('user_activity_logs')
-          .select('*')
-          .eq('user_id', currentChildId)
-          .eq('action_type', 'daily_checkin_completed')
-          .gte('created_at', new Date().toISOString().split('T')[0])
-          .single();
+      if (newEntry) {
+        try {
+          // Log activity with XP earned
+          await supabase
+            .from('user_activity_logs')
+            .insert([{
+              user_id: currentChildId,
+              user_type: 'child',
+              action_type: 'journal_entry_completed',
+              action_details: {
+                date: new Date().toISOString(),
+                xp_earned: 15
+              }
+            }]);
           
-        if (todayCheckIn) {
-          // Award bonus XP for completing both activities
-          const { data: progressData } = await supabase
-            .from('child_progress')
-            .select('xp_points')
-            .eq('child_id', currentChildId)
+          // Check if user completed both check-in and journal today for bonus XP
+          const { data: todayCheckIn } = await supabase
+            .from('user_activity_logs')
+            .select('*')
+            .eq('user_id', currentChildId)
+            .eq('action_type', 'daily_checkin_completed')
+            .gte('created_at', new Date().toISOString().split('T')[0])
             .single();
             
-          if (progressData) {
-            await supabase
+          if (todayCheckIn) {
+            // Award bonus XP for completing both activities
+            const { data: progressData } = await supabase
               .from('child_progress')
-              .update({ xp_points: (progressData.xp_points || 0) + 5 })
-              .eq('child_id', currentChildId);
+              .select('xp_points')
+              .eq('child_id', currentChildId)
+              .single();
               
-            // Log the bonus XP
-            await supabase
-              .from('user_activity_logs')
-              .insert([{
-                user_id: currentChildId,
-                user_type: 'child',
-                action_type: 'daily_activities_bonus',
-                action_details: {
-                  date: new Date().toISOString(),
-                  xp_earned: 5
-                }
-              }]);
-              
-            successToast({
-              title: "Daily Bonus Achieved!",
-              description: "You completed both your check-in and journal today! +5 XP bonus awarded!"
-            });
+            if (progressData) {
+              await supabase
+                .from('child_progress')
+                .update({ xp_points: (progressData.xp_points || 0) + 5 })
+                .eq('child_id', currentChildId);
+                
+              // Log the bonus XP
+              await supabase
+                .from('user_activity_logs')
+                .insert([{
+                  user_id: currentChildId,
+                  user_type: 'child',
+                  action_type: 'daily_activities_bonus',
+                  action_details: {
+                    date: new Date().toISOString(),
+                    xp_earned: 5
+                  }
+                }]);
+                
+              successToast({
+                title: "Daily Bonus Achieved!",
+                description: "You completed both your check-in and journal today! +5 XP bonus awarded!"
+              });
+            }
           }
+        } catch (error) {
+          console.error("Error handling XP rewards:", error);
         }
-      } catch (error) {
-        console.error("Error handling XP rewards:", error);
+        
+        setTodayEntryExists(true);
+        setCurrentTab("history");
+        return newEntry;
       }
-      
-      setTodayEntryExists(true);
-      setCurrentTab("history");
-      return newEntry;
+      return null;
+    } catch (error) {
+      console.error("Error submitting journal entry:", error);
+      return null;
     }
-    
-    console.log("Failed to save journal entry");
-    return null;
   };
 
   return (
