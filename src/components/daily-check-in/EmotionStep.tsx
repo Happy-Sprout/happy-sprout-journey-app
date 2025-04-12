@@ -137,7 +137,7 @@ const EmotionStep = ({ mood, setMood, selectedFeeling, setSelectedFeeling }: Emo
               <button
                 key={feeling}
                 type="button"
-                className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                className={`px-3 py-2 text-sm rounded-md transition-colors min-h-[45px] whitespace-normal text-center ${
                   selectedFeeling === feeling
                     ? `bg-${emotionFeelingMap[mood].color}/20 border border-${emotionFeelingMap[mood].color} text-${emotionFeelingMap[mood].color}`
                     : "bg-white border border-gray-200 hover:bg-gray-100"

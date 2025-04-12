@@ -63,7 +63,7 @@ const AchievementsSection = ({ currentChild, currentChildId }: AchievementsSecti
 
   return (
     <div className="mb-8">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Trophy className="h-6 w-6 text-sprout-orange" />
           Achievements

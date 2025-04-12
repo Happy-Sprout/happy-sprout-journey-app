@@ -62,11 +62,11 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className={`flex items-center p-3 ${dailyCheckInCompleted ? 'bg-sprout-green/10' : 'bg-sprout-orange/10'} rounded-lg`}>
-                <div className={`mr-4 ${dailyCheckInCompleted ? 'bg-sprout-green' : 'bg-sprout-orange'} text-white p-2 rounded-full`}>
+              <div className={`flex flex-col sm:flex-row items-start sm:items-center p-3 ${dailyCheckInCompleted ? 'bg-sprout-green/10' : 'bg-sprout-orange/10'} rounded-lg`}>
+                <div className={`mr-4 ${dailyCheckInCompleted ? 'bg-sprout-green' : 'bg-sprout-orange'} text-white p-2 rounded-full mb-2 sm:mb-0`}>
                   {dailyCheckInCompleted ? <Check className="h-5 w-5" /> : <CalendarDays className="h-5 w-5" />}
                 </div>
-                <div>
+                <div className="flex-1 mb-2 sm:mb-0">
                   <h3 className="font-medium">Daily Check-In</h3>
                   <p className="text-sm text-gray-600">
                     {dailyCheckInCompleted 
@@ -75,7 +75,7 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
                   </p>
                 </div>
                 <Button 
-                  className="ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full"
+                  className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
                   onClick={() => navigate("/daily-check-in")}
                   disabled={dailyCheckInCompleted}
                 >
@@ -83,11 +83,11 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
                 </Button>
               </div>
               
-              <div className={`flex items-center p-3 ${journalCompleted ? 'bg-sprout-green/10' : 'bg-sprout-purple/10'} rounded-lg`}>
-                <div className={`mr-4 ${journalCompleted ? 'bg-sprout-green' : 'bg-sprout-purple'} text-white p-2 rounded-full`}>
+              <div className={`flex flex-col sm:flex-row items-start sm:items-center p-3 ${journalCompleted ? 'bg-sprout-green/10' : 'bg-sprout-purple/10'} rounded-lg`}>
+                <div className={`mr-4 ${journalCompleted ? 'bg-sprout-green' : 'bg-sprout-purple'} text-white p-2 rounded-full mb-2 sm:mb-0`}>
                   {journalCompleted ? <Check className="h-5 w-5" /> : <BookOpen className="h-5 w-5" />}
                 </div>
-                <div>
+                <div className="flex-1 mb-2 sm:mb-0">
                   <h3 className="font-medium">Journal Entry</h3>
                   <p className="text-sm text-gray-600">
                     {journalCompleted 
@@ -96,7 +96,7 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
                   </p>
                 </div>
                 <Button 
-                  className="ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full"
+                  className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
                   onClick={() => navigate("/journal")}
                   disabled={journalCompleted}
                 >
@@ -108,12 +108,23 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
         </Card>
       </div>
       
-      <DailyInspirationCard />
+      <div className="w-full">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Daily Inspiration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-gradient-to-br from-sprout-yellow/30 to-sprout-orange/30 rounded-lg text-center h-full flex items-center justify-center">
+              <p className="italic text-gray-800 break-words">"{getRandomQuote()}"</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
 
-const DailyInspirationCard = () => {
+const getRandomQuote = () => {
   const motivationalQuotes = [
     "Believe you can and you're halfway there.",
     "You are braver than you believe, stronger than you seem, and smarter than you think.",
@@ -122,20 +133,7 @@ const DailyInspirationCard = () => {
     "You're off to great places! Today is your day! Your mountain is waiting, so get on your way!"
   ];
   
-  const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Daily Inspiration</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="p-4 bg-gradient-to-br from-sprout-yellow/30 to-sprout-orange/30 rounded-lg text-center">
-          <p className="italic text-gray-800">"{randomQuote}"</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
 };
 
 export default DailyActivities;

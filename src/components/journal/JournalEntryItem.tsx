@@ -14,8 +14,8 @@ export const JournalEntryItem = ({ entry }: JournalEntryItemProps) => {
   };
 
   return (
-    <Card key={entry.id} className="mb-4">
-      <CardHeader className="pb-2">
+    <Card key={entry.id} className="mb-4 shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-2 border-b">
         <div className="flex justify-between items-center">
           <CardTitle>{formatDate(entry.date)}</CardTitle>
           <div className="text-xl">
@@ -23,71 +23,71 @@ export const JournalEntryItem = ({ entry }: JournalEntryItemProps) => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <details className="group">
-          <summary className="flex justify-between items-center cursor-pointer list-none">
-            <div className="font-medium">Daily Trackers</div>
+      <CardContent className="pt-4">
+        <details className="group mb-4">
+          <summary className="flex justify-between items-center cursor-pointer list-none bg-gray-50 p-2 rounded-md">
+            <div className="font-medium text-sprout-purple">Daily Trackers</div>
             <div className="transition-transform group-open:rotate-180">
               <ChevronDown className="h-5 w-5" />
             </div>
           </summary>
-          <div className="mt-3 pl-4 border-l-2 border-gray-200">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex items-center">
-                <Droplet className="w-4 h-4 mr-1 text-blue-500" /> Water: {entry.water} glasses
+          <div className="mt-3 pl-4 border-l-2 border-gray-200 p-2">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center p-1 bg-blue-50 rounded">
+                <Droplet className="w-4 h-4 mr-2 text-blue-500" /> <span className="font-medium">Water:</span> {entry.water} glasses
               </div>
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 mr-1 text-purple-500" /> Sleep: {entry.sleep} hours
+              <div className="flex items-center p-1 bg-purple-50 rounded">
+                <Clock className="w-4 h-4 mr-2 text-purple-500" /> <span className="font-medium">Sleep:</span> {entry.sleep} hours
               </div>
-              <div className="flex items-center">
-                <HeartPulse className="w-4 h-4 mr-1 text-red-500" /> Exercise: {entry.exercise}/10
+              <div className="flex items-center p-1 bg-red-50 rounded">
+                <HeartPulse className="w-4 h-4 mr-2 text-red-500" /> <span className="font-medium">Exercise:</span> {entry.exercise}/10
               </div>
-              <div className="flex items-center">
-                <CheckCircle className="w-4 h-4 mr-1 text-green-500" /> Mindfulness: {entry.mindfulness}/10
+              <div className="flex items-center p-1 bg-green-50 rounded">
+                <CheckCircle className="w-4 h-4 mr-2 text-green-500" /> <span className="font-medium">Mindfulness:</span> {entry.mindfulness}/10
               </div>
-              <div className="flex items-center">
-                <Heart className="w-4 h-4 mr-1 text-pink-500" /> Kind Acts: {entry.kindness}/10
+              <div className="flex items-center p-1 bg-pink-50 rounded">
+                <Heart className="w-4 h-4 mr-2 text-pink-500" /> <span className="font-medium">Kind Acts:</span> {entry.kindness}/10
               </div>
-              <div className="flex items-center">
-                <Sun className="w-4 h-4 mr-1 text-yellow-500" /> Positivity: {entry.positivity}/10
+              <div className="flex items-center p-1 bg-yellow-50 rounded">
+                <Sun className="w-4 h-4 mr-2 text-yellow-500" /> <span className="font-medium">Positivity:</span> {entry.positivity}/10
               </div>
             </div>
           </div>
         </details>
         
-        <div className="mt-4 space-y-3">
+        <div className="space-y-4 mt-4">
           {entry.wentWell && (
-            <div>
-              <div className="font-medium text-sprout-green">What went well:</div>
-              <p className="text-gray-700 mt-1">{entry.wentWell}</p>
+            <div className="p-3 bg-sprout-green/10 rounded-md">
+              <div className="font-medium text-sprout-green mb-1">What went well:</div>
+              <p className="text-gray-700">{entry.wentWell}</p>
             </div>
           )}
           
           {entry.wentBadly && (
-            <div>
-              <div className="font-medium text-sprout-orange">What didn't go well:</div>
-              <p className="text-gray-700 mt-1">{entry.wentBadly}</p>
+            <div className="p-3 bg-sprout-orange/10 rounded-md">
+              <div className="font-medium text-sprout-orange mb-1">What didn't go well:</div>
+              <p className="text-gray-700">{entry.wentBadly}</p>
             </div>
           )}
           
           {entry.gratitude && (
-            <div>
-              <div className="font-medium text-sprout-purple">Gratitude:</div>
-              <p className="text-gray-700 mt-1">{entry.gratitude}</p>
+            <div className="p-3 bg-sprout-purple/10 rounded-md">
+              <div className="font-medium text-sprout-purple mb-1">Gratitude:</div>
+              <p className="text-gray-700">{entry.gratitude}</p>
             </div>
           )}
           
           {entry.challenge && (
-            <div>
-              <div className="font-medium text-sprout-orange">Challenge:</div>
-              <p className="text-gray-700 mt-1">{entry.challenge}</p>
+            <div className="p-3 bg-sprout-orange/10 rounded-md">
+              <div className="font-medium text-sprout-orange mb-1">Challenge:</div>
+              <p className="text-gray-700">{entry.challenge}</p>
             </div>
           )}
           
           {entry.tomorrowPlan && (
-            <div>
-              <div className="font-medium text-sprout-green">Tomorrow's Plan:</div>
-              <p className="text-gray-700 mt-1">{entry.tomorrowPlan}</p>
+            <div className="p-3 bg-sprout-green/10 rounded-md">
+              <div className="font-medium text-sprout-green mb-1">Tomorrow's Plan:</div>
+              <p className="text-gray-700">{entry.tomorrowPlan}</p>
             </div>
           )}
         </div>

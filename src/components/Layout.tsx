@@ -122,17 +122,19 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
                 <span className="text-xl font-bold text-sprout-purple ml-2">Happy Sprout</span>
               </div>
               <NavContent />
-              <div className="mt-auto p-4 bg-sprout-cream rounded-xl">
-                <div className="text-sm font-medium text-center">
-                  {getCurrentChild() ? (
-                    <>
-                      <div className="font-bold text-sprout-purple">{getCurrentChild()?.nickname}</div>
-                      <div className="text-xs text-gray-500">XP: {getCurrentChild()?.xpPoints || 0}</div>
-                      <div className="text-xs text-gray-500">Streak: {getCurrentChild()?.streakCount || 0} days</div>
-                    </>
-                  ) : (
-                    <div className="text-gray-500">No active profile</div>
-                  )}
+              <div className="mt-auto">
+                <div className="p-4 bg-sprout-cream rounded-xl border border-sprout-orange/20 shadow-sm">
+                  <div className="text-sm font-medium text-center">
+                    {getCurrentChild() ? (
+                      <>
+                        <div className="font-bold text-sprout-purple">{getCurrentChild()?.nickname}</div>
+                        <div className="text-xs text-gray-500 mt-1">XP: {getCurrentChild()?.xpPoints || 0}</div>
+                        <div className="text-xs text-gray-500">Streak: {getCurrentChild()?.streakCount || 0} days</div>
+                      </>
+                    ) : (
+                      <div className="text-gray-500">No active profile</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
