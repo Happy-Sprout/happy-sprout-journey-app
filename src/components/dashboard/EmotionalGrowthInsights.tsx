@@ -117,11 +117,11 @@ const EmotionalGrowthInsights = ({
       <div className="mt-4 p-3 bg-slate-50 rounded-md">
         <p className="text-sm text-slate-800">
           <span className="font-semibold">Growing strength:</span> {SEL_LABELS[highestSkill.name as keyof typeof SEL_LABELS]} 
-          {' '}- {highestSkill.value.toFixed(2) * 100}%
+          {' '}- {(highestSkill.value * 100).toFixed(0)}%
         </p>
         <p className="text-sm text-slate-800 mt-1">
           <span className="font-semibold">Growth opportunity:</span> {SEL_LABELS[lowestSkill.name as keyof typeof SEL_LABELS]}
-          {' '}- {lowestSkill.value.toFixed(2) * 100}%
+          {' '}- {(lowestSkill.value * 100).toFixed(0)}%
         </p>
       </div>
     );
