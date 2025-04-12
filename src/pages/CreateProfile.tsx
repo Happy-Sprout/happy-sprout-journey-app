@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import AvatarSelector from "@/components/AvatarSelector";
 import MultipleCheckboxGroup from "@/components/MultipleCheckboxGroup";
+import DatePickerField from "@/components/profile/DatePickerField";
 import { 
   gradeOptions, 
   learningStyleOptions,
@@ -291,17 +292,13 @@ const CreateProfile = () => {
                   onChange={setSelectedAvatar} 
                 />
                 
-                <div className="space-y-2">
-                  <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    required
-                    className="sprout-input"
-                  />
-                </div>
+                <DatePickerField
+                  label="Date of Birth"
+                  value={dateOfBirth}
+                  onChange={setDateOfBirth}
+                  required={true}
+                  maxDate={new Date()}
+                />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import AvatarSelector from "@/components/AvatarSelector";
 import MultipleCheckboxGroup from "@/components/MultipleCheckboxGroup";
+import DatePickerField from "@/components/profile/DatePickerField";
 import { 
   gradeOptions, 
   learningStyleOptions,
@@ -48,16 +49,16 @@ const EditProfile = () => {
     if (profile) {
       setNickname(profile.nickname);
       setAge(profile.age);
-      setDateOfBirth(profile.dateOfBirth);
+      setDateOfBirth(profile.dateOfBirth || "");
       setGender(profile.gender || "");
-      setGrade(profile.grade);
+      setGrade(profile.grade || "");
       setSelectedAvatar(profile.avatar || "avatar1");
       setSelectedLearningStyles(profile.learningStyles || []);
       setSelectedSELStrengths(profile.selStrengths || []);
       
       const standardInterestOptions = ["art", "music", "sports", "reading", "videogames", "science", "cooking"];
-      const standardInterests = profile.interests.filter(i => standardInterestOptions.includes(i));
-      const customInterests = profile.interests.filter(i => !standardInterestOptions.includes(i));
+      const standardInterests = profile.interests?.filter(i => standardInterestOptions.includes(i)) || [];
+      const customInterests = profile.interests?.filter(i => !standardInterestOptions.includes(i)) || [];
       
       setSelectedInterests(standardInterests);
       if (customInterests.length > 0) {
@@ -66,8 +67,8 @@ const EditProfile = () => {
         setShowOtherInterests(true);
       }
       
-      setSelectedStoryPreferences(profile.storyPreferences);
-      setSelectedChallenges(profile.selChallenges);
+      setSelectedStoryPreferences(profile.storyPreferences || []);
+      setSelectedChallenges(profile.selChallenges || []);
     } else {
       toast({
         title: "Profile not found",
@@ -267,17 +268,13 @@ const EditProfile = () => {
                   onChange={setSelectedAvatar} 
                 />
                 
-                <div className="space-y-2">
-                  <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    required
-                    className="sprout-input"
-                  />
-                </div>
+                <DatePickerField
+                  label="Date of Birth"
+                  value={dateOfBirth}
+                  onChange={setDateOfBirth}
+                  required={true}
+                  maxDate={new Date()}
+                />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
