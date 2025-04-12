@@ -106,6 +106,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id, parentInfo, saveParentInfoToDb, updateParentInfoState]);
 
+  // Create context value with useMemo to ensure consistent reference
   const contextValue = useMemo(() => ({
     parentInfo,
     isLoading,

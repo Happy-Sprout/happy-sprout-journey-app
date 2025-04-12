@@ -19,7 +19,7 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Render a fallback while we're waiting for auth state
+  // Using a separate component for the main content ensures that hooks are consistently called
   if (!pageReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
