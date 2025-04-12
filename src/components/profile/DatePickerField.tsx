@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -68,49 +67,33 @@ const DatePickerField = ({
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
       
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Calendar popover for better UX */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full sm:w-auto justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "MMMM d, yyyy") : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={handleSelect}
-              disabled={(date) => date > maxDate}
-              initialFocus
-              captionLayout="dropdown-buttons"
-              fromYear={fromYear}
-              toYear={toYear}
-              className="p-3 pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
-        
-        {/* Standard date input for fallback */}
-        <div className="relative flex-grow">
-          <Input
-            id={id}
-            type="date"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            required={required}
-            className="sprout-input"
-            max={format(maxDate, "yyyy-MM-dd")}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, "MMMM d, yyyy") : <span>Select a date</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleSelect}
+            disabled={(date) => date > maxDate}
+            initialFocus
+            captionLayout="dropdown-buttons"
+            fromYear={fromYear}
+            toYear={toYear}
+            className="p-3 pointer-events-auto"
           />
-        </div>
-      </div>
+        </PopoverContent>
+      </Popover>
       
       {date && (
         <p className="text-sm text-gray-500">
