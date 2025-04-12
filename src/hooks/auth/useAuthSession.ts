@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 
@@ -9,16 +9,19 @@ export const useAuthSession = (
   setIsLoggedIn: (isLoggedIn: boolean) => void,
   setLoading: (loading: boolean) => void
 ) => {
+  // Use a ref to track mounted state
+  const isMounted = useRef(true);
+  
   useEffect(() => {
-    // Mark this as a mounted reference
-    let isMounted = true;
+    // Set isMounted ref
+    isMounted.current = true;
     
     // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        if (!isMounted) return;
+        if (!isMounted.current) return;
         
-        console.log('Auth state changed:', event, newSession?.user?.email);
+        console.log('Auth state changed:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setIsLoggedIn(!!newSession);
@@ -28,11 +31,11 @@ export const useAuthSession = (
     
     // Then check for an existing session
     const initSession = async () => {
-      if (!isMounted) return;
+      if (!isMounted.current) return;
       
       try {
         const { data } = await supabase.auth.getSession();
-        if (!isMounted) return;
+        if (!isMounted.current) return;
         
         setSession(data.session);
         setUser(data.session?.user ?? null);
@@ -40,7 +43,7 @@ export const useAuthSession = (
       } catch (error) {
         console.error("Error checking session:", error);
       } finally {
-        if (isMounted) {
+        if (isMounted.current) {
           setLoading(false);
         }
       }
@@ -49,7 +52,7 @@ export const useAuthSession = (
     initSession();
     
     return () => {
-      isMounted = false;
+      isMounted.current = false;
       subscription.unsubscribe();
     };
   }, [setSession, setUser, setIsLoggedIn, setLoading]);

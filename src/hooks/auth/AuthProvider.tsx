@@ -1,5 +1,5 @@
 
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useMemo, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
 import { useAuthState } from "./useAuthState";
 import { useAuthActions } from "./useAuthActions";
@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoggedIn
   );
 
-  // Initialize session handling
+  // Initialize session handling - always called, never conditional
   useAuthSession(setSession, setUser, setIsLoggedIn, setLoading);
 
   // Create a memoized context value to prevent unnecessary rerenders

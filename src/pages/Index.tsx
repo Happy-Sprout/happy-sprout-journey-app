@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import { useUser } from "@/hooks/useUser";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 const Index = () => {
   const navigate = useNavigate();

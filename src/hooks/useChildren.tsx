@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useParent } from "./useParent";
@@ -24,18 +24,24 @@ const ChildrenContext = createContext<ChildrenContextType>({
 });
 
 export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
+  // Always define all state hooks at the top level
   const [childProfiles, setChildProfiles] = useState<ChildProfile[]>([]);
   const [currentChildId, setCurrentChildId] = useState<string | null>(null);
+  
+  // Define all hooks at the top level
   const { toast } = useToast();
   const { user } = useAuth();
   const { parentInfo } = useParent();
   
+  // Use a persistent useEffect for fetching child profiles
   useEffect(() => {
     if (user?.id) {
       fetchChildProfiles(user.id);
     }
-  }, [user, parentInfo]);
+    // Adding parentInfo as a dependency to refresh when parent info changes
+  }, [user?.id, parentInfo]);
   
+  // Load saved child ID on initial render
   useEffect(() => {
     const savedChildId = localStorage.getItem("currentChildId");
     if (savedChildId) {
@@ -43,6 +49,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // Save child ID when it changes
   useEffect(() => {
     if (currentChildId) {
       localStorage.setItem("currentChildId", currentChildId);
@@ -51,7 +58,8 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [currentChildId]);
   
-  const fetchChildProfiles = async (parentId: string) => {
+  // Define fetch function with useCallback to prevent recreating on each render
+  const fetchChildProfiles = useCallback(async (parentId: string) => {
     if (!parentInfo) {
       console.log("Parent info not available yet, will fetch children later");
       return;
@@ -70,9 +78,10 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Error in fetchChildProfiles:", error);
     }
-  };
+  }, [parentInfo, currentChildId]);
   
-  const addChildProfile = async (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">): Promise<string | undefined> => {
+  // Define all handler functions with useCallback
+  const addChildProfile = useCallback(async (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">): Promise<string | undefined> => {
     if (!user || !parentInfo) {
       console.error("Cannot add child profile: no user logged in or parent profile not created");
       toast({
@@ -114,9 +123,9 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       });
       return undefined;
     }
-  };
+  }, [user, parentInfo, toast]);
 
-  const updateChildProfile = async (id: string, updatedInfo: Partial<ChildProfile>) => {
+  const updateChildProfile = useCallback(async (id: string, updatedInfo: Partial<ChildProfile>) => {
     try {
       const childIndex = childProfiles.findIndex((profile) => profile.id === id);
       if (childIndex === -1) return;
@@ -141,9 +150,9 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
     }
-  };
+  }, [childProfiles, toast]);
 
-  const deleteChildProfile = async (id: string) => {
+  const deleteChildProfile = useCallback(async (id: string) => {
     try {
       await childrenDb.deleteChildProfile(id);
       
@@ -166,35 +175,48 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
     }
-  };
+  }, [childProfiles, currentChildId, toast]);
 
-  const getChildById = () => getCurrentChild(childProfiles, currentChildId);
+  const getChildById = useCallback(() => getCurrentChild(childProfiles, currentChildId), [childProfiles, currentChildId]);
 
-  const handleMarkDailyCheckInComplete = (childId: string, date = new Date().toISOString()) => {
+  const handleMarkDailyCheckInComplete = useCallback((childId: string, date = new Date().toISOString()) => {
     markDailyCheckInComplete(childId, childProfiles, setChildProfiles, date);
-  };
+  }, [childProfiles]);
 
-  const handleSetRelationshipToParent = async (childId: string, relationship: string) => {
+  const handleSetRelationshipToParent = useCallback(async (childId: string, relationship: string) => {
     await setChildRelationship(childId, relationship, updateChildProfile);
-  };
+  }, [updateChildProfile]);
+
+  // Create context value with useMemo to prevent unnecessary rerenders
+  const contextValue = useMemo(() => ({
+    childProfiles,
+    setChildProfiles,
+    addChildProfile,
+    updateChildProfile,
+    deleteChildProfile,
+    currentChildId,
+    setCurrentChildId,
+    getCurrentChild: getChildById,
+    calculateAgeFromDOB,
+    markDailyCheckInComplete: handleMarkDailyCheckInComplete,
+    setRelationshipToParent: handleSetRelationshipToParent,
+    fetchChildProfiles
+  }), [
+    childProfiles, 
+    setChildProfiles,
+    addChildProfile, 
+    updateChildProfile, 
+    deleteChildProfile, 
+    currentChildId,
+    setCurrentChildId, 
+    getChildById, 
+    handleMarkDailyCheckInComplete, 
+    handleSetRelationshipToParent,
+    fetchChildProfiles
+  ]);
 
   return (
-    <ChildrenContext.Provider
-      value={{
-        childProfiles,
-        setChildProfiles,
-        addChildProfile,
-        updateChildProfile,
-        deleteChildProfile,
-        currentChildId,
-        setCurrentChildId,
-        getCurrentChild: getChildById,
-        calculateAgeFromDOB,
-        markDailyCheckInComplete: handleMarkDailyCheckInComplete,
-        setRelationshipToParent: handleSetRelationshipToParent,
-        fetchChildProfiles
-      }}
-    >
+    <ChildrenContext.Provider value={contextValue}>
       {children}
     </ChildrenContext.Provider>
   );
