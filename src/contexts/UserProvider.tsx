@@ -1,6 +1,6 @@
 
 import React, { ReactNode } from "react";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider } from "@/hooks/auth";
 import { ParentProvider } from "@/providers/ParentProvider";
 import { ChildrenProvider } from "@/hooks/useChildren";
 
