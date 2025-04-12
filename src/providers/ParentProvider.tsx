@@ -1,10 +1,15 @@
 
 import { useState, ReactNode, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ParentContext from "@/contexts/ParentContext";
 import { ParentInfo } from "@/types/parentInfo";
+import { 
+  fetchParentInfoById,
+  createParentInfo,
+  saveParentInfo,
+  updateParentInfoFields
+} from "@/utils/parentDb";
 
 export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const [parentInfo, setParentInfoState] = useState<ParentInfo | null>(null);
@@ -23,61 +28,15 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   
   const fetchParentInfo = async (userId: string) => {
     try {
-      console.log("Fetching parent info for user:", userId);
-      const { data, error } = await supabase
-        .from('parents')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error("Error fetching parent data:", error);
-        return;
-      }
+      const data = await fetchParentInfoById(userId);
       
       if (data) {
-        console.log("Parent data found:", data);
-        setParentInfoState({
-          id: data.id,
-          name: data.name,
-          relationship: data.relationship,
-          email: data.email,
-          emergencyContact: data.emergency_contact,
-          additionalInfo: data.additional_info
-        });
-      } else {
-        console.log("No parent data found for user:", userId);
-        
+        setParentInfoState(data);
+      } else if (user) {
         // If parent record doesn't exist and we have user data, create one
-        if (user?.id && user.user_metadata?.name) {
-          console.log("Creating parent record for user:", userId);
-          const newParent = {
-            id: user.id,
-            name: user.user_metadata.name as string,
-            relationship: "Parent",
-            email: user.email || "",
-            emergency_contact: ""
-          };
-          
-          const { error: insertError } = await supabase
-            .from('parents')
-            .insert([newParent]);
-            
-          if (insertError) {
-            console.error("Error creating parent record:", insertError);
-            return;
-          }
-          
-          console.log("Parent record created successfully");
-          // Make sure we match the ParentInfo type when setting state
-          setParentInfoState({
-            id: newParent.id,
-            name: newParent.name,
-            relationship: newParent.relationship,
-            email: newParent.email,
-            emergencyContact: newParent.emergency_contact,
-            // additionalInfo is optional, so we can omit it
-          });
+        const newParent = await createParentInfo(user);
+        if (newParent) {
+          setParentInfoState(newParent);
         }
       }
     } catch (error) {
@@ -99,20 +58,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      console.log("Setting parent info:", info);
-      const { error } = await supabase
-        .from('parents')
-        .upsert({
-          id: info.id,
-          name: info.name,
-          relationship: info.relationship,
-          email: info.email,
-          emergency_contact: info.emergencyContact,
-          additional_info: info.additionalInfo
-        });
-        
-      if (error) {
-        console.error("Error setting parent info:", error);
+      const success = await saveParentInfo(info);
+      
+      if (!success) {
         toast({
           title: "Error",
           description: "Could not save profile. Please try again.",
@@ -144,21 +92,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      console.log("Updating parent info:", updatedInfo);
-      const update: any = {};
-      if (updatedInfo.name) update.name = updatedInfo.name;
-      if (updatedInfo.relationship) update.relationship = updatedInfo.relationship;
-      if (updatedInfo.email) update.email = updatedInfo.email;
-      if (updatedInfo.emergencyContact) update.emergency_contact = updatedInfo.emergencyContact;
-      if (updatedInfo.additionalInfo) update.additional_info = updatedInfo.additionalInfo;
+      const success = await updateParentInfoFields(parentInfo.id, updatedInfo);
       
-      const { error } = await supabase
-        .from('parents')
-        .update(update)
-        .eq('id', parentInfo.id);
-        
-      if (error) {
-        console.error("Error updating parent info:", error);
+      if (!success) {
         toast({
           title: "Error",
           description: "Could not update profile. Please try again.",
