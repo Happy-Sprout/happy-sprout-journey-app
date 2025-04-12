@@ -27,6 +27,7 @@ const ParentInfoTab = () => {
   // Better form state handling with refs
   const formInitialized = useRef(false);
   const componentMounted = useRef(true);
+  const isSubmitting = useRef(false);
   
   // Create the form with resolver
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
@@ -75,9 +76,10 @@ const ParentInfoTab = () => {
   }, [editParentMode, parentInfo, parentForm]);
 
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
-    if (!componentMounted.current) return;
+    if (!componentMounted.current || isSubmitting.current) return;
     
     console.log("saveParentProfile called with data:", data);
+    isSubmitting.current = true;
     
     try {
       if (parentInfo) {
@@ -110,6 +112,8 @@ const ParentInfoTab = () => {
         description: "Failed to save profile. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      isSubmitting.current = false;
     }
   }, [parentInfo, updateParentInfo, setParentInfo, toast]);
 

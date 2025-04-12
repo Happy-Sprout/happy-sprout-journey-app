@@ -1,3 +1,4 @@
+
 import { useState, ReactNode, useEffect, useCallback, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -171,11 +172,21 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
+      console.log("updateParentInfo called with:", updatedInfo);
+      // Don't prevent API calls immediately - we need this to run
       const releaseFlag = preventApiCalls();
       
-      const success = await updateParentInfoFields(parentInfo.id, updatedInfo);
+      // Ensure we're updating with the right ID
+      const dataToUpdate = {
+        ...updatedInfo,
+        id: parentInfo.id
+      };
+      
+      console.log("Calling saveParentInfo with:", dataToUpdate);
+      const success = await saveParentInfo(dataToUpdate as ParentInfo);
       
       if (!success) {
+        console.error("saveParentInfo failed");
         toast({
           title: "Error",
           description: "Could not update profile. Please try again.",
@@ -185,26 +196,17 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
+      // Important: Update local state to reflect changes
+      console.log("Updating local state with:", dataToUpdate);
       setParentInfoState(prev => {
         if (!prev) {
-          if (
-            !updatedInfo.name ||
-            !updatedInfo.email ||
-            !updatedInfo.id
-          ) {
-            console.error("Missing required fields for parent info");
-            return null;
-          }
-          
-          return updatedInfo as ParentInfo;
+          return dataToUpdate as ParentInfo;
         }
         
-        const newParentInfo = {
+        return {
           ...prev,
-          ...updatedInfo
+          ...dataToUpdate
         };
-        
-        return newParentInfo;
       });
       
       toast({
@@ -212,6 +214,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         description: "Profile updated successfully!"
       });
       
+      // Release the flag after a short delay
       setTimeout(releaseFlag, 100);
     } catch (error) {
       console.error("Error in updateParentInfo:", error);

@@ -17,7 +17,8 @@ interface ParentInfoFormProps {
 const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormProps) => {
   const handleFormSubmit = useCallback((data: any) => {
     console.log("ParentInfoForm - Form submitted with data:", data);
-    onSubmit(data);
+    // Call onSubmit asynchronously to prevent React state batching issues
+    setTimeout(() => onSubmit(data), 0);
   }, [onSubmit]);
 
   const handleCancel = useCallback(() => {

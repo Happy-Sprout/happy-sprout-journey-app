@@ -128,7 +128,13 @@ export async function createParentInfo(user: any) {
 
 export async function saveParentInfo(info: ParentInfo) {
   try {
-    console.log("Saving parent info for:", info.id);
+    console.log("Saving parent info for:", info.id, "with data:", info);
+    
+    if (!info.id) {
+      console.error("Cannot save parent info without an ID");
+      return false;
+    }
+    
     const { error } = await supabase
       .from('parents')
       .upsert({
@@ -138,12 +144,16 @@ export async function saveParentInfo(info: ParentInfo) {
         email: info.email,
         emergency_contact: info.emergencyContact,
         additional_info: info.additionalInfo
+      }, {
+        onConflict: 'id' // Explicitly set onConflict
       });
       
     if (error) {
       console.error("Error saving parent info:", error);
       return false;
     }
+    
+    console.log("Parent info saved successfully for:", info.id);
     
     // Update cache
     parentInfoCache.set(info.id, {
