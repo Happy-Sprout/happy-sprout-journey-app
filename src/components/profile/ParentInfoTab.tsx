@@ -21,7 +21,7 @@ const parentProfileSchema = z.object({
 
 const ParentInfoTab = () => {
   const { toast } = useToast();
-  const { parentInfo, isLoading, updateParentInfo, setParentInfo, refreshParentInfo } = useParent();
+  const { parentInfo, isLoading, updateParentInfo, setParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
   
   // Add a console log to check parentInfo on mount and updates
@@ -32,16 +32,16 @@ const ParentInfoTab = () => {
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
     resolver: zodResolver(parentProfileSchema),
     defaultValues: {
-      name: parentInfo?.name || "",
-      email: parentInfo?.email || "",
-      relationship: parentInfo?.relationship || "Parent",
-      emergencyContact: parentInfo?.emergencyContact || "",
+      name: "",
+      email: "",
+      relationship: "Parent",
+      emergencyContact: "",
     },
   });
 
-  // Update form values when parentInfo changes
+  // Update form values when parentInfo changes and not in edit mode
   useEffect(() => {
-    if (parentInfo) {
+    if (parentInfo && !editParentMode) {
       console.log("Resetting form with parent info:", parentInfo);
       parentForm.reset({
         name: parentInfo.name,
@@ -50,7 +50,7 @@ const ParentInfoTab = () => {
         emergencyContact: parentInfo.emergencyContact || "",
       });
     }
-  }, [parentInfo, parentForm]);
+  }, [parentInfo, parentForm, editParentMode]);
 
   const saveParentProfile = async (data: z.infer<typeof parentProfileSchema>) => {
     try {

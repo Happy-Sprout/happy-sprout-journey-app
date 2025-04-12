@@ -14,6 +14,8 @@ interface ParentInfoViewProps {
 const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) => {
   const { toast } = useToast();
   
+  console.log("ParentInfoView rendering with:", parentInfo);
+  
   // Added safety check to prevent rendering with invalid data
   if (!parentInfo || !parentInfo.id) {
     console.error("ParentInfoView received invalid parent info:", parentInfo);

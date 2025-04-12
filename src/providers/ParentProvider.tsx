@@ -1,5 +1,5 @@
 
-import { useState, ReactNode, useEffect, useCallback } from "react";
+import { useState, ReactNode, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ParentContext from "@/contexts/ParentContext";
@@ -44,8 +44,10 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user]);
 
-  // Fetch parent info whenever user changes
+  // Only fetch parent info when user changes and userId exists
   useEffect(() => {
+    let isMounted = true;
+    
     if (user?.id) {
       console.log("User ID changed, fetching parent info:", user.id);
       fetchParentInfo(user.id).catch(err => {
@@ -55,6 +57,10 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       // Clear parent info if user is not logged in
       setParentInfoState(null);
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user?.id, fetchParentInfo]);
   
   // Use useCallback for functions passed through context to prevent unnecessary re-renders
@@ -89,7 +95,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Update state with a new object to ensure React detects the change
-      setParentInfoState({...info});
+      setParentInfoState(prev => prev === info ? {...info} : info);
       
       toast({
         title: "Success",
@@ -159,17 +165,18 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id, parentInfo, toast]);
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    parentInfo,
+    isLoading,
+    setParentInfo,
+    updateParentInfo,
+    fetchParentInfo,
+    refreshParentInfo
+  }), [parentInfo, isLoading, setParentInfo, updateParentInfo, fetchParentInfo, refreshParentInfo]);
+
   return (
-    <ParentContext.Provider
-      value={{
-        parentInfo,
-        isLoading,
-        setParentInfo,
-        updateParentInfo,
-        fetchParentInfo,
-        refreshParentInfo
-      }}
-    >
+    <ParentContext.Provider value={contextValue}>
       {children}
     </ParentContext.Provider>
   );
