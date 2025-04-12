@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -56,10 +55,8 @@ const ParentInfoTab = () => {
         description: "Your parent profile has been successfully updated.",
       });
       
-      // Explicitly exit edit mode and reset form after successful save
       setEditParentMode(false);
       
-      // Force reset the form to ensure clean state
       parentForm.reset({
         name: data.name,
         email: data.email,
@@ -77,8 +74,7 @@ const ParentInfoTab = () => {
     }
   };
 
-  // Update form values when parentInfo changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (parentInfo) {
       parentForm.reset({
         name: parentInfo.name,
