@@ -1,17 +1,14 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/useAuth";
-import { UserProvider } from "@/contexts/UserContext";
+import { UserProvider } from "@/contexts/UserProvider";
 import { AdminProvider } from "@/contexts/AdminContext";
-import { ParentProvider } from "@/providers/ParentProvider";
 import Index from "@/pages/Index";
-// Import critical pages normally to prevent lazy loading issues
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 import Journal from "@/pages/Journal";
-// Lazy load less critical pages
+
 const Register = lazy(() => import("@/pages/Register"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -34,7 +31,6 @@ const AdminProtectedRoute = lazy(() => import("@/components/AdminProtectedRoute"
 
 import "./App.css";
 
-// Loading fallback
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="animate-pulse">Loading...</div>
@@ -47,47 +43,41 @@ function App() {
       <AuthProvider>
         <UserProvider>
           <AdminProvider>
-            <ParentProvider>
-              <Suspense fallback={<LoadingFallback />}>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  
-                  {/* Protected parent routes */}
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/daily-check-in" element={<DailyCheckIn />} />
-                  <Route path="/journal" element={<Journal />} />
-                  <Route path="/sel-assessment" element={<SELAssessment />} />
-                  <Route path="/create-profile" element={<CreateProfile />} />
-                  <Route path="/edit-profile/:id" element={<EditProfile />} />
-                  
-                  {/* Admin routes - properly nested structure */}
-                  <Route path="/admin" element={
-                    <AdminProtectedRoute>
-                      <AdminLayout />
-                    </AdminProtectedRoute>
-                  }>
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="users" element={<UserManagement />} />
-                    <Route path="content" element={<ContentManagement />} />
-                    <Route path="reports" element={<ReportingAnalytics />} />
-                    <Route path="journal-monitoring" element={<JournalMonitoring />} />
-                    <Route path="assessments" element={<AssessmentManagement />} />
-                    <Route path="gamification" element={<GamificationManagement />} />
-                    <Route path="notifications" element={<NotificationsManagement />} />
-                    <Route path="settings" element={<SettingsManagement />} />
-                  </Route>
-                  
-                  {/* Catch all */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-              <Toaster />
-            </ParentProvider>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/daily-check-in" element={<DailyCheckIn />} />
+                <Route path="/journal" element={<Journal />} />
+                <Route path="/sel-assessment" element={<SELAssessment />} />
+                <Route path="/create-profile" element={<CreateProfile />} />
+                <Route path="/edit-profile/:id" element={<EditProfile />} />
+                
+                <Route path="/admin" element={
+                  <AdminProtectedRoute>
+                    <AdminLayout />
+                  </AdminProtectedRoute>
+                }>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<UserManagement />} />
+                  <Route path="content" element={<ContentManagement />} />
+                  <Route path="reports" element={<ReportingAnalytics />} />
+                  <Route path="journal-monitoring" element={<JournalMonitoring />} />
+                  <Route path="assessments" element={<AssessmentManagement />} />
+                  <Route path="gamification" element={<GamificationManagement />} />
+                  <Route path="notifications" element={<NotificationsManagement />} />
+                  <Route path="settings" element={<SettingsManagement />} />
+                </Route>
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+            <Toaster />
           </AdminProvider>
         </UserProvider>
       </AuthProvider>

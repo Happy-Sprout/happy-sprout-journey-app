@@ -1,7 +1,8 @@
 
 import { useAuth } from "./useAuth";
-import { useParent, ParentInfo } from "./useParent";
-import { useChildren, ChildProfile } from "./useChildren";
+import { useParent } from "./useParent";
+import { useChildren, type ChildProfile } from "./useChildren";
+import type { ParentInfo } from "@/types/parentInfo";
 
 // This hook combines all the functionality from the separate contexts
 // for backwards compatibility

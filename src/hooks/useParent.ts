@@ -1,7 +1,7 @@
 
 import { useContext } from "react";
 import ParentContext from "@/contexts/ParentContext";
-import { ParentInfo } from "@/types/parentInfo";
+import type { ParentInfo } from "@/types/parentInfo";
 
 export const useParent = () => {
   const context = useContext(ParentContext);
@@ -13,4 +13,5 @@ export const useParent = () => {
   return context;
 };
 
+// Re-export the ParentInfo type for convenience
 export type { ParentInfo };

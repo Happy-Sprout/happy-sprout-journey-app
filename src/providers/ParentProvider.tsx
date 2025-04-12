@@ -2,11 +2,10 @@
 import { ReactNode, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import ParentContext from "@/contexts/ParentContext";
-import { ParentInfo } from "@/utils/parent";
+import type { ParentInfo } from "@/types/parentInfo";
 import { useParentState } from "@/hooks/useParentState";
 import { useParentUpdate } from "@/hooks/useParentUpdate";
 import { useParentFetch } from "@/hooks/useParentFetch";
-import { saveParentInfo } from "@/utils/parent";
 
 export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const { parentInfo, isLoading, setParentInfo: setParentInfoState, setIsLoading, updateParentInfoState } = useParentState();
@@ -80,11 +79,11 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    const success = await saveParentInfo(info);
+    const success = await saveParentInfoToDb(info);
     if (success) {
-      setParentInfoState({...info});
+      setParentInfoState(info);
     }
-  }, [setParentInfoState]);
+  }, [setParentInfoState, saveParentInfoToDb]);
 
   const updateParentInfo = useCallback(async (updatedInfo: Partial<ParentInfo>) => {
     if (!user?.id || !parentInfo) {
