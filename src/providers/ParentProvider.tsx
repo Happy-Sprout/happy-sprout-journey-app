@@ -1,4 +1,3 @@
-
 import { useState, ReactNode, useEffect, useCallback, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,66 +15,94 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  
   const fetchInProgress = useRef(false);
   const initialFetchDone = useRef(false);
   const preventApiCallsFlag = useRef(false);
   const lastUserIdFetched = useRef<string | null>(null);
+  const fetchInFlightPromise = useRef<Promise<any> | null>(null);
+  const componentMounted = useRef(true);
 
-  // Memoize fetchParentInfo to prevent recreation on each render
   const fetchParentInfo = useCallback(async (userId: string) => {
-    // Prevent multiple concurrent fetches or fetching the same data again
-    if (fetchInProgress.current || preventApiCallsFlag.current || lastUserIdFetched.current === userId) {
+    if (fetchInProgress.current && fetchInFlightPromise.current && lastUserIdFetched.current === userId) {
+      console.log("Reusing in-flight parent info fetch for:", userId);
+      return fetchInFlightPromise.current;
+    }
+    
+    if (fetchInProgress.current || preventApiCallsFlag.current || !componentMounted.current) {
+      console.log("Skipping parent info fetch - already in progress or prevented");
       return;
     }
 
     try {
+      console.log("Starting new parent info fetch for:", userId);
       fetchInProgress.current = true;
       setIsLoading(true);
-      const data = await fetchParentInfoById(userId);
       lastUserIdFetched.current = userId;
       
-      if (data) {
-        setParentInfoState(prevState => {
-          // Only update if data is different to prevent unnecessary re-renders
-          if (JSON.stringify(prevState) !== JSON.stringify(data)) {
+      fetchInFlightPromise.current = (async () => {
+        try {
+          const data = await fetchParentInfoById(userId);
+          
+          if (!componentMounted.current) return null;
+          
+          if (data) {
+            setParentInfoState(prevState => {
+              if (JSON.stringify(prevState) !== JSON.stringify(data)) {
+                return data;
+              }
+              return prevState;
+            });
             return data;
+          } else if (user) {
+            const newParent = await createParentInfo(user);
+            if (newParent && componentMounted.current) {
+              setParentInfoState(newParent);
+              return newParent;
+            }
           }
-          return prevState;
-        });
-      } else if (user) {
-        // If parent record doesn't exist and we have user data, create one
-        const newParent = await createParentInfo(user);
-        if (newParent) {
-          setParentInfoState(newParent);
+          return null;
+        } finally {
+          if (componentMounted.current) {
+            setIsLoading(false);
+          }
         }
-      }
+      })();
+      
+      const result = await fetchInFlightPromise.current;
+      return result;
     } catch (error) {
       console.error("Error in fetchParentInfo:", error);
-      // Don't set parent info to null on error to prevent UI issues
+      return null;
     } finally {
-      setIsLoading(false);
       fetchInProgress.current = false;
+      fetchInFlightPromise.current = null;
     }
   }, [user]);
 
-  // Only fetch parent info once when user changes and userId exists
   useEffect(() => {
-    if (!user?.id) return;
+    componentMounted.current = true;
     
-    if (!initialFetchDone.current || lastUserIdFetched.current !== user.id) {
-      initialFetchDone.current = true;
-      fetchParentInfo(user.id).catch(err => {
+    const initParentInfo = async () => {
+      if (!user?.id || initialFetchDone.current) return;
+      
+      try {
+        initialFetchDone.current = true;
+        console.log("Performing initial parent info fetch");
+        await fetchParentInfo(user.id);
+      } catch (err) {
         console.error("Error in initial parent info fetch:", err);
-      });
-    }
+      }
+    };
+    
+    initParentInfo();
     
     return () => {
-      // Clean up on unmount
+      componentMounted.current = false;
       initialFetchDone.current = false;
     };
   }, [user?.id, fetchParentInfo]);
   
-  // Temporarily prevent API calls during state updates
   const preventApiCalls = useCallback(() => {
     preventApiCallsFlag.current = true;
     return () => {
@@ -83,11 +110,14 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
   
-  // Use useCallback for functions passed through context to prevent unnecessary re-renders
   const refreshParentInfo = useCallback(async () => {
-    if (!user?.id || fetchInProgress.current || preventApiCallsFlag.current) return;
+    if (!user?.id || fetchInProgress.current || preventApiCallsFlag.current || !componentMounted.current) {
+      console.log("Skipping parent info refresh - fetch in progress or prevented");
+      return;
+    }
     
-    lastUserIdFetched.current = null; // Force a refresh by resetting this
+    console.log("Forcing parent info refresh");
+    lastUserIdFetched.current = null;
     try {
       await fetchParentInfo(user.id);
     } catch (err) {
@@ -102,7 +132,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      // Prevent concurrent API calls during this operation
       const releaseFlag = preventApiCalls();
       
       const success = await saveParentInfo(info);
@@ -117,7 +146,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Update state with a new object to ensure React detects the change
       setParentInfoState(() => ({...info}));
       
       toast({
@@ -125,7 +153,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         description: "Profile saved successfully!"
       });
       
-      // Release the flag after state is updated
       setTimeout(releaseFlag, 100);
     } catch (error) {
       console.error("Error in setParentInfo:", error);
@@ -144,7 +171,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      // Prevent concurrent API calls during this operation
       const releaseFlag = preventApiCalls();
       
       const success = await updateParentInfoFields(parentInfo.id, updatedInfo);
@@ -159,7 +185,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Immediately update local state with the new data immutably
       setParentInfoState(prev => {
         if (!prev) {
           if (
@@ -174,7 +199,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           return updatedInfo as ParentInfo;
         }
         
-        // Create a completely new object instead of mutating the existing one
         const newParentInfo = {
           ...prev,
           ...updatedInfo
@@ -188,7 +212,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         description: "Profile updated successfully!"
       });
       
-      // Release the flag after state is updated
       setTimeout(releaseFlag, 100);
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
@@ -200,7 +223,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id, parentInfo, toast, preventApiCalls]);
 
-  // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     parentInfo,
     isLoading,

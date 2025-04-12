@@ -22,24 +22,43 @@ const ChildProfilesTab = () => {
   const [editChildRelationship, setEditChildRelationship] = useState<string | null>(null);
   const [relationshipValue, setRelationshipValue] = useState("");
   
-  // Track if we've already refreshed profiles to prevent multiple refreshes
-  const refreshed = useRef(false);
-  const isLoading = useRef(false);
+  // Improved fetch control with stronger reference tracking
+  const hasInitialFetch = useRef(false);
+  const fetchInProgress = useRef(false);
+  const componentMounted = useRef(true);
 
-  // Ensure we fetch the latest profiles only once when this component mounts
+  // Single fetch on component mount with improved controls
   useEffect(() => {
-    if (user?.id && !refreshed.current && !isLoading.current) {
-      console.log("Initial child profiles fetch");
-      isLoading.current = true;
-      refreshed.current = true;
-      refreshChildProfiles(user.id).finally(() => {
-        isLoading.current = false;
-      });
-    }
+    const fetchProfiles = async () => {
+      if (
+        user?.id && 
+        !hasInitialFetch.current && 
+        !fetchInProgress.current && 
+        componentMounted.current
+      ) {
+        console.log("Performing controlled child profiles fetch");
+        fetchInProgress.current = true;
+        
+        try {
+          await refreshChildProfiles(user.id);
+          if (componentMounted.current) {
+            hasInitialFetch.current = true;
+          }
+        } catch (error) {
+          console.error("Error fetching child profiles:", error);
+        } finally {
+          if (componentMounted.current) {
+            fetchInProgress.current = false;
+          }
+        }
+      }
+    };
     
+    fetchProfiles();
+    
+    // Cleanup properly
     return () => {
-      refreshed.current = false; // Reset when component unmounts
-      isLoading.current = false;
+      componentMounted.current = false;
     };
   }, [refreshChildProfiles, user]);
 
@@ -57,9 +76,10 @@ const ChildProfilesTab = () => {
           description: "The child profile has been successfully deleted.",
         });
         
-        // Refresh profiles after deletion
-        if (user?.id) {
-          refreshChildProfiles(user.id);
+        // Only refresh profiles if component is still mounted
+        if (user?.id && componentMounted.current) {
+          hasInitialFetch.current = false; // Force a fresh fetch after deletion
+          await refreshChildProfiles(user.id);
         }
       } catch (error) {
         console.error("Error deleting profile:", error);
@@ -85,9 +105,9 @@ const ChildProfilesTab = () => {
           description: "The relationship has been successfully updated.",
         });
         
-        // Refresh profiles after update
-        if (user?.id) {
-          refreshChildProfiles(user.id);
+        // Only refresh profiles if component is still mounted
+        if (user?.id && componentMounted.current) {
+          await refreshChildProfiles(user.id);
         }
       } catch (error) {
         console.error("Error updating relationship:", error);

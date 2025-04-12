@@ -23,7 +23,10 @@ const ParentInfoTab = () => {
   const { toast } = useToast();
   const { parentInfo, isLoading, updateParentInfo, setParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
+  
+  // Better form state handling with refs
   const formInitialized = useRef(false);
+  const componentMounted = useRef(true);
   
   // Create the form with resolver
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
@@ -36,11 +39,14 @@ const ParentInfoTab = () => {
     },
   });
 
-  // Only update form when parent info changes and we're not in edit mode
+  // Reset form to prevent unnecessary re-renders
   useEffect(() => {
-    if (parentInfo && !editParentMode && !formInitialized.current) {
+    // Only update form on initial load or when parent info changes significantly
+    if (parentInfo && !editParentMode && !formInitialized.current && componentMounted.current) {
+      console.log("Initializing parent form with data - one time only");
       formInitialized.current = true;
-      console.log("Initializing parent form with data");
+      
+      // Batch update to prevent multiple re-renders
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -48,12 +54,16 @@ const ParentInfoTab = () => {
         emergencyContact: parentInfo.emergencyContact || "",
       });
     }
+    
+    return () => {
+      componentMounted.current = false;
+    };
   }, [parentInfo, parentForm, editParentMode]);
 
-  // When entering edit mode, initialize the form with current values
+  // When entering edit mode, initialize the form with current values - only once
   useEffect(() => {
-    if (editParentMode && parentInfo) {
-      console.log("Setting form values for edit mode");
+    if (editParentMode && parentInfo && componentMounted.current) {
+      // Form values only need to be set once when entering edit mode
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -64,6 +74,8 @@ const ParentInfoTab = () => {
   }, [editParentMode, parentInfo, parentForm]);
 
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
+    if (!componentMounted.current) return;
+    
     try {
       if (parentInfo) {
         console.log("Updating existing parent profile");
