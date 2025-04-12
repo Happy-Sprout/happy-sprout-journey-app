@@ -8,10 +8,13 @@ import StatsCards from "@/components/dashboard/StatsCards";
 import DailyActivities from "@/components/dashboard/DailyActivities";
 import AchievementsSection from "@/components/dashboard/AchievementsSection";
 import WelcomePrompt from "@/components/dashboard/WelcomePrompt";
+import EmotionalGrowthInsights from "@/components/dashboard/EmotionalGrowthInsights";
+import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
   const currentChild = getCurrentChild();
+  const { latestInsight, loading } = useEmotionalInsights(currentChildId);
   
   return (
     <Layout requireAuth>
@@ -43,6 +46,15 @@ const Dashboard = () => {
                   currentChild={currentChild}
                   currentChildId={currentChildId!}
                 />
+                
+                {/* Add Emotional Growth Insights section */}
+                {currentChild && (
+                  <EmotionalGrowthInsights 
+                    currentChild={currentChild} 
+                    insight={latestInsight}
+                    loading={loading}
+                  />
+                )}
               </>
             )}
           </>

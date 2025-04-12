@@ -163,6 +163,7 @@ export const useJournalEntries = (childId: string | undefined) => {
       };
       
       let result;
+      let savedEntry: JournalEntry | null = null;
       
       if (todayEntry) {
         // Update today's entry
@@ -212,12 +213,12 @@ export const useJournalEntries = (childId: string | undefined) => {
           return [updatedEntry, ...filtered];
         });
         
+        savedEntry = updatedEntry;
+        
         successToast({
           title: "Journal Entry Updated!",
           description: "Your journal entry for today has been updated.",
         });
-        
-        return updatedEntry;
       } else {
         // Create new entry
         console.log("Creating new journal entry for today");
@@ -284,16 +285,37 @@ export const useJournalEntries = (childId: string | undefined) => {
           }
           
           setJournalEntries(prevEntries => [newEntry, ...prevEntries]);
+          savedEntry = newEntry;
+          
           successToast({
             title: "Journal Entry Saved!",
             description: "Great job on completing your journal entry today. You earned 15 XP!",
           });
-          
-          return newEntry;
         }
       }
       
-      return null;
+      // Trigger emotional analysis after saving journal entry
+      if (savedEntry) {
+        try {
+          // Call the analyze-emotional-growth edge function
+          await fetch('https://ghucegvhempgmdykosiw.functions.supabase.co/analyze-emotional-growth', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              journalText: journalData.content,
+              childId: childId
+            })
+          });
+          console.log("Emotional growth analysis triggered");
+        } catch (analysisError) {
+          console.error("Error triggering emotional growth analysis:", analysisError);
+          // Non-blocking - continue even if analysis fails
+        }
+      }
+      
+      return savedEntry;
     } catch (error) {
       console.error("Error in saveJournalEntry:", error);
       warningToast({

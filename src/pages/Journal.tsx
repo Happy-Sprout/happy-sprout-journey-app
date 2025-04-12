@@ -9,6 +9,7 @@ import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { successToast } from "@/components/ui/toast-extensions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
 
 const Journal = () => {
   const { getCurrentChild, currentChildId } = useUser();
@@ -24,6 +25,8 @@ const Journal = () => {
     saveJournalEntry,
     getTodayEntry
   } = useJournalEntries(currentChildId);
+  
+  const { analyzeEntry } = useEmotionalInsights(currentChildId);
 
   useEffect(() => {
     if (!currentChildId) return;
@@ -74,6 +77,18 @@ const Journal = () => {
                 xp_earned: 15
               }
             }]);
+          
+          // Trigger emotional insight analysis
+          const journalText = `
+            What went well: ${entry.wentWell}
+            What went badly: ${entry.wentBadly}
+            Gratitude: ${entry.gratitude}
+            Challenge: ${entry.challenge}
+            Tomorrow's plan: ${entry.tomorrowPlan}
+          `;
+          
+          // We'll call this in the background, we don't need to wait for it
+          analyzeEntry(journalText);
           
           // Check if user completed both check-in and journal today for bonus XP
           const { data: todayCheckIn } = await supabase

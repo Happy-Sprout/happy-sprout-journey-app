@@ -674,6 +674,42 @@ export type Database = {
           },
         ]
       }
+      sel_insights: {
+        Row: {
+          child_id: string
+          created_at: string
+          id: string
+          relationship_skills: number
+          responsible_decision_making: number
+          self_awareness: number
+          self_management: number
+          social_awareness: number
+          source_text: string | null
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          id?: string
+          relationship_skills: number
+          responsible_decision_making: number
+          self_awareness: number
+          self_management: number
+          social_awareness: number
+          source_text?: string | null
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          id?: string
+          relationship_skills?: number
+          responsible_decision_making?: number
+          self_awareness?: number
+          self_management?: number
+          social_awareness?: number
+          source_text?: string | null
+        }
+        Relationships: []
+      }
       streak_rules: {
         Row: {
           active: boolean | null
