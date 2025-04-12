@@ -1,4 +1,3 @@
-
 import { useState, ReactNode, useEffect, useCallback, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,9 +6,8 @@ import { ParentInfo } from "@/types/parentInfo";
 import { 
   fetchParentInfoById,
   createParentInfo,
-  saveParentInfo,
-  updateParentInfoFields
-} from "@/utils/parentDb";
+  saveParentInfo
+} from "@/utils/parent";
 
 export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const [parentInfo, setParentInfoState] = useState<ParentInfo | null>(null);
@@ -173,10 +171,8 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       console.log("updateParentInfo called with:", updatedInfo);
-      // Don't prevent API calls immediately - we need this to run
       const releaseFlag = preventApiCalls();
       
-      // Ensure we're updating with the right ID
       const dataToUpdate = {
         ...updatedInfo,
         id: parentInfo.id
@@ -196,8 +192,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Important: Update local state to reflect changes
-      console.log("Updating local state with:", dataToUpdate);
       setParentInfoState(prev => {
         if (!prev) {
           return dataToUpdate as ParentInfo;
@@ -214,7 +208,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         description: "Profile updated successfully!"
       });
       
-      // Release the flag after a short delay
       setTimeout(releaseFlag, 100);
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
