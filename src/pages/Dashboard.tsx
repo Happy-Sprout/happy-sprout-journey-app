@@ -1,5 +1,4 @@
 
-import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import NoActiveChildPrompt from "@/components/dashboard/NoActiveChildPrompt";
