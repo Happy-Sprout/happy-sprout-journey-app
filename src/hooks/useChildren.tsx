@@ -33,31 +33,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { parentInfo } = useParent();
   
-  // Use a persistent useEffect for fetching child profiles
-  useEffect(() => {
-    if (user?.id) {
-      fetchChildProfiles(user.id);
-    }
-    // Adding parentInfo as a dependency to refresh when parent info changes
-  }, [user?.id, parentInfo]);
-  
-  // Load saved child ID on initial render
-  useEffect(() => {
-    const savedChildId = localStorage.getItem("currentChildId");
-    if (savedChildId) {
-      setCurrentChildId(savedChildId);
-    }
-  }, []);
-
-  // Save child ID when it changes
-  useEffect(() => {
-    if (currentChildId) {
-      localStorage.setItem("currentChildId", currentChildId);
-    } else {
-      localStorage.removeItem("currentChildId");
-    }
-  }, [currentChildId]);
-  
   // Define fetch function with useCallback to prevent recreating on each render
   const fetchChildProfiles = useCallback(async (parentId: string) => {
     if (!parentInfo) {
@@ -79,6 +54,31 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error in fetchChildProfiles:", error);
     }
   }, [parentInfo, currentChildId]);
+  
+  // Use a persistent useEffect for fetching child profiles
+  useEffect(() => {
+    if (user?.id) {
+      fetchChildProfiles(user.id);
+    }
+    // Adding parentInfo as a dependency to refresh when parent info changes
+  }, [user?.id, parentInfo, fetchChildProfiles]); // Added fetchChildProfiles to dependencies
+  
+  // Load saved child ID on initial render
+  useEffect(() => {
+    const savedChildId = localStorage.getItem("currentChildId");
+    if (savedChildId) {
+      setCurrentChildId(savedChildId);
+    }
+  }, []);
+
+  // Save child ID when it changes
+  useEffect(() => {
+    if (currentChildId) {
+      localStorage.setItem("currentChildId", currentChildId);
+    } else {
+      localStorage.removeItem("currentChildId");
+    }
+  }, [currentChildId]);
   
   // Define all handler functions with useCallback
   const addChildProfile = useCallback(async (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">): Promise<string | undefined> => {
