@@ -1,4 +1,3 @@
-
 import { ReactNode, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import ParentContext from "@/contexts/ParentContext";
@@ -105,11 +104,58 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const contextValue = useMemo(() => ({
     parentInfo,
     isLoading,
-    setParentInfo,
-    updateParentInfo,
+    setParentInfo: useCallback(async (info: ParentInfo | null) => {
+      if (!info) {
+        setParentInfoState(null);
+        return;
+      }
+      
+      const success = await saveParentInfoToDb(info);
+      if (success) {
+        setParentInfoState(info);
+      }
+    }, [setParentInfoState, saveParentInfoToDb]),
+    updateParentInfo: useCallback(async (updatedInfo: Partial<ParentInfo>) => {
+      if (!user?.id || !parentInfo) {
+        console.error("Cannot update parent info: no user logged in or no parent info available");
+        return;
+      }
+      
+      const dataToUpdate = {
+        ...updatedInfo,
+        id: parentInfo.id
+      };
+      
+      const success = await saveParentInfoToDb(dataToUpdate);
+      if (success) {
+        updateParentInfoState(updatedInfo);
+      }
+    }, [user?.id, parentInfo, saveParentInfoToDb, updateParentInfoState]),
     fetchParentInfo: useCallback((userId: string) => fetchParentInfo(userId, user), [fetchParentInfo, user]),
-    refreshParentInfo
-  }), [parentInfo, isLoading, setParentInfo, updateParentInfo, fetchParentInfo, refreshParentInfo, user]);
+    refreshParentInfo: useCallback(async () => {
+      if (!user?.id || isApiCallPrevented() || !componentMounted.current) {
+        console.log("Skipping parent info refresh - fetch prevented or component unmounted");
+        return;
+      }
+      
+      console.log("Forcing parent info refresh");
+      resetFetchState();
+      setIsLoading(true);
+      
+      try {
+        const data = await fetchParentInfo(user.id, user);
+        if (componentMounted.current && data) {
+          setParentInfoState(data);
+        }
+      } catch (err) {
+        console.error("Error refreshing parent info:", err);
+      } finally {
+        if (componentMounted.current) {
+          setIsLoading(false);
+        }
+      }
+    }, [user?.id, fetchParentInfo, resetFetchState, setParentInfoState, setIsLoading, isApiCallPrevented, user])
+  }), [parentInfo, isLoading, setParentInfoState, saveParentInfoToDb, user, parentInfo, updateParentInfoState, fetchParentInfo, resetFetchState, isApiCallPrevented]);
 
   return (
     <ParentContext.Provider value={contextValue}>

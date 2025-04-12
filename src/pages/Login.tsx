@@ -27,13 +27,25 @@ const Login = () => {
   // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Check if already logged in
+  // Check if already logged in - but only redirect if not on the login page
   useEffect(() => {
-    if (isLoggedIn && user) {
-      // Don't check admin status here, wait for the login handler to do it
-      navigate("/dashboard");
+    if (isLoggedIn && user && location.pathname === "/login") {
+      // Wait to check admin status on next tick to avoid potential circular updates
+      setTimeout(async () => {
+        try {
+          const isAdmin = await checkAdminStatus();
+          if (isAdmin) {
+            navigate("/admin");
+          } else {
+            navigate("/dashboard");
+          }
+        } catch (error) {
+          console.error("Error checking admin status:", error);
+          navigate("/dashboard");
+        }
+      }, 0);
     }
-  }, [isLoggedIn, user, navigate]);
+  }, [isLoggedIn, user, navigate, checkAdminStatus, location]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +64,7 @@ const Login = () => {
       await loginWithEmail(email, password);
       
       // Wait briefly to ensure auth state has updated
+      // Move this to the next tick to avoid potential React state update issues
       setTimeout(async () => {
         try {
           // Check if the user is an admin and redirect accordingly
@@ -70,7 +83,7 @@ const Login = () => {
         } finally {
           setLoading(false);
         }
-      }, 500);
+      }, 10);
     } catch (error: any) {
       console.error("Login error in component:", error);
       setError(error.message || "Login failed. Please check your credentials.");
@@ -131,14 +144,6 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-sprout-purple">Happy Sprout</h1>
           <p className="text-gray-600">Nurturing Social-Emotional Growth</p>
         </div>
-        
-        {/* <Alert className="mb-6 bg-blue-50 border-blue-200">
-          <InfoIcon className="h-4 w-4 text-blue-500" />
-          <AlertTitle>Admin Access</AlertTitle>
-          <AlertDescription>
-            To access the admin panel, register a normal user account, and then use the Supabase dashboard to set them as an admin.
-          </AlertDescription>
-        </Alert> */}
         
         {error && (
           <Alert className="mb-6 bg-red-50 border-red-200">
