@@ -163,27 +163,6 @@ const EditProfile = () => {
     { value: "peerpressure", label: "Dealing with peer pressure and conflicts" },
   ];
   
-  const validateAgeAndGrade = () => {
-    if (!age || !grade) return true;
-    
-    const validCombinations: Record<string, number[]> = {
-      'preschool': [3, 4, 5],
-      'kindergarten': [5, 6],
-      'grade1': [6, 7],
-      'grade2': [7, 8],
-      'grade3': [8, 9],
-      'grade4': [9, 10],
-      'grade5': [10, 11],
-      'grade6': [11, 12],
-      'grade7': [12, 13],
-      'grade8': [13, 14],
-      'middle': [11, 12, 13, 14],
-      'high': [14, 15, 16, 17, 18]
-    };
-    
-    return validCombinations[grade]?.includes(age) || false;
-  };
-  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -221,15 +200,6 @@ const EditProfile = () => {
         title: "Missing information",
         description: "Please select at least one interest and story preference",
         variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!validateAgeAndGrade()) {
-      toast({
-        title: "Age and grade mismatch",
-        description: "The selected age doesn't match the typical age for this grade level.",
-        variant: "default",
       });
       return;
     }
