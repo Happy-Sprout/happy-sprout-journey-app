@@ -23,9 +23,5 @@ export const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
-// Create the provider component
-export type AuthProviderProps = {
-  children: ReactNode;
-};
-
+// Hook to use auth context
 export const useAuthContext = () => useContext(AuthContext);
