@@ -2,15 +2,15 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { Suspense } from 'react'
+import { StrictMode } from 'react'
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Failed to find the root element");
 const root = createRoot(rootElement);
 
-// Wrap with Suspense to handle any loading states properly
+// Render without Suspense at the root level to avoid hook ordering issues
 root.render(
-  <Suspense fallback={<div>Loading application...</div>}>
+  <StrictMode>
     <App />
-  </Suspense>
+  </StrictMode>
 );
