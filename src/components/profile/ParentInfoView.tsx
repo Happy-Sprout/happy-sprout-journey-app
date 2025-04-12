@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ParentInfo } from "@/contexts/UserContext";
+import { ParentInfo } from "@/types/parentInfo";
 import { Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";

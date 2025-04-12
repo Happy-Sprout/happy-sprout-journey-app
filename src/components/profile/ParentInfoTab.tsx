@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/contexts/UserContext";
 import { Edit } from "lucide-react";
 import ParentInfoForm from "./ParentInfoForm";
 import ParentInfoView from "./ParentInfoView";
@@ -22,10 +21,8 @@ const parentProfileSchema = z.object({
 
 const ParentInfoTab = () => {
   const { toast } = useToast();
-  const { parentInfo, updateParentInfo, setParentInfo } = useUser();
-  const { fetchParentInfo } = useParent();
+  const { parentInfo, updateParentInfo, setParentInfo, refreshParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
-  const { user } = useUser();
   
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
     resolver: zodResolver(parentProfileSchema),
@@ -36,6 +33,18 @@ const ParentInfoTab = () => {
       emergencyContact: parentInfo?.emergencyContact || "",
     },
   });
+
+  // Update form values when parentInfo changes
+  useEffect(() => {
+    if (parentInfo) {
+      parentForm.reset({
+        name: parentInfo.name,
+        email: parentInfo.email,
+        relationship: parentInfo.relationship,
+        emergencyContact: parentInfo.emergencyContact || "",
+      });
+    }
+  }, [parentInfo, parentForm]);
 
   const saveParentProfile = async (data: z.infer<typeof parentProfileSchema>) => {
     try {
@@ -61,18 +70,8 @@ const ParentInfoTab = () => {
       
       setEditParentMode(false);
       
-      parentForm.reset({
-        name: data.name,
-        email: data.email,
-        relationship: data.relationship,
-        emergencyContact: data.emergencyContact || "",
-      });
-      
       // Refresh parent info after update
-      if (user?.id) {
-        await fetchParentInfo(user.id);
-      }
-      
+      await refreshParentInfo();
     } catch (error) {
       console.error("Error saving parent profile:", error);
       toast({
@@ -82,17 +81,6 @@ const ParentInfoTab = () => {
       });
     }
   };
-
-  useEffect(() => {
-    if (parentInfo) {
-      parentForm.reset({
-        name: parentInfo.name,
-        email: parentInfo.email,
-        relationship: parentInfo.relationship,
-        emergencyContact: parentInfo.emergencyContact || "",
-      });
-    }
-  }, [parentInfo, parentForm]);
 
   return (
     <Card>
@@ -107,17 +95,7 @@ const ParentInfoTab = () => {
           {!editParentMode && parentInfo && (
             <Button 
               variant="outline" 
-              onClick={() => {
-                if (parentInfo) {
-                  parentForm.reset({
-                    name: parentInfo.name,
-                    email: parentInfo.email,
-                    relationship: parentInfo.relationship,
-                    emergencyContact: parentInfo.emergencyContact || "",
-                  });
-                }
-                setEditParentMode(true);
-              }}
+              onClick={() => setEditParentMode(true)}
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit Information
@@ -130,15 +108,7 @@ const ParentInfoTab = () => {
           parentInfo ? (
             <ParentInfoView 
               parentInfo={parentInfo} 
-              onEdit={() => {
-                parentForm.reset({
-                  name: parentInfo.name,
-                  email: parentInfo.email,
-                  relationship: parentInfo.relationship,
-                  emergencyContact: parentInfo.emergencyContact || "",
-                });
-                setEditParentMode(true);
-              }}
+              onEdit={() => setEditParentMode(true)}
             />
           ) : (
             <div className="text-center py-6">

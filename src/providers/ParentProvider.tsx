@@ -11,9 +11,13 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Fetch parent info whenever user changes
   useEffect(() => {
     if (user?.id) {
       fetchParentInfo(user.id);
+    } else {
+      // Clear parent info if user is not logged in
+      setParentInfoState(null);
     }
   }, [user]);
   
@@ -83,6 +87,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshParentInfo = async () => {
     if (user?.id) {
+      console.log("Refreshing parent info for user:", user.id);
       await fetchParentInfo(user.id);
     }
   };
