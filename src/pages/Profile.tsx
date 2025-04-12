@@ -1,4 +1,5 @@
 
+import React from "react";
 import ProfileLayout from "@/components/profile/ProfileLayout";
 import { Helmet } from "react-helmet";
 
