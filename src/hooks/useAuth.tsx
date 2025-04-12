@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Set up the auth state change listener
   useEffect(() => {
+    // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.email);
@@ -43,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
     
-    // Initial session check
+    // Then check for an existing session
     const initSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
