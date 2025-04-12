@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { loginWithEmail, isLoggedIn, user } = useAuth();
   const { checkAdminStatus } = useAdmin();
   const { toast } = useToast();
@@ -29,22 +29,35 @@ const Login = () => {
 
   // Check if already logged in - but only redirect if not on the login page
   useEffect(() => {
-    if (isLoggedIn && user && location.pathname === "/login") {
-      // Wait to check admin status on next tick to avoid potential circular updates
-      setTimeout(async () => {
+    let isMounted = true;
+    
+    const checkAuthAndRedirect = async () => {
+      if (isLoggedIn && user && location.pathname === "/login" && isMounted) {
         try {
           const isAdmin = await checkAdminStatus();
-          if (isAdmin) {
-            navigate("/admin");
-          } else {
-            navigate("/dashboard");
+          if (isMounted) {
+            if (isAdmin) {
+              navigate("/admin");
+            } else {
+              navigate("/dashboard");
+            }
           }
         } catch (error) {
           console.error("Error checking admin status:", error);
-          navigate("/dashboard");
+          if (isMounted) {
+            navigate("/dashboard");
+          }
         }
-      }, 0);
-    }
+      }
+    };
+    
+    // Use a slight delay to avoid potential race conditions
+    const timer = setTimeout(checkAuthAndRedirect, 10);
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [isLoggedIn, user, navigate, checkAdminStatus, location]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -63,27 +76,8 @@ const Login = () => {
       console.log("Login attempt with:", email);
       await loginWithEmail(email, password);
       
-      // Wait briefly to ensure auth state has updated
-      // Move this to the next tick to avoid potential React state update issues
-      setTimeout(async () => {
-        try {
-          // Check if the user is an admin and redirect accordingly
-          const isAdmin = await checkAdminStatus();
-          console.log("User is admin after login:", isAdmin);
-          
-          if (isAdmin) {
-            navigate("/admin");
-          } else {
-            navigate("/dashboard");
-          }
-        } catch (error) {
-          console.error("Error checking admin status:", error);
-          // Default to dashboard on error
-          navigate("/dashboard");
-        } finally {
-          setLoading(false);
-        }
-      }, 10);
+      // Don't navigate here - let the useEffect handle navigation
+      // after auth state is fully updated
     } catch (error: any) {
       console.error("Login error in component:", error);
       setError(error.message || "Login failed. Please check your credentials.");

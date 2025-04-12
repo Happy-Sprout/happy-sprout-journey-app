@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Session, User } from "@supabase/supabase-js";
@@ -31,38 +31,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // First set up the auth state listener to avoid missing events
+    let isMounted = true;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log('Auth state changed:', event, newSession?.user?.email);
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        setIsLoggedIn(!!newSession);
+        if (isMounted) {
+          console.log('Auth state changed:', event, newSession?.user?.email);
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          setIsLoggedIn(!!newSession);
+        }
       }
     );
     
-    // Then check for existing session
     const initSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
-        setIsLoggedIn(!!data.session);
+        if (isMounted) {
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+          setIsLoggedIn(!!data.session);
+          setLoading(false);
+        }
       } catch (error) {
         console.error("Error checking session:", error);
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     
     initSession();
     
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
   
-  const loginWithEmail = async (email: string, password: string) => {
+  const loginWithEmail = useCallback(async (email: string, password: string) => {
     setLoading(true);
     try {
       console.log("Attempting login with:", email);
@@ -71,16 +78,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password
       });
       
-      // Always attempt to sign in, ignore the "Email not confirmed" error
       if (error && error.message !== "Email not confirmed") {
         throw error;
       }
       
       if (data?.session) {
-        setSession(data.session);
-        setUser(data.user);
-        setIsLoggedIn(true);
-        
         toast({
           title: "Login successful",
           description: "Welcome back to Happy Sprout!"
@@ -88,10 +90,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         return;
       } else if (error && error.message === "Email not confirmed") {
-        // For development, directly try to sign in despite the error
         console.log("Email not confirmed, but proceeding with login anyway");
         
-        // This will work if email confirmation is disabled in Supabase settings
         const { data: secondAttemptData, error: secondAttemptError } = await supabase.auth.signInWithPassword({
           email,
           password
@@ -102,10 +102,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (secondAttemptData?.session) {
-          setSession(secondAttemptData.session);
-          setUser(secondAttemptData.user);
-          setIsLoggedIn(true);
-          
           toast({
             title: "Login successful",
             description: "Welcome back to Happy Sprout!"
@@ -128,12 +124,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
   
   const signUpWithEmail = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
-      // First create the user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -154,7 +149,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       console.log("User created successfully:", data.user.id);
       
-      // Now create parent record - use direct SQL query instead of RPC to bypass TypeScript error
       const { error: parentError } = await supabase
         .from('parents')
         .insert({
@@ -176,7 +170,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("Parent record created successfully");
       }
       
-      // Automatically sign in the user after registration
       if (data.user) {
         try {
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -217,12 +210,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await supabase.auth.signOut();
-      setIsLoggedIn(false);
-      setUser(null);
-      setSession(null);
       toast({
         title: "Logged out",
         description: "You have been successfully logged out."
@@ -235,20 +225,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
     }
+  }, [toast]);
+
+  const authContextValue = {
+    isLoggedIn,
+    loading,
+    user,
+    session,
+    loginWithEmail,
+    signUpWithEmail,
+    logout
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        isLoggedIn,
-        loading,
-        user,
-        session,
-        loginWithEmail,
-        signUpWithEmail,
-        logout
-      }}
-    >
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );

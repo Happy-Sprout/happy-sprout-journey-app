@@ -7,7 +7,7 @@ import { User } from "@supabase/supabase-js";
 export function useParentFetch() {
   const fetchInProgress = useRef(false);
   const lastUserIdFetched = useRef<string | null>(null);
-  const fetchInFlightPromise = useRef<Promise<any> | null>(null);
+  const fetchInFlightPromise = useRef<Promise<ParentInfo | null> | null>(null);
   
   const fetchParentInfo = useCallback(async (userId: string, currentUser?: User | null) => {
     if (!userId) {
@@ -15,13 +15,15 @@ export function useParentFetch() {
       return null;
     }
     
+    // If we already have a fetch in progress for this user, return that promise
     if (fetchInProgress.current && fetchInFlightPromise.current && lastUserIdFetched.current === userId) {
       console.log("Reusing in-flight parent info fetch for:", userId);
       return fetchInFlightPromise.current;
     }
     
+    // If we have a fetch in progress for a different user, wait for it to complete
     if (fetchInProgress.current) {
-      console.log("Skipping parent info fetch - already in progress");
+      console.log("Skipping parent info fetch - already in progress for a different user");
       return null;
     }
 
@@ -30,6 +32,7 @@ export function useParentFetch() {
       fetchInProgress.current = true;
       lastUserIdFetched.current = userId;
       
+      // Create a promise for this fetch operation
       fetchInFlightPromise.current = (async () => {
         try {
           const data = await fetchParentInfoById(userId);
@@ -37,12 +40,14 @@ export function useParentFetch() {
           if (data) {
             return data;
           } else if (currentUser) {
+            // Create parent info if it doesn't exist
             const newParent = await createParentInfo(currentUser);
             return newParent;
           }
           return null;
-        } finally {
-          // Nothing to do here, cleanup happens in parent component
+        } catch (error) {
+          console.error("Error in fetchParentInfo internal promise:", error);
+          return null;
         }
       })();
       
@@ -53,14 +58,15 @@ export function useParentFetch() {
       return null;
     } finally {
       fetchInProgress.current = false;
-      fetchInFlightPromise.current = null;
     }
   }, []);
 
   return {
     fetchParentInfo,
     resetFetchState: useCallback(() => {
+      fetchInProgress.current = false;
       lastUserIdFetched.current = null;
+      fetchInFlightPromise.current = null;
     }, [])
   };
 }
