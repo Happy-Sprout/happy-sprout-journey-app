@@ -16,6 +16,11 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const initialFetchDone = useRef(false);
   const componentMounted = useRef(true);
 
+  // Pre-create the fetchParentInfoWithUser function at the top level
+  const fetchParentInfoWithUser = useCallback((userId: string) => {
+    return fetchParentInfo(userId, user);
+  }, [fetchParentInfo, user]);
+
   // Handle initial fetch of parent info when user logs in
   useEffect(() => {
     componentMounted.current = true;
@@ -106,9 +111,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
     setParentInfo,
     updateParentInfo,
-    fetchParentInfo: useCallback((userId: string) => fetchParentInfo(userId, user), [fetchParentInfo, user]),
+    fetchParentInfo: fetchParentInfoWithUser,
     refreshParentInfo
-  }), [parentInfo, isLoading, setParentInfo, updateParentInfo, fetchParentInfo, user, refreshParentInfo]);
+  }), [parentInfo, isLoading, setParentInfo, updateParentInfo, fetchParentInfoWithUser, refreshParentInfo]);
 
   return (
     <ParentContext.Provider value={contextValue}>

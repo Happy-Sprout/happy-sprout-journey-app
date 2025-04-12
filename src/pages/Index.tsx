@@ -19,7 +19,7 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Ensure the UI renders even if user state is loading
+  // Render a fallback while we're waiting for auth state
   if (!pageReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
