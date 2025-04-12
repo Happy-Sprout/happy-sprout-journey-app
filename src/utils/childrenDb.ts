@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import { ChildProfile } from "@/hooks/useChildren";
@@ -277,18 +276,26 @@ export async function deleteChildProfile(id: string) {
 export async function markDailyCheckInComplete(
   childId: string, 
   currentChild: ChildProfile,
-  date = new Date().toISOString()
+  date = new Date().toISOString(),
+  updatedStreakCount: number,
+  xpIncrement: number,
+  badges: string[]
 ) {
   try {
-    console.log("markDailyCheckInComplete called with:", { childId, date });
-    const streakIncrement = currentChild.dailyCheckInCompleted ? 0 : 1;
-    const xpIncrement = currentChild.dailyCheckInCompleted ? 0 : 10;
+    console.log("markDailyCheckInComplete called with:", { 
+      childId, 
+      date,
+      updatedStreakCount,
+      xpIncrement,
+      badges
+    });
     
     const updateData = { 
       dailyCheckInCompleted: true,
       lastCheckInDate: date,
-      streakCount: (currentChild.streakCount || 0) + streakIncrement,
-      xpPoints: (currentChild.xpPoints || 0) + xpIncrement
+      streakCount: updatedStreakCount,
+      xpPoints: (currentChild.xpPoints || 0) + xpIncrement,
+      badges: badges
     };
     
     console.log("Updating child profile with:", updateData);
@@ -298,8 +305,9 @@ export async function markDailyCheckInComplete(
       .update({ 
         daily_check_in_completed: true,
         last_check_in: date,
-        streak_count: (currentChild.streakCount || 0) + streakIncrement,
-        xp_points: (currentChild.xpPoints || 0) + xpIncrement
+        streak_count: updatedStreakCount,
+        xp_points: (currentChild.xpPoints || 0) + xpIncrement,
+        badges: badges
       })
       .eq('child_id', childId);
       
@@ -319,7 +327,9 @@ export async function markDailyCheckInComplete(
           action_type: 'daily_check_in_completed',
           action_details: {
             date: date,
-            streakCount: (currentChild.streakCount || 0) + streakIncrement
+            streakCount: updatedStreakCount,
+            xpEarned: xpIncrement,
+            badges: badges.filter(badge => !currentChild.badges.includes(badge)) // Only log new badges
           }
         }]);
       console.log("Daily check-in logged successfully");
