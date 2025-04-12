@@ -10,6 +10,11 @@ export function useParentFetch() {
   const fetchInFlightPromise = useRef<Promise<any> | null>(null);
   
   const fetchParentInfo = useCallback(async (userId: string, currentUser?: User | null) => {
+    if (!userId) {
+      console.log("No user ID provided for parent info fetch");
+      return null;
+    }
+    
     if (fetchInProgress.current && fetchInFlightPromise.current && lastUserIdFetched.current === userId) {
       console.log("Reusing in-flight parent info fetch for:", userId);
       return fetchInFlightPromise.current;

@@ -45,6 +45,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     
     return () => {
       componentMounted.current = false;
+      // Don't reset initialFetchDone on unmount - this was causing re-initialization issues
     };
   }, [user?.id, fetchParentInfo, setParentInfoState, setIsLoading, user]);
   
