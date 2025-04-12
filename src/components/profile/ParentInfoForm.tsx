@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
-import { useEffect } from "react";
+import { memo } from "react";
 
 interface ParentInfoFormProps {
   parentForm: UseFormReturn<any>;
@@ -14,15 +14,17 @@ interface ParentInfoFormProps {
   onCancel: () => void;
 }
 
-const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps) => {
-  // Log when form values change for debugging
-  useEffect(() => {
-    console.log("ParentInfoForm - current form values:", parentForm.getValues());
-  }, [parentForm]);
+const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormProps) => {
+  console.log("ParentInfoForm - Rendering with values:", parentForm.getValues());
+  
+  const handleFormSubmit = (data: any) => {
+    console.log("ParentInfoForm - Submitting form with data:", data);
+    onSubmit(data);
+  };
 
   return (
     <Form {...parentForm}>
-      <form onSubmit={parentForm.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={parentForm.handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={parentForm.control}
@@ -34,10 +36,6 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
                   <Input 
                     placeholder="Enter your full name" 
                     {...field} 
-                    onChange={(e) => {
-                      console.log("Name field changed to:", e.target.value);
-                      field.onChange(e);
-                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -56,10 +54,6 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
                     placeholder="Enter your email" 
                     type="email" 
                     {...field} 
-                    onChange={(e) => {
-                      console.log("Email field changed to:", e.target.value);
-                      field.onChange(e);
-                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -74,10 +68,7 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
               <FormItem className="text-left">
                 <FormLabel className="text-left">Relationship to Child</FormLabel>
                 <Select
-                  onValueChange={(value) => {
-                    console.log("Relationship field changed to:", value);
-                    field.onChange(value);
-                  }}
+                  onValueChange={field.onChange}
                   defaultValue={field.value}
                   value={field.value}
                 >
@@ -108,10 +99,6 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
                   <Input 
                     placeholder="Enter emergency contact" 
                     {...field} 
-                    onChange={(e) => {
-                      console.log("Emergency contact field changed to:", e.target.value);
-                      field.onChange(e);
-                    }}
                   />
                 </FormControl>
                 <FormDescription className="text-left">
@@ -128,7 +115,7 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
             type="button" 
             variant="outline" 
             onClick={() => {
-              console.log("Cancel button clicked");
+              console.log("ParentInfoForm - Cancel button clicked");
               onCancel();
             }}
           >
@@ -137,7 +124,6 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
           <Button 
             type="submit" 
             className="sprout-button"
-            onClick={() => console.log("Save button clicked, form data:", parentForm.getValues())}
           >
             <Save className="w-4 h-4 mr-2" />
             Save Profile
@@ -146,6 +132,8 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
       </form>
     </Form>
   );
-};
+});
+
+ParentInfoForm.displayName = "ParentInfoForm";
 
 export default ParentInfoForm;

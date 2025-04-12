@@ -24,11 +24,7 @@ const ParentInfoTab = () => {
   const { parentInfo, isLoading, updateParentInfo, setParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
   
-  // Add a console log to check parentInfo on mount and updates
-  useEffect(() => {
-    console.log("ParentInfoTab - parentInfo updated:", parentInfo);
-  }, [parentInfo]);
-  
+  // Create the form with resolver
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
     resolver: zodResolver(parentProfileSchema),
     defaultValues: {
@@ -39,10 +35,10 @@ const ParentInfoTab = () => {
     },
   });
 
-  // Update form values when parentInfo changes and not in edit mode
+  // Only update form when parent info changes and we're not in edit mode
   useEffect(() => {
     if (parentInfo && !editParentMode) {
-      console.log("Resetting form with parent info:", parentInfo);
+      console.log("ParentInfoTab - Resetting form with parent info:", parentInfo);
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -55,7 +51,7 @@ const ParentInfoTab = () => {
   // When entering edit mode, initialize the form with current values
   useEffect(() => {
     if (editParentMode && parentInfo) {
-      console.log("Entering edit mode, initializing form with:", parentInfo);
+      console.log("ParentInfoTab - Entering edit mode, initializing form with:", parentInfo);
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -67,16 +63,16 @@ const ParentInfoTab = () => {
 
   const saveParentProfile = async (data: z.infer<typeof parentProfileSchema>) => {
     try {
-      console.log("Form data to save:", data);
+      console.log("ParentInfoTab - Form data to save:", data);
       
       if (parentInfo) {
-        console.log("Updating existing parent profile with:", data);
+        console.log("ParentInfoTab - Updating existing parent profile");
         await updateParentInfo({
           ...data,
           id: parentInfo.id,
         });
       } else {
-        console.log("Creating new parent profile with:", data);
+        console.log("ParentInfoTab - Creating new parent profile");
         await setParentInfo({
           id: uuidv4(),
           name: data.name,
@@ -88,12 +84,12 @@ const ParentInfoTab = () => {
       
       toast({
         title: "Profile Updated",
-        description: "Your parent profile has been successfully updated.",
+        description: "Your profile has been successfully updated.",
       });
       
       setEditParentMode(false);
     } catch (error) {
-      console.error("Error saving parent profile:", error);
+      console.error("ParentInfoTab - Error saving parent profile:", error);
       toast({
         title: "Error",
         description: "Failed to save profile. Please try again.",
@@ -103,7 +99,7 @@ const ParentInfoTab = () => {
   };
 
   const handleCancelEdit = () => {
-    console.log("Canceling edit mode");
+    console.log("ParentInfoTab - Canceling edit mode");
     setEditParentMode(false);
     
     // Reset form to current parent info values when canceling

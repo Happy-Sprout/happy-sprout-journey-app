@@ -106,11 +106,17 @@ export async function updateParentInfoFields(parentId: string, updatedFields: Pa
   try {
     console.log("Updating parent info:", updatedFields);
     const update: any = {};
-    if (updatedFields.name) update.name = updatedFields.name;
-    if (updatedFields.relationship) update.relationship = updatedFields.relationship;
-    if (updatedFields.email) update.email = updatedFields.email;
-    if (updatedFields.emergencyContact) update.emergency_contact = updatedFields.emergencyContact;
-    if (updatedFields.additionalInfo) update.additional_info = updatedFields.additionalInfo;
+    if (updatedFields.name !== undefined) update.name = updatedFields.name;
+    if (updatedFields.relationship !== undefined) update.relationship = updatedFields.relationship;
+    if (updatedFields.email !== undefined) update.email = updatedFields.email;
+    if (updatedFields.emergencyContact !== undefined) update.emergency_contact = updatedFields.emergencyContact;
+    if (updatedFields.additionalInfo !== undefined) update.additional_info = updatedFields.additionalInfo;
+    
+    // Ensure we have fields to update
+    if (Object.keys(update).length === 0) {
+      console.warn("No fields to update for parent:", parentId);
+      return true; // Return true as this isn't an error
+    }
     
     const { error } = await supabase
       .from('parents')

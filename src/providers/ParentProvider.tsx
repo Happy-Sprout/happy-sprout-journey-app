@@ -1,5 +1,5 @@
 
-import { useState, ReactNode, useEffect, useCallback, useMemo } from "react";
+import { useState, ReactNode, useEffect, useCallback, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ParentContext from "@/contexts/ParentContext";
@@ -16,11 +16,20 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const fetchInProgress = useRef(false);
+  const initialFetchDone = useRef(false);
 
   // Memoize fetchParentInfo to prevent recreation on each render
   const fetchParentInfo = useCallback(async (userId: string) => {
+    // Prevent multiple concurrent fetches
+    if (fetchInProgress.current) {
+      console.log("Fetch already in progress, skipping redundant request");
+      return;
+    }
+
     try {
       console.log("Fetching parent info for user:", userId);
+      fetchInProgress.current = true;
       setIsLoading(true);
       const data = await fetchParentInfoById(userId);
       
@@ -41,42 +50,35 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       // Don't set parent info to null on error to prevent UI issues
     } finally {
       setIsLoading(false);
+      fetchInProgress.current = false;
     }
   }, [user]);
 
-  // Only fetch parent info when user changes and userId exists
+  // Only fetch parent info once when user changes and userId exists
   useEffect(() => {
-    let isMounted = true;
+    if (!user?.id || initialFetchDone.current) return;
     
-    if (user?.id) {
-      console.log("User ID changed, fetching parent info:", user.id);
-      setIsLoading(true);
-      fetchParentInfo(user.id)
-        .catch(err => {
-          console.error("Error in initial parent info fetch:", err);
-        })
-        .finally(() => {
-          if (isMounted) setIsLoading(false);
-        });
-    } else {
-      // Clear parent info if user is not logged in
-      setParentInfoState(null);
-    }
+    console.log("Initial parent info fetch for user:", user.id);
+    initialFetchDone.current = true;
+    fetchParentInfo(user.id).catch(err => {
+      console.error("Error in initial parent info fetch:", err);
+    });
     
     return () => {
-      isMounted = false;
+      // Clean up on unmount
+      initialFetchDone.current = false;
     };
   }, [user?.id, fetchParentInfo]);
   
   // Use useCallback for functions passed through context to prevent unnecessary re-renders
   const refreshParentInfo = useCallback(async () => {
-    if (user?.id) {
-      console.log("Explicitly refreshing parent info for user:", user.id);
-      try {
-        await fetchParentInfo(user.id);
-      } catch (err) {
-        console.error("Error refreshing parent info:", err);
-      }
+    if (!user?.id || fetchInProgress.current) return;
+    
+    console.log("Explicitly refreshing parent info for user:", user.id);
+    try {
+      await fetchParentInfo(user.id);
+    } catch (err) {
+      console.error("Error refreshing parent info:", err);
     }
   }, [user?.id, fetchParentInfo]);
 
@@ -100,9 +102,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Update state with a new object to ensure React detects the change
-      setParentInfoState(prevState => {
+      setParentInfoState(() => {
         // Create a completely new object to ensure reference changes
-        return JSON.parse(JSON.stringify(info));
+        return {...info};
       });
       
       toast({
