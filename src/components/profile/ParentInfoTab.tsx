@@ -63,6 +63,7 @@ const ParentInfoTab = () => {
   // When entering edit mode, initialize the form with current values - only once
   useEffect(() => {
     if (editParentMode && parentInfo && componentMounted.current) {
+      console.log("Entering edit mode - resetting form with current values");
       // Form values only need to be set once when entering edit mode
       parentForm.reset({
         name: parentInfo.name || "",
@@ -75,6 +76,8 @@ const ParentInfoTab = () => {
 
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
     if (!componentMounted.current) return;
+    
+    console.log("saveParentProfile called with data:", data);
     
     try {
       if (parentInfo) {
@@ -111,6 +114,7 @@ const ParentInfoTab = () => {
   }, [parentInfo, updateParentInfo, setParentInfo, toast]);
 
   const handleCancelEdit = useCallback(() => {
+    console.log("Cancel edit clicked");
     setEditParentMode(false);
     
     // Reset form to current parent info values when canceling
@@ -125,6 +129,7 @@ const ParentInfoTab = () => {
   }, [parentInfo, parentForm]);
 
   const handleStartEdit = useCallback(() => {
+    console.log("Start edit clicked");
     setEditParentMode(true);
   }, []);
 
