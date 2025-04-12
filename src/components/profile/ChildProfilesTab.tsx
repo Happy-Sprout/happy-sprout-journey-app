@@ -22,6 +22,7 @@ const ChildProfilesTab = () => {
   const [editChildRelationship, setEditChildRelationship] = useState<string | null>(null);
   const [relationshipValue, setRelationshipValue] = useState("");
 
+  // Ensure we fetch the latest profiles whenever this component mounts
   useEffect(() => {
     if (user?.id) {
       console.log("ChildProfilesTab: Refreshing child profiles");
@@ -36,17 +37,27 @@ const ChildProfilesTab = () => {
 
   const confirmDelete = async () => {
     if (profileToDelete) {
-      await deleteChildProfile(profileToDelete);
-      toast({
-        title: "Profile Deleted",
-        description: "The child profile has been successfully deleted.",
-      });
-      setDeleteDialogOpen(false);
-      setProfileToDelete(null);
-      
-      // Refresh profiles after deletion
-      if (user?.id) {
-        refreshChildProfiles(user.id);
+      try {
+        await deleteChildProfile(profileToDelete);
+        toast({
+          title: "Profile Deleted",
+          description: "The child profile has been successfully deleted.",
+        });
+        
+        // Refresh profiles after deletion
+        if (user?.id) {
+          refreshChildProfiles(user.id);
+        }
+      } catch (error) {
+        console.error("Error deleting profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete profile. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setDeleteDialogOpen(false);
+        setProfileToDelete(null);
       }
     }
   };
@@ -65,9 +76,6 @@ const ChildProfilesTab = () => {
         if (user?.id) {
           refreshChildProfiles(user.id);
         }
-        
-        setEditChildRelationship(null);
-        setRelationshipValue("");
       } catch (error) {
         console.error("Error updating relationship:", error);
         toast({
@@ -75,8 +83,15 @@ const ChildProfilesTab = () => {
           description: "Failed to update relationship. Please try again.",
           variant: "destructive"
         });
+      } finally {
+        setEditChildRelationship(null);
+        setRelationshipValue("");
       }
     }
+  };
+
+  const handleCreateProfile = () => {
+    navigate("/create-profile");
   };
 
   return (
@@ -85,7 +100,7 @@ const ChildProfilesTab = () => {
         <h2 className="text-xl font-semibold">Child Profiles</h2>
         <Button
           className="sprout-button w-full sm:w-auto"
-          onClick={() => navigate("/create-profile")}
+          onClick={handleCreateProfile}
         >
           <Plus className="w-4 h-4 mr-2" />
           Create New Profile
@@ -102,7 +117,7 @@ const ChildProfilesTab = () => {
             </p>
             <Button
               className="sprout-button"
-              onClick={() => navigate("/create-profile")}
+              onClick={handleCreateProfile}
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Profile

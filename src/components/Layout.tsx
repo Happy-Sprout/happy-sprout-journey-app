@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,10 +23,12 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   const isMobile = useIsMobile();
   
   // Check if the user is logged in when required
-  if (requireAuth && !isLoggedIn) {
-    navigate("/login", { state: { from: location.pathname } });
-    return null;
-  }
+  useEffect(() => {
+    if (requireAuth && !isLoggedIn) {
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+  }, [requireAuth, isLoggedIn, navigate, location.pathname]);
 
   const navItems = [
     { name: "Home", path: "/dashboard", icon: <Home className="mr-2 h-4 w-4" /> },
@@ -40,27 +42,33 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
     navigate("/");
   };
 
+  const handleNavigation = (path: string) => {
+    // Close mobile nav if open
+    setOpen(false);
+    // Navigate to the path
+    navigate(path);
+  };
+
   const NavContent = () => (
     <div className="flex flex-col space-y-4 py-4">
       {navItems.map((item) => (
-        <Link
+        <button
           key={item.path}
-          to={item.path}
+          onClick={() => handleNavigation(item.path)}
           className={cn(
-            "flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-all",
+            "flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-all w-full text-left",
             location.pathname === item.path
               ? "bg-sprout-purple text-white"
               : "hover:bg-sprout-purple/10"
           )}
-          onClick={() => setOpen(false)}
         >
           {item.icon}
           {item.name}
-        </Link>
+        </button>
       ))}
       <button
         onClick={handleLogout}
-        className="flex items-center rounded-lg px-4 py-3 text-sm font-medium hover:bg-red-100 text-red-600"
+        className="flex items-center rounded-lg px-4 py-3 text-sm font-medium hover:bg-red-100 text-red-600 w-full text-left"
       >
         <LogOut className="mr-2 h-4 w-4" />
         Logout

@@ -13,6 +13,17 @@ interface ParentInfoViewProps {
 const ParentInfoView = ({ parentInfo, onEdit }: ParentInfoViewProps) => {
   const { toast } = useToast();
   
+  const handleChangePassword = (e: React.MouseEvent) => {
+    // Prevent any default behavior
+    e.preventDefault();
+    e.stopPropagation();
+    
+    toast({
+      title: "Change Password",
+      description: "This feature is coming soon!",
+    });
+  };
+  
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -44,19 +55,18 @@ const ParentInfoView = ({ parentInfo, onEdit }: ParentInfoViewProps) => {
       <div className="flex flex-col sm:flex-row gap-3">
         <Button 
           variant="outline"
-          onClick={onEdit}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onEdit();
+          }}
         >
           <Edit className="w-4 h-4 mr-2" />
           Edit Information
         </Button>
         <Button
           variant="outline"
-          onClick={() => {
-            toast({
-              title: "Change Password",
-              description: "This feature is coming soon!",
-            });
-          }}
+          onClick={handleChangePassword}
         >
           Change Password
         </Button>

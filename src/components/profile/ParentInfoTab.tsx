@@ -56,7 +56,17 @@ const ParentInfoTab = () => {
         description: "Your parent profile has been successfully updated.",
       });
       
+      // Explicitly exit edit mode and reset form after successful save
       setEditParentMode(false);
+      
+      // Force reset the form to ensure clean state
+      parentForm.reset({
+        name: data.name,
+        email: data.email,
+        relationship: data.relationship,
+        emergencyContact: data.emergencyContact || "",
+      });
+      
     } catch (error) {
       console.error("Error saving parent profile:", error);
       toast({
@@ -66,6 +76,18 @@ const ParentInfoTab = () => {
       });
     }
   };
+
+  // Update form values when parentInfo changes
+  React.useEffect(() => {
+    if (parentInfo) {
+      parentForm.reset({
+        name: parentInfo.name,
+        email: parentInfo.email,
+        relationship: parentInfo.relationship,
+        emergencyContact: parentInfo.emergencyContact || "",
+      });
+    }
+  }, [parentInfo, parentForm]);
 
   return (
     <Card>
