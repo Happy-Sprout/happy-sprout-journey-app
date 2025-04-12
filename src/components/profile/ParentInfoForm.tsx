@@ -15,15 +15,11 @@ interface ParentInfoFormProps {
 }
 
 const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormProps) => {
-  console.log("ParentInfoForm - Rendering with values:", parentForm.getValues());
-  
   const handleFormSubmit = useCallback((data: any) => {
-    console.log("ParentInfoForm - Submitting form with data:", data);
     onSubmit(data);
   }, [onSubmit]);
 
   const handleCancel = useCallback(() => {
-    console.log("ParentInfoForm - Cancel button clicked");
     onCancel();
   }, [onCancel]);
 

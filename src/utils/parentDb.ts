@@ -2,9 +2,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ParentInfo } from "@/types/parentInfo";
 
+// Cache for parent info to prevent excessive database calls
+const parentInfoCache = new Map<string, {data: ParentInfo, timestamp: number}>();
+const CACHE_TTL = 30000; // 30 seconds cache time
+
 export async function fetchParentInfoById(userId: string) {
   try {
-    console.log("Fetching parent info for user:", userId);
+    // Check cache first
+    const cachedInfo = parentInfoCache.get(userId);
+    if (cachedInfo && (Date.now() - cachedInfo.timestamp) < CACHE_TTL) {
+      return cachedInfo.data;
+    }
+    
     const { data, error } = await supabase
       .from('parents')
       .select('*')
@@ -17,8 +26,7 @@ export async function fetchParentInfoById(userId: string) {
     }
     
     if (data) {
-      console.log("Parent data found:", data);
-      return {
+      const parentInfo = {
         id: data.id,
         name: data.name,
         relationship: data.relationship,
@@ -26,9 +34,16 @@ export async function fetchParentInfoById(userId: string) {
         emergencyContact: data.emergency_contact,
         additionalInfo: data.additional_info
       };
+      
+      // Update cache
+      parentInfoCache.set(userId, {
+        data: parentInfo,
+        timestamp: Date.now()
+      });
+      
+      return parentInfo;
     }
     
-    console.log("No parent data found for user:", userId);
     return null;
   } catch (error) {
     console.error("Error in fetchParentInfoById:", error);
@@ -43,7 +58,6 @@ export async function createParentInfo(user: any) {
       return null;
     }
     
-    console.log("Creating parent record for user:", user.id);
     const newParent = {
       id: user.id,
       name: user.user_metadata.name as string,
@@ -61,15 +75,21 @@ export async function createParentInfo(user: any) {
       return null;
     }
     
-    console.log("Parent record created successfully");
-    
-    return {
+    const parentInfo = {
       id: newParent.id,
       name: newParent.name,
       relationship: newParent.relationship,
       email: newParent.email,
       emergencyContact: newParent.emergency_contact,
     };
+    
+    // Update cache
+    parentInfoCache.set(user.id, {
+      data: parentInfo,
+      timestamp: Date.now()
+    });
+    
+    return parentInfo;
   } catch (error) {
     console.error("Error in createParentInfo:", error);
     return null;
@@ -78,7 +98,6 @@ export async function createParentInfo(user: any) {
 
 export async function saveParentInfo(info: ParentInfo) {
   try {
-    console.log("Saving parent info:", info);
     const { error } = await supabase
       .from('parents')
       .upsert({
@@ -95,6 +114,12 @@ export async function saveParentInfo(info: ParentInfo) {
       return false;
     }
     
+    // Update cache
+    parentInfoCache.set(info.id, {
+      data: info,
+      timestamp: Date.now()
+    });
+    
     return true;
   } catch (error) {
     console.error("Error in saveParentInfo:", error);
@@ -104,7 +129,6 @@ export async function saveParentInfo(info: ParentInfo) {
 
 export async function updateParentInfoFields(parentId: string, updatedFields: Partial<ParentInfo>) {
   try {
-    console.log("Updating parent info:", updatedFields);
     const update: any = {};
     if (updatedFields.name !== undefined) update.name = updatedFields.name;
     if (updatedFields.relationship !== undefined) update.relationship = updatedFields.relationship;
@@ -128,9 +152,28 @@ export async function updateParentInfoFields(parentId: string, updatedFields: Pa
       return false;
     }
     
+    // Update cache if it exists
+    const cachedInfo = parentInfoCache.get(parentId);
+    if (cachedInfo) {
+      parentInfoCache.set(parentId, {
+        data: { ...cachedInfo.data, ...updatedFields },
+        timestamp: Date.now()
+      });
+    }
+    
     return true;
   } catch (error) {
     console.error("Error in updateParentInfoFields:", error);
     return false;
   }
+}
+
+// Clear cache for a specific parent
+export function clearParentCache(parentId: string) {
+  parentInfoCache.delete(parentId);
+}
+
+// Clear all cache
+export function clearAllParentCache() {
+  parentInfoCache.clear();
 }

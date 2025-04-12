@@ -19,23 +19,22 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const fetchInProgress = useRef(false);
   const initialFetchDone = useRef(false);
   const preventApiCallsFlag = useRef(false);
+  const lastUserIdFetched = useRef<string | null>(null);
 
   // Memoize fetchParentInfo to prevent recreation on each render
   const fetchParentInfo = useCallback(async (userId: string) => {
-    // Prevent multiple concurrent fetches
-    if (fetchInProgress.current || preventApiCallsFlag.current) {
-      console.log("Fetch already in progress or API calls prevented, skipping redundant request");
+    // Prevent multiple concurrent fetches or fetching the same data again
+    if (fetchInProgress.current || preventApiCallsFlag.current || lastUserIdFetched.current === userId) {
       return;
     }
 
     try {
-      console.log("Fetching parent info for user:", userId);
       fetchInProgress.current = true;
       setIsLoading(true);
       const data = await fetchParentInfoById(userId);
+      lastUserIdFetched.current = userId;
       
       if (data) {
-        console.log("Parent data fetched successfully:", data);
         setParentInfoState(prevState => {
           // Only update if data is different to prevent unnecessary re-renders
           if (JSON.stringify(prevState) !== JSON.stringify(data)) {
@@ -45,10 +44,8 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         });
       } else if (user) {
         // If parent record doesn't exist and we have user data, create one
-        console.log("No parent record found, creating new one");
         const newParent = await createParentInfo(user);
         if (newParent) {
-          console.log("New parent record created:", newParent);
           setParentInfoState(newParent);
         }
       }
@@ -63,13 +60,14 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
 
   // Only fetch parent info once when user changes and userId exists
   useEffect(() => {
-    if (!user?.id || initialFetchDone.current) return;
+    if (!user?.id) return;
     
-    console.log("Initial parent info fetch for user:", user.id);
-    initialFetchDone.current = true;
-    fetchParentInfo(user.id).catch(err => {
-      console.error("Error in initial parent info fetch:", err);
-    });
+    if (!initialFetchDone.current || lastUserIdFetched.current !== user.id) {
+      initialFetchDone.current = true;
+      fetchParentInfo(user.id).catch(err => {
+        console.error("Error in initial parent info fetch:", err);
+      });
+    }
     
     return () => {
       // Clean up on unmount
@@ -89,7 +87,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const refreshParentInfo = useCallback(async () => {
     if (!user?.id || fetchInProgress.current || preventApiCallsFlag.current) return;
     
-    console.log("Explicitly refreshing parent info for user:", user.id);
+    lastUserIdFetched.current = null; // Force a refresh by resetting this
     try {
       await fetchParentInfo(user.id);
     } catch (err) {
@@ -107,7 +105,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       // Prevent concurrent API calls during this operation
       const releaseFlag = preventApiCalls();
       
-      console.log("Saving parent info:", info);
       const success = await saveParentInfo(info);
       
       if (!success) {
@@ -121,10 +118,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Update state with a new object to ensure React detects the change
-      setParentInfoState(() => {
-        // Create a completely new object to ensure reference changes
-        return {...info};
-      });
+      setParentInfoState(() => ({...info}));
       
       toast({
         title: "Success",
@@ -148,8 +142,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       console.error("Cannot update parent info: no user logged in or no parent info available");
       return;
     }
-    
-    console.log("Updating parent info with:", updatedInfo);
     
     try {
       // Prevent concurrent API calls during this operation
@@ -188,7 +180,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           ...updatedInfo
         };
         
-        console.log("Updated parent info state:", newParentInfo);
         return newParentInfo;
       });
       

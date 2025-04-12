@@ -1,4 +1,5 @@
 
+import React, { useCallback, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Layout from "@/components/Layout";
 import ChildProfilesTab from "./ChildProfilesTab";
@@ -7,6 +8,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const ProfileLayout = () => {
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState("children");
+  
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value);
+  }, []);
   
   return (
     <Layout requireAuth>
@@ -16,18 +22,22 @@ const ProfileLayout = () => {
           Manage child profiles and parent information
         </p>
 
-        <Tabs defaultValue="children" className="space-y-6 sm:space-y-8">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={handleTabChange} 
+          className="space-y-6 sm:space-y-8"
+        >
           <TabsList className="w-full grid grid-cols-2 mb-6">
             <TabsTrigger value="children">Child Profiles</TabsTrigger>
             <TabsTrigger value="parent">Parent Information</TabsTrigger>
           </TabsList>
 
           <TabsContent value="children" className="space-y-6 focus-visible:outline-none focus-visible:ring-0">
-            <ChildProfilesTab />
+            {activeTab === "children" && <ChildProfilesTab />}
           </TabsContent>
 
           <TabsContent value="parent" className="focus-visible:outline-none focus-visible:ring-0">
-            <ParentInfoTab />
+            {activeTab === "parent" && <ParentInfoTab />}
           </TabsContent>
         </Tabs>
       </div>
@@ -35,4 +45,4 @@ const ProfileLayout = () => {
   );
 };
 
-export default ProfileLayout;
+export default React.memo(ProfileLayout);

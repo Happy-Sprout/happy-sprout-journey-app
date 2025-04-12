@@ -177,4 +177,4 @@ const ParentInfoTab = () => {
   );
 };
 
-export default ParentInfoTab;
+export default React.memo(ParentInfoTab);

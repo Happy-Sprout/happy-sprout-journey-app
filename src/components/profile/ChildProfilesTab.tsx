@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,21 +21,28 @@ const ChildProfilesTab = () => {
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   const [editChildRelationship, setEditChildRelationship] = useState<string | null>(null);
   const [relationshipValue, setRelationshipValue] = useState("");
+  
+  // Track if we've already refreshed profiles to prevent multiple refreshes
+  const refreshed = useRef(false);
 
-  // Ensure we fetch the latest profiles whenever this component mounts
+  // Ensure we fetch the latest profiles only once when this component mounts
   useEffect(() => {
-    if (user?.id) {
-      console.log("ChildProfilesTab: Refreshing child profiles");
+    if (user?.id && !refreshed.current) {
+      refreshed.current = true;
       refreshChildProfiles(user.id);
     }
+    
+    return () => {
+      refreshed.current = false; // Reset when component unmounts
+    };
   }, [refreshChildProfiles, user]);
 
-  const handleDeleteProfile = (id: string) => {
+  const handleDeleteProfile = useCallback((id: string) => {
     setProfileToDelete(id);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (profileToDelete) {
       try {
         await deleteChildProfile(profileToDelete);
@@ -60,9 +67,9 @@ const ChildProfilesTab = () => {
         setProfileToDelete(null);
       }
     }
-  };
+  }, [profileToDelete, deleteChildProfile, toast, user, refreshChildProfiles]);
 
-  const handleSaveRelationship = async () => {
+  const handleSaveRelationship = useCallback(async () => {
     if (editChildRelationship && relationshipValue) {
       try {
         await setRelationshipToParent(editChildRelationship, relationshipValue);
@@ -88,11 +95,16 @@ const ChildProfilesTab = () => {
         setRelationshipValue("");
       }
     }
-  };
+  }, [editChildRelationship, relationshipValue, setRelationshipToParent, toast, user, refreshChildProfiles]);
 
-  const handleCreateProfile = () => {
+  const handleCreateProfile = useCallback(() => {
     navigate("/create-profile");
-  };
+  }, [navigate]);
+
+  const handleEditRelationship = useCallback((id: string, relationship: string | undefined) => {
+    setEditChildRelationship(id);
+    setRelationshipValue(relationship || "");
+  }, []);
 
   return (
     <>
@@ -127,10 +139,7 @@ const ChildProfilesTab = () => {
       ) : (
         <ChildProfilesList 
           onDeleteProfile={handleDeleteProfile}
-          onEditRelationship={(id, relationship) => {
-            setEditChildRelationship(id);
-            setRelationshipValue(relationship || "");
-          }}
+          onEditRelationship={handleEditRelationship}
         />
       )}
 
