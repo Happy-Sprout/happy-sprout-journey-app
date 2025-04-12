@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { v4 as uuidv4 } from "uuid";
+import { useParent } from "@/hooks/useParent";
 
 const parentProfileSchema = z.object({
   name: z.string().min(2, "Name must have at least 2 characters"),
@@ -20,8 +22,10 @@ const parentProfileSchema = z.object({
 
 const ParentInfoTab = () => {
   const { toast } = useToast();
-  const { parentInfo, setParentInfo, updateParentInfo } = useUser();
+  const { parentInfo, updateParentInfo, setParentInfo } = useUser();
+  const { fetchParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
+  const { user } = useUser();
   
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
     resolver: zodResolver(parentProfileSchema),
@@ -63,6 +67,11 @@ const ParentInfoTab = () => {
         relationship: data.relationship,
         emergencyContact: data.emergencyContact || "",
       });
+      
+      // Refresh parent info after update
+      if (user?.id) {
+        await fetchParentInfo(user.id);
+      }
       
     } catch (error) {
       console.error("Error saving parent profile:", error);

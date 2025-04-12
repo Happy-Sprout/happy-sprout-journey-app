@@ -4,13 +4,14 @@ import { Separator } from "@/components/ui/separator";
 import { ParentInfo } from "@/contexts/UserContext";
 import { Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
 interface ParentInfoViewProps {
   parentInfo: ParentInfo;
   onEdit: () => void;
 }
 
-const ParentInfoView = ({ parentInfo, onEdit }: ParentInfoViewProps) => {
+const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) => {
   const { toast } = useToast();
   
   const handleChangePassword = (e: React.MouseEvent) => {
@@ -73,6 +74,8 @@ const ParentInfoView = ({ parentInfo, onEdit }: ParentInfoViewProps) => {
       </div>
     </>
   );
-};
+});
+
+ParentInfoView.displayName = "ParentInfoView";
 
 export default ParentInfoView;

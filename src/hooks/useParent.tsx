@@ -18,6 +18,7 @@ type ParentContextType = {
   setParentInfo: (info: ParentInfo | null) => Promise<void>;
   updateParentInfo: (info: Partial<ParentInfo>) => Promise<void>;
   fetchParentInfo: (userId: string) => Promise<void>;
+  refreshParentInfo: () => Promise<void>;
 };
 
 const ParentContext = createContext<ParentContextType>({
@@ -25,6 +26,7 @@ const ParentContext = createContext<ParentContextType>({
   setParentInfo: async () => {},
   updateParentInfo: async () => {},
   fetchParentInfo: async () => {},
+  refreshParentInfo: async () => {},
 });
 
 export const ParentProvider = ({ children }: { children: ReactNode }) => {
@@ -99,6 +101,12 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Error in fetchParentInfo:", error);
+    }
+  };
+
+  const refreshParentInfo = async () => {
+    if (user?.id) {
+      await fetchParentInfo(user.id);
     }
   };
 
@@ -177,6 +185,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
+      // Immediately update local state with the new data
       setParentInfoState((prev) => {
         if (!prev) {
           if (
@@ -195,6 +204,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         
         return { ...prev, ...updatedInfo };
       });
+      
+      // Also refresh from the database to ensure we have the latest data
+      await fetchParentInfo(parentInfo.id);
       
       toast({
         title: "Success",
@@ -216,7 +228,8 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         parentInfo,
         setParentInfo,
         updateParentInfo,
-        fetchParentInfo
+        fetchParentInfo,
+        refreshParentInfo
       }}
     >
       {children}

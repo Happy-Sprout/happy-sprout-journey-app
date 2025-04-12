@@ -24,6 +24,7 @@ export const useUser = () => {
     parentInfo: parent.parentInfo,
     setParentInfo: parent.setParentInfo,
     updateParentInfo: parent.updateParentInfo,
+    refreshParentInfo: parent.refreshParentInfo,
     
     // Children properties
     childProfiles: children.childProfiles,
