@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,13 +13,20 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const ChildProfilesTab = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { childProfiles, deleteChildProfile, currentChildId, setRelationshipToParent } = useUser();
+  const { childProfiles, deleteChildProfile, currentChildId, setRelationshipToParent, refreshChildProfiles, user } = useUser();
   const isMobile = useIsMobile();
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   const [editChildRelationship, setEditChildRelationship] = useState<string | null>(null);
   const [relationshipValue, setRelationshipValue] = useState("");
+
+  useEffect(() => {
+    if (user?.id) {
+      console.log("ChildProfilesTab: Refreshing child profiles");
+      refreshChildProfiles(user.id);
+    }
+  }, [refreshChildProfiles, user]);
 
   const handleDeleteProfile = (id: string) => {
     setProfileToDelete(id);

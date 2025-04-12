@@ -168,7 +168,7 @@ const CreateProfile = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (selectedInterests.length === 0 || selectedStoryPreferences.length === 0) {
@@ -187,7 +187,6 @@ const CreateProfile = () => {
     }
     
     const newProfile = {
-      id: uuidv4(),
       nickname,
       age: age || 0,
       dateOfBirth,
@@ -199,22 +198,36 @@ const CreateProfile = () => {
       interests: allInterests,
       storyPreferences: selectedStoryPreferences,
       selChallenges: selectedChallenges,
-      streakCount: 0,
-      xpPoints: 0,
-      badges: [],
       creationStatus: 'completed' as const,
       dailyCheckInCompleted: false,
     };
     
-    addChildProfile(newProfile);
-    setCurrentChildId(newProfile.id);
+    console.log("Creating new profile:", newProfile);
     
-    toast({
-      title: "Profile created!",
-      description: `${nickname}'s profile has been created successfully.`,
-    });
-    
-    navigate("/dashboard");
+    try {
+      const childId = await addChildProfile(newProfile);
+      
+      if (childId) {
+        console.log("Setting current child to new profile:", childId);
+        setCurrentChildId(childId);
+        
+        toast({
+          title: "Profile created!",
+          description: `${nickname}'s profile has been created successfully.`,
+        });
+        
+        setTimeout(() => {
+          navigate("/profile");
+        }, 300);
+      }
+    } catch (error) {
+      console.error("Error creating profile:", error);
+      toast({
+        title: "Error",
+        description: "There was an error creating the profile. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   return (

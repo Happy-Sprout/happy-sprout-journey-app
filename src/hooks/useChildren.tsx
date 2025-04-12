@@ -58,7 +58,9 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
+      console.log("Fetching child profiles for parent:", parentId);
       const profiles = await childrenDb.fetchChildrenProfiles(parentId);
+      console.log("Fetched profiles:", profiles);
       setChildProfiles(profiles);
       
       if (!currentChildId && profiles.length > 0) {
@@ -84,24 +86,25 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     try {
       // Create child profile in the database
       const childId = await childrenDb.createChildProfile(user.id, profile);
+      console.log("Child profile created with ID:", childId);
       
-      // Refresh child profiles
-      try {
-        if (user.id) {
-          await fetchChildProfiles(user.id);
-        }
-        
-        // Show success message
-        toast({
-          title: "Success",
-          description: `Profile for ${profile.nickname} created successfully!`
-        });
-        
-        // Set the newly created profile as current
-        setCurrentChildId(childId);
-      } catch (error) {
-        console.error("Error fetching updated profiles:", error);
-      }
+      // Directly fetch the updated profiles instead of relying on a separate call
+      const updatedProfiles = await childrenDb.fetchChildrenProfiles(user.id);
+      console.log("Updated child profiles after creation:", updatedProfiles);
+      
+      // Update the state with the new profiles
+      setChildProfiles(updatedProfiles);
+      
+      // Show success message
+      toast({
+        title: "Success",
+        description: `Profile for ${profile.nickname} created successfully!`
+      });
+      
+      // Set the newly created profile as current
+      setCurrentChildId(childId);
+      
+      return childId;
     } catch (error) {
       console.error("Error in addChildProfile:", error);
       toast({
