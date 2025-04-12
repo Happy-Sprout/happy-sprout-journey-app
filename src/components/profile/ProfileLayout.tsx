@@ -1,5 +1,5 @@
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Layout from "@/components/Layout";
 import ChildProfilesTab from "./ChildProfilesTab";
@@ -13,6 +13,15 @@ const ProfileLayout = () => {
   const handleTabChange = useCallback((value: string) => {
     setActiveTab(value);
   }, []);
+  
+  // Memoize tab content to prevent unnecessary re-renders
+  const childrenTabContent = useMemo(() => 
+    activeTab === "children" ? <ChildProfilesTab /> : null
+  , [activeTab]);
+  
+  const parentTabContent = useMemo(() => 
+    activeTab === "parent" ? <ParentInfoTab /> : null
+  , [activeTab]);
   
   return (
     <Layout requireAuth>
@@ -33,11 +42,11 @@ const ProfileLayout = () => {
           </TabsList>
 
           <TabsContent value="children" className="space-y-6 focus-visible:outline-none focus-visible:ring-0">
-            {activeTab === "children" && <ChildProfilesTab />}
+            {childrenTabContent}
           </TabsContent>
 
           <TabsContent value="parent" className="focus-visible:outline-none focus-visible:ring-0">
-            {activeTab === "parent" && <ParentInfoTab />}
+            {parentTabContent}
           </TabsContent>
         </Tabs>
       </div>

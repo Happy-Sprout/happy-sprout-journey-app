@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,7 @@ const ParentInfoTab = () => {
   const { toast } = useToast();
   const { parentInfo, isLoading, updateParentInfo, setParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
+  const formInitialized = useRef(false);
   
   // Create the form with resolver
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
@@ -37,7 +38,9 @@ const ParentInfoTab = () => {
 
   // Only update form when parent info changes and we're not in edit mode
   useEffect(() => {
-    if (parentInfo && !editParentMode) {
+    if (parentInfo && !editParentMode && !formInitialized.current) {
+      formInitialized.current = true;
+      console.log("Initializing parent form with data");
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -50,6 +53,7 @@ const ParentInfoTab = () => {
   // When entering edit mode, initialize the form with current values
   useEffect(() => {
     if (editParentMode && parentInfo) {
+      console.log("Setting form values for edit mode");
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -62,11 +66,13 @@ const ParentInfoTab = () => {
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
     try {
       if (parentInfo) {
+        console.log("Updating existing parent profile");
         await updateParentInfo({
           ...parentInfo, // Keep existing fields
           ...data, // Update with new data
         });
       } else {
+        console.log("Creating new parent profile");
         await setParentInfo({
           id: uuidv4(),
           name: data.name,
@@ -149,6 +155,22 @@ const ParentInfoTab = () => {
     );
   }, [isLoading, editParentMode, parentInfo, handleStartEdit, parentForm, saveParentProfile, handleCancelEdit]);
 
+  // Memoize the header actions to prevent re-renders
+  const headerActions = useMemo(() => {
+    if (!editParentMode && parentInfo) {
+      return (
+        <Button 
+          variant="outline" 
+          onClick={handleStartEdit}
+        >
+          <Edit className="mr-2 h-4 w-4" />
+          Edit Information
+        </Button>
+      );
+    }
+    return null;
+  }, [editParentMode, parentInfo, handleStartEdit]);
+
   return (
     <Card>
       <CardHeader>
@@ -159,15 +181,7 @@ const ParentInfoTab = () => {
               Your contact information and account details
             </CardDescription>
           </div>
-          {!editParentMode && parentInfo && (
-            <Button 
-              variant="outline" 
-              onClick={handleStartEdit}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Information
-            </Button>
-          )}
+          {headerActions}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -4,16 +4,30 @@ import { ParentInfo } from "@/types/parentInfo";
 
 // Cache for parent info to prevent excessive database calls
 const parentInfoCache = new Map<string, {data: ParentInfo, timestamp: number}>();
-const CACHE_TTL = 30000; // 30 seconds cache time
+const CACHE_TTL = 300000; // 5 minutes cache time (increased from 30 seconds)
+const CACHE_ERROR_LOCK = new Map<string, number>(); // Prevent hammering the database on errors
+const ERROR_LOCK_TIME = 5000; // 5 seconds lock time after errors
 
 export async function fetchParentInfoById(userId: string) {
   try {
+    console.log("fetchParentInfoById called for:", userId);
+    
+    // Check if we had a recent error for this user
+    const errorLockTime = CACHE_ERROR_LOCK.get(userId);
+    if (errorLockTime && (Date.now() - errorLockTime) < ERROR_LOCK_TIME) {
+      console.log("Error lock active for user, using cache if available");
+      const cachedInfo = parentInfoCache.get(userId);
+      return cachedInfo?.data || null;
+    }
+    
     // Check cache first
     const cachedInfo = parentInfoCache.get(userId);
     if (cachedInfo && (Date.now() - cachedInfo.timestamp) < CACHE_TTL) {
+      console.log("Using cached parent info for user:", userId);
       return cachedInfo.data;
     }
     
+    console.log("Fetching fresh parent info from database for user:", userId);
     const { data, error } = await supabase
       .from('parents')
       .select('*')
@@ -22,7 +36,9 @@ export async function fetchParentInfoById(userId: string) {
       
     if (error) {
       console.error("Error fetching parent data:", error);
-      return null;
+      // Add to error lock to prevent hammering
+      CACHE_ERROR_LOCK.set(userId, Date.now());
+      return cachedInfo?.data || null; // Return cached data as fallback
     }
     
     if (data) {
@@ -47,7 +63,10 @@ export async function fetchParentInfoById(userId: string) {
     return null;
   } catch (error) {
     console.error("Error in fetchParentInfoById:", error);
-    return null;
+    // Add to error lock to prevent hammering
+    CACHE_ERROR_LOCK.set(userId, Date.now());
+    const cachedInfo = parentInfoCache.get(userId);
+    return cachedInfo?.data || null; // Return cached data as fallback
   }
 }
 
@@ -58,6 +77,14 @@ export async function createParentInfo(user: any) {
       return null;
     }
     
+    // Check if a record already exists before creating
+    const existingParent = await fetchParentInfoById(user.id);
+    if (existingParent) {
+      console.log("Parent record already exists, returning existing record");
+      return existingParent;
+    }
+    
+    console.log("Creating new parent record for user:", user.id);
     const newParent = {
       id: user.id,
       name: user.user_metadata.name as string,
@@ -89,6 +116,9 @@ export async function createParentInfo(user: any) {
       timestamp: Date.now()
     });
     
+    // Clear any error locks
+    CACHE_ERROR_LOCK.delete(user.id);
+    
     return parentInfo;
   } catch (error) {
     console.error("Error in createParentInfo:", error);
@@ -98,6 +128,7 @@ export async function createParentInfo(user: any) {
 
 export async function saveParentInfo(info: ParentInfo) {
   try {
+    console.log("Saving parent info for:", info.id);
     const { error } = await supabase
       .from('parents')
       .upsert({
@@ -120,6 +151,9 @@ export async function saveParentInfo(info: ParentInfo) {
       timestamp: Date.now()
     });
     
+    // Clear any error locks
+    CACHE_ERROR_LOCK.delete(info.id);
+    
     return true;
   } catch (error) {
     console.error("Error in saveParentInfo:", error);
@@ -129,6 +163,7 @@ export async function saveParentInfo(info: ParentInfo) {
 
 export async function updateParentInfoFields(parentId: string, updatedFields: Partial<ParentInfo>) {
   try {
+    console.log("Updating parent info fields for:", parentId);
     const update: any = {};
     if (updatedFields.name !== undefined) update.name = updatedFields.name;
     if (updatedFields.relationship !== undefined) update.relationship = updatedFields.relationship;
@@ -161,6 +196,9 @@ export async function updateParentInfoFields(parentId: string, updatedFields: Pa
       });
     }
     
+    // Clear any error locks
+    CACHE_ERROR_LOCK.delete(parentId);
+    
     return true;
   } catch (error) {
     console.error("Error in updateParentInfoFields:", error);
@@ -170,10 +208,14 @@ export async function updateParentInfoFields(parentId: string, updatedFields: Pa
 
 // Clear cache for a specific parent
 export function clearParentCache(parentId: string) {
+  console.log("Clearing parent cache for:", parentId);
   parentInfoCache.delete(parentId);
+  CACHE_ERROR_LOCK.delete(parentId);
 }
 
 // Clear all cache
 export function clearAllParentCache() {
+  console.log("Clearing all parent cache");
   parentInfoCache.clear();
+  CACHE_ERROR_LOCK.clear();
 }

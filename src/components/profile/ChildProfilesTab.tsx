@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,16 +24,22 @@ const ChildProfilesTab = () => {
   
   // Track if we've already refreshed profiles to prevent multiple refreshes
   const refreshed = useRef(false);
+  const isLoading = useRef(false);
 
   // Ensure we fetch the latest profiles only once when this component mounts
   useEffect(() => {
-    if (user?.id && !refreshed.current) {
+    if (user?.id && !refreshed.current && !isLoading.current) {
+      console.log("Initial child profiles fetch");
+      isLoading.current = true;
       refreshed.current = true;
-      refreshChildProfiles(user.id);
+      refreshChildProfiles(user.id).finally(() => {
+        isLoading.current = false;
+      });
     }
     
     return () => {
       refreshed.current = false; // Reset when component unmounts
+      isLoading.current = false;
     };
   }, [refreshChildProfiles, user]);
 
@@ -106,20 +112,10 @@ const ChildProfilesTab = () => {
     setRelationshipValue(relationship || "");
   }, []);
 
-  return (
-    <>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h2 className="text-xl font-semibold">Child Profiles</h2>
-        <Button
-          className="sprout-button w-full sm:w-auto"
-          onClick={handleCreateProfile}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Profile
-        </Button>
-      </div>
-
-      {childProfiles.length === 0 ? (
+  // Memoize the child profiles view to prevent re-renders
+  const childProfilesView = useMemo(() => {
+    if (childProfiles.length === 0) {
+      return (
         <Card>
           <div className="text-center py-8 p-6">
             <UserCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -136,12 +132,31 @@ const ChildProfilesTab = () => {
             </Button>
           </div>
         </Card>
-      ) : (
-        <ChildProfilesList 
-          onDeleteProfile={handleDeleteProfile}
-          onEditRelationship={handleEditRelationship}
-        />
-      )}
+      );
+    }
+    
+    return (
+      <ChildProfilesList 
+        onDeleteProfile={handleDeleteProfile}
+        onEditRelationship={handleEditRelationship}
+      />
+    );
+  }, [childProfiles.length, handleCreateProfile, handleDeleteProfile, handleEditRelationship]);
+
+  return (
+    <>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-xl font-semibold">Child Profiles</h2>
+        <Button
+          className="sprout-button w-full sm:w-auto"
+          onClick={handleCreateProfile}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create New Profile
+        </Button>
+      </div>
+
+      {childProfilesView}
 
       <DeleteProfileDialog
         open={deleteDialogOpen}
