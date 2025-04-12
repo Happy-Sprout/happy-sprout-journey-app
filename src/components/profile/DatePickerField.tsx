@@ -39,6 +39,8 @@ const DatePickerField = ({
   useEffect(() => {
     if (value) {
       setDate(new Date(value));
+    } else {
+      setDate(undefined);
     }
   }, [value]);
 
@@ -49,8 +51,16 @@ const DatePickerField = ({
       // Format the date as YYYY-MM-DD for the input field
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       onChange(formattedDate);
+    } else {
+      setDate(undefined);
+      onChange("");
     }
   };
+
+  // Calculate the start year for the calendar (100 years ago)
+  const fromYear = new Date().getFullYear() - 100;
+  // Current year for max date
+  const toYear = new Date().getFullYear();
 
   return (
     <div className="space-y-2">
@@ -58,29 +68,19 @@ const DatePickerField = ({
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
       
-      <div className="flex flex-col sm:flex-row gap-2">
-        {/* Standard date input for fallback */}
-        <div className="relative flex-grow">
-          <Input
-            id={id}
-            type="date"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            required={required}
-            className="sprout-input pr-10"
-            max={format(maxDate, "yyyy-MM-dd")}
-          />
-        </div>
-        
+      <div className="flex flex-col sm:flex-row gap-3">
         {/* Calendar popover for better UX */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="sm:w-auto w-full border-dashed border-sprout-purple/40 hover:bg-sprout-purple/5"
+              className={cn(
+                "w-full sm:w-auto justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              <span>Choose from Calendar</span>
+              {date ? format(date, "MMMM d, yyyy") : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -90,15 +90,33 @@ const DatePickerField = ({
               onSelect={handleSelect}
               disabled={(date) => date > maxDate}
               initialFocus
+              captionLayout="dropdown-buttons"
+              fromYear={fromYear}
+              toYear={toYear}
               className="p-3 pointer-events-auto"
             />
           </PopoverContent>
         </Popover>
+        
+        {/* Standard date input for fallback */}
+        <div className="relative flex-grow">
+          <Input
+            id={id}
+            type="date"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            required={required}
+            className="sprout-input"
+            max={format(maxDate, "yyyy-MM-dd")}
+          />
+        </div>
       </div>
       
-      <p className="text-sm text-gray-500">
-        {date ? `Selected: ${format(date, "MMMM d, yyyy")}` : "No date selected"}
-      </p>
+      {date && (
+        <p className="text-sm text-gray-500">
+          Selected: {format(date, "MMMM d, yyyy")}
+        </p>
+      )}
     </div>
   );
 };
