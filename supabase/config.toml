@@ -1,1 +1,32 @@
+
 project_id = "ghucegvhempgmdykosiw"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+
+[realtime]
+enabled = true
+
+[analytics]
+enabled = true
+port = 54327
+
+[functions]
+[functions.analyze-emotional-growth]
+verify_jwt = false
+[functions.batch-process-journal-entries]
+verify_jwt = false
