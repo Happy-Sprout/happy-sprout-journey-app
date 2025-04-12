@@ -8,10 +8,10 @@ import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 import Journal from "@/pages/Journal";
+import Dashboard from "@/pages/Dashboard"; // Change to direct import instead of lazy
 
 const Register = lazy(() => import("@/pages/Register"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const DailyCheckIn = lazy(() => import("@/pages/DailyCheckIn"));
 const SELAssessment = lazy(() => import("@/pages/SELAssessment"));
