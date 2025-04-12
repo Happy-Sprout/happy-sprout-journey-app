@@ -44,16 +44,31 @@ const ParentInfoTab = () => {
     if (parentInfo && !editParentMode) {
       console.log("Resetting form with parent info:", parentInfo);
       parentForm.reset({
-        name: parentInfo.name,
-        email: parentInfo.email,
-        relationship: parentInfo.relationship,
+        name: parentInfo.name || "",
+        email: parentInfo.email || "",
+        relationship: parentInfo.relationship || "Parent",
         emergencyContact: parentInfo.emergencyContact || "",
       });
     }
   }, [parentInfo, parentForm, editParentMode]);
 
+  // When entering edit mode, initialize the form with current values
+  useEffect(() => {
+    if (editParentMode && parentInfo) {
+      console.log("Entering edit mode, initializing form with:", parentInfo);
+      parentForm.reset({
+        name: parentInfo.name || "",
+        email: parentInfo.email || "",
+        relationship: parentInfo.relationship || "Parent",
+        emergencyContact: parentInfo.emergencyContact || "",
+      });
+    }
+  }, [editParentMode, parentInfo, parentForm]);
+
   const saveParentProfile = async (data: z.infer<typeof parentProfileSchema>) => {
     try {
+      console.log("Form data to save:", data);
+      
       if (parentInfo) {
         console.log("Updating existing parent profile with:", data);
         await updateParentInfo({
@@ -87,6 +102,21 @@ const ParentInfoTab = () => {
     }
   };
 
+  const handleCancelEdit = () => {
+    console.log("Canceling edit mode");
+    setEditParentMode(false);
+    
+    // Reset form to current parent info values when canceling
+    if (parentInfo) {
+      parentForm.reset({
+        name: parentInfo.name,
+        email: parentInfo.email,
+        relationship: parentInfo.relationship || "Parent",
+        emergencyContact: parentInfo.emergencyContact || "",
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -102,7 +132,7 @@ const ParentInfoTab = () => {
               variant="outline" 
               onClick={() => setEditParentMode(true)}
             >
-              <Edit className="w-4 h-4 mr-2" />
+              <Edit className="mr-2 h-4 w-4" />
               Edit Information
             </Button>
           )}
@@ -131,7 +161,7 @@ const ParentInfoTab = () => {
           <ParentInfoForm 
             parentForm={parentForm} 
             onSubmit={saveParentProfile}
-            onCancel={() => setEditParentMode(false)}
+            onCancel={handleCancelEdit}
           />
         )}
       </CardContent>

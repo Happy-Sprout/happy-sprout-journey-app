@@ -50,9 +50,14 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     
     if (user?.id) {
       console.log("User ID changed, fetching parent info:", user.id);
-      fetchParentInfo(user.id).catch(err => {
-        console.error("Error in initial parent info fetch:", err);
-      });
+      setIsLoading(true);
+      fetchParentInfo(user.id)
+        .catch(err => {
+          console.error("Error in initial parent info fetch:", err);
+        })
+        .finally(() => {
+          if (isMounted) setIsLoading(false);
+        });
     } else {
       // Clear parent info if user is not logged in
       setParentInfoState(null);
@@ -95,7 +100,10 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Update state with a new object to ensure React detects the change
-      setParentInfoState(prev => prev === info ? {...info} : info);
+      setParentInfoState(prevState => {
+        // Create a completely new object to ensure reference changes
+        return JSON.parse(JSON.stringify(info));
+      });
       
       toast({
         title: "Success",
@@ -117,8 +125,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
+    console.log("Updating parent info with:", updatedInfo);
+    
     try {
-      console.log("Updating parent info with:", updatedInfo);
       const success = await updateParentInfoFields(parentInfo.id, updatedInfo);
       
       if (!success) {
@@ -135,9 +144,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         if (!prev) {
           if (
             !updatedInfo.name ||
-            !updatedInfo.relationship ||
             !updatedInfo.email ||
-            !updatedInfo.emergencyContact ||
             !updatedInfo.id
           ) {
             console.error("Missing required fields for parent info");
@@ -147,8 +154,14 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           return updatedInfo as ParentInfo;
         }
         
-        // Create a new object instead of mutating the existing one
-        return { ...prev, ...updatedInfo };
+        // Create a completely new object instead of mutating the existing one
+        const newParentInfo = {
+          ...prev,
+          ...updatedInfo
+        };
+        
+        console.log("Updated parent info state:", newParentInfo);
+        return newParentInfo;
       });
       
       toast({

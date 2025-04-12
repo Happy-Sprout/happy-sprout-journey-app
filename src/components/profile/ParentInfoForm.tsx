@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
+import { useEffect } from "react";
 
 interface ParentInfoFormProps {
   parentForm: UseFormReturn<any>;
@@ -14,6 +15,11 @@ interface ParentInfoFormProps {
 }
 
 const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps) => {
+  // Log when form values change for debugging
+  useEffect(() => {
+    console.log("ParentInfoForm - current form values:", parentForm.getValues());
+  }, [parentForm]);
+
   return (
     <Form {...parentForm}>
       <form onSubmit={parentForm.handleSubmit(onSubmit)} className="space-y-6">
@@ -25,7 +31,14 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
               <FormItem className="text-left">
                 <FormLabel className="text-left">Full Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your full name" {...field} />
+                  <Input 
+                    placeholder="Enter your full name" 
+                    {...field} 
+                    onChange={(e) => {
+                      console.log("Name field changed to:", e.target.value);
+                      field.onChange(e);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -39,7 +52,15 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
               <FormItem className="text-left">
                 <FormLabel className="text-left">Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your email" type="email" {...field} />
+                  <Input 
+                    placeholder="Enter your email" 
+                    type="email" 
+                    {...field} 
+                    onChange={(e) => {
+                      console.log("Email field changed to:", e.target.value);
+                      field.onChange(e);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -53,8 +74,12 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
               <FormItem className="text-left">
                 <FormLabel className="text-left">Relationship to Child</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    console.log("Relationship field changed to:", value);
+                    field.onChange(value);
+                  }}
                   defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -80,7 +105,14 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
               <FormItem className="text-left">
                 <FormLabel className="text-left">Emergency Contact</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter emergency contact" {...field} />
+                  <Input 
+                    placeholder="Enter emergency contact" 
+                    {...field} 
+                    onChange={(e) => {
+                      console.log("Emergency contact field changed to:", e.target.value);
+                      field.onChange(e);
+                    }}
+                  />
                 </FormControl>
                 <FormDescription className="text-left">
                   Optional: Phone number or email of an emergency contact
@@ -95,11 +127,18 @@ const ParentInfoForm = ({ parentForm, onSubmit, onCancel }: ParentInfoFormProps)
           <Button 
             type="button" 
             variant="outline" 
-            onClick={onCancel}
+            onClick={() => {
+              console.log("Cancel button clicked");
+              onCancel();
+            }}
           >
             Cancel
           </Button>
-          <Button type="submit" className="sprout-button">
+          <Button 
+            type="submit" 
+            className="sprout-button"
+            onClick={() => console.log("Save button clicked, form data:", parentForm.getValues())}
+          >
             <Save className="w-4 h-4 mr-2" />
             Save Profile
           </Button>
