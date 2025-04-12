@@ -16,7 +16,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
-  loading: false,
+  loading: true,
   user: null,
   session: null,
   loginWithEmail: async () => {},
@@ -31,18 +31,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
 
+  // Set up the auth state change listener
   useEffect(() => {
-    let isMounted = true;
-    
-    // Set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        if (!isMounted) return;
-        
         console.log('Auth state changed:', event, newSession?.user?.email);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setIsLoggedIn(!!newSession);
+        setLoading(false);
       }
     );
     
@@ -50,32 +47,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        if (!isMounted) return;
-        
         setSession(data.session);
         setUser(data.session?.user ?? null);
         setIsLoggedIn(!!data.session);
       } catch (error) {
         console.error("Error checking session:", error);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
     
     initSession();
     
     return () => {
-      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
   
   const loginWithEmail = useCallback(async (email: string, password: string) => {
-    setLoading(true);
     try {
       console.log("Attempting login with:", email);
+      setLoading(true);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -101,7 +94,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               title: "Login successful",
               description: "Welcome back to Happy Sprout!"
             });
-            setLoading(false);
             return;
           }
         } else {
@@ -115,7 +107,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: "Login successful",
           description: "Welcome back to Happy Sprout!"
         });
-        setLoading(false);
         return;
       }
       
@@ -130,14 +121,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: error.message || "Please check your email and password",
         variant: "destructive"
       });
-      setLoading(false);
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [toast]);
   
   const signUpWithEmail = useCallback(async (email: string, password: string, name: string) => {
-    setLoading(true);
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -191,10 +183,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (signInError) {
             console.error("Auto login after signup failed:", signInError);
           } else if (signInData.session) {
-            setSession(signInData.session);
-            setUser(signInData.user);
-            setIsLoggedIn(true);
-            
             toast({
               title: "Registration successful",
               description: "Welcome to Happy Sprout!"
@@ -205,7 +193,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
-      setLoading(false);
       return data;
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -217,8 +204,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
       
-      setLoading(false);
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [toast]);
   
@@ -239,7 +227,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [toast]);
 
-  // Create a stable reference to the context value
+  // Create a memoized context value to prevent unnecessary rerenders
   const authContextValue = {
     isLoggedIn,
     loading,

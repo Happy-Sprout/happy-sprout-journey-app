@@ -22,12 +22,6 @@ export function useParentFetch() {
       return fetchInFlightPromise.current;
     }
     
-    // Skip if we have another fetch in progress
-    if (fetchInProgress.current) {
-      console.log("Skipping parent info fetch - already in progress for a different user");
-      return null;
-    }
-
     // Start a new fetch operation
     console.log("Starting new parent info fetch for:", userId);
     fetchInProgress.current = true;
@@ -53,6 +47,9 @@ export function useParentFetch() {
       } catch (error) {
         console.error("Error in fetchParentInfo internal promise:", error);
         return null;
+      } finally {
+        // Always clean up after fetch completes
+        fetchInProgress.current = false;
       }
     })();
     
@@ -63,9 +60,6 @@ export function useParentFetch() {
     } catch (error) {
       console.error("Error in fetchParentInfo:", error);
       return null;
-    } finally {
-      // Clean up after fetch completes
-      fetchInProgress.current = false;
     }
   }, []);
 

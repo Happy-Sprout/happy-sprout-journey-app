@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { loginWithEmail, isLoggedIn, user } = useAuth();
   const { checkAdminStatus } = useAdmin();
   const { toast } = useToast();
@@ -28,7 +27,7 @@ const Login = () => {
   // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Check if already logged in - but only redirect if not on the login page
+  // Check if already logged in and redirect if needed
   useEffect(() => {
     if (!isLoggedIn || !user) return;
     

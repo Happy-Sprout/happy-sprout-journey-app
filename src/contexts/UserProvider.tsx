@@ -16,3 +16,5 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     </AuthProvider>
   );
 };
+
+export default UserProvider;
