@@ -45,7 +45,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     
     return () => {
       componentMounted.current = false;
-      initialFetchDone.current = false;
     };
   }, [user?.id, fetchParentInfo, setParentInfoState, setIsLoading, user]);
   
