@@ -8,7 +8,7 @@ const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Failed to find the root element");
 const root = createRoot(rootElement);
 
-// Render without Suspense at the root level to avoid hook ordering issues
+// Render with StrictMode to help catch potential issues
 root.render(
   <StrictMode>
     <App />

@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session, setSession
   } = useAuthState();
 
+  // Initialize auth actions with state setters
   const { loginWithEmail, signUpWithEmail, logout } = useAuthActions(
     setLoading,
     setUser,
