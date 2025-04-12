@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +10,7 @@ import { ChildProfile, ChildrenContextType } from "@/types/childProfile";
 const ChildrenContext = createContext<ChildrenContextType>({
   childProfiles: [],
   setChildProfiles: () => {},
-  addChildProfile: async () => {},
+  addChildProfile: async () => undefined,
   updateChildProfile: async () => {},
   deleteChildProfile: async () => {},
   currentChildId: null,
@@ -80,7 +79,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         description: "Parent profile must be created before adding a child. Please try again.",
         variant: "destructive"
       });
-      return;
+      return undefined;
     }
     
     try {
@@ -112,6 +111,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         description: "Failed to create profile. Please try again.",
         variant: "destructive"
       });
+      return undefined;
     }
   };
 

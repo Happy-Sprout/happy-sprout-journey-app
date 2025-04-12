@@ -27,7 +27,7 @@ export type ChildProfile = {
 export type ChildrenContextType = {
   childProfiles: ChildProfile[];
   setChildProfiles: (profiles: ChildProfile[]) => void;
-  addChildProfile: (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">) => Promise<void>;
+  addChildProfile: (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">) => Promise<string | undefined>;
   updateChildProfile: (id: string, profile: Partial<ChildProfile>) => Promise<void>;
   deleteChildProfile: (id: string) => Promise<void>;
   currentChildId: string | null;
