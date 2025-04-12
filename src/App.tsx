@@ -26,6 +26,7 @@ const AssessmentManagement = lazy(() => import("@/pages/admin/AssessmentManageme
 const GamificationManagement = lazy(() => import("@/pages/admin/GamificationManagement"));
 const NotificationsManagement = lazy(() => import("@/pages/admin/NotificationsManagement"));
 const SettingsManagement = lazy(() => import("@/pages/admin/SettingsManagement"));
+const EmotionalInsightsProcessing = lazy(() => import("@/pages/admin/EmotionalInsightsProcessing"));
 const AdminLayout = lazy(() => import("@/components/AdminLayout"));
 const AdminProtectedRoute = lazy(() => import("@/components/AdminProtectedRoute"));
 
@@ -71,6 +72,7 @@ function App() {
                 <Route path="gamification" element={<GamificationManagement />} />
                 <Route path="notifications" element={<NotificationsManagement />} />
                 <Route path="settings" element={<SettingsManagement />} />
+                <Route path="emotional-insights-processing" element={<EmotionalInsightsProcessing />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />
