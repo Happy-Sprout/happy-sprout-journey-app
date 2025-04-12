@@ -101,9 +101,8 @@ const EditProfile = () => {
     if (value === "other") {
       setShowOtherInterests(!showOtherInterests);
       if (selectedInterests.includes("other")) {
-        const parsedInterests = parseOtherInterests();
         setSelectedInterests(prev => 
-          prev.filter(i => i !== "other" && !parsedInterests.includes(i))
+          prev.filter(i => i !== "other")
         );
         setOtherInterests("");
       } else {

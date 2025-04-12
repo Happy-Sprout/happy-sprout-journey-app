@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ import {
   selStrengthOptions 
 } from "@/constants/profileOptions";
 
-// Define types for multi-select options
 type Option = {
   value: string;
   label: string;
@@ -38,30 +36,25 @@ const CreateProfile = () => {
   const { toast } = useToast();
   const { addChildProfile, setCurrentChildId, calculateAgeFromDOB } = useUser();
   
-  // Basic Information
   const [nickname, setNickname] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [grade, setGrade] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("avatar1");
-  const [age, setAge] = useState<number | null>(null); // Keep for internal use only
+  const [age, setAge] = useState<number | null>(null);
   
-  // Learning Preferences
   const [selectedLearningStyles, setSelectedLearningStyles] = useState<string[]>([]);
   const [selectedSELStrengths, setSelectedSELStrengths] = useState<string[]>([]);
   
-  // Interests & Challenges
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedStoryPreferences, setSelectedStoryPreferences] = useState<string[]>([]);
   const [selectedChallenges, setSelectedChallenges] = useState<string[]>([]);
   const [otherInterests, setOtherInterests] = useState("");
   const [showOtherInterests, setShowOtherInterests] = useState(false);
   
-  // Step navigation
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
   
-  // Options for multi-select fields
   const interestOptions: Option[] = [
     { value: "art", label: "Art", icon: "🎨" },
     { value: "music", label: "Music", icon: "🎵" },
@@ -91,7 +84,6 @@ const CreateProfile = () => {
     { value: "peerpressure", label: "Dealing with peer pressure and conflicts" },
   ];
 
-  // Update age when date of birth changes (internal calculation only)
   useEffect(() => {
     if (dateOfBirth) {
       const calculatedAge = calculateAgeFromDOB(dateOfBirth);
@@ -99,16 +91,12 @@ const CreateProfile = () => {
     }
   }, [dateOfBirth, calculateAgeFromDOB]);
   
-  // Toggle selection for multi-select options
   const toggleInterest = (value: string) => {
     if (value === "other") {
       setShowOtherInterests(!showOtherInterests);
-      // If removing "other", also clear the otherInterests
       if (selectedInterests.includes("other")) {
-        const parsedInterests = parseOtherInterests();
-        // Remove custom interests
         setSelectedInterests(prev => 
-          prev.filter(i => i !== "other" && !parsedInterests.includes(i))
+          prev.filter(i => i !== "other")
         );
         setOtherInterests("");
       } else {
@@ -145,7 +133,6 @@ const CreateProfile = () => {
     );
   };
   
-  // Parse other interests from comma-separated text
   const parseOtherInterests = () => {
     if (!otherInterests) return [];
     return otherInterests.split(',')
@@ -153,11 +140,9 @@ const CreateProfile = () => {
       .filter(item => item.length > 0);
   };
   
-  // Age and grade validation
   const validateAgeAndGrade = () => {
-    if (!age || !grade) return true; // Skip validation if not both set
+    if (!age || !grade) return true;
     
-    // Simple validation examples - can be adjusted based on educational system
     const validCombinations: Record<string, number[]> = {
       'preschool': [3, 4, 5],
       'kindergarten': [5, 6],
@@ -176,10 +161,8 @@ const CreateProfile = () => {
     return validCombinations[grade]?.includes(age) || false;
   };
   
-  // Step navigation
   const nextStep = () => {
     if (currentStep === 1) {
-      // Validate basic information
       if (!nickname || !dateOfBirth || !grade) {
         toast({
           title: "Missing information",
@@ -189,17 +172,15 @@ const CreateProfile = () => {
         return;
       }
       
-      // Validate age and grade match
       if (!validateAgeAndGrade()) {
         toast({
           title: "Age and grade mismatch",
           description: "The selected age doesn't match the typical age for this grade level.",
-          variant: "default", // Changed from "warning" to "default"
+          variant: "default",
         });
-        // Continue anyway - this is just a warning
+        return;
       }
     } else if (currentStep === 2) {
-      // Validate learning preferences
       if (selectedLearningStyles.length === 0 || selectedSELStrengths.length === 0) {
         toast({
           title: "Missing information",
@@ -217,11 +198,9 @@ const CreateProfile = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
   
-  // Form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate final step
     if (selectedInterests.length === 0 || selectedStoryPreferences.length === 0) {
       toast({
         title: "Missing information",
@@ -231,15 +210,12 @@ const CreateProfile = () => {
       return;
     }
     
-    // Combine standard interests with custom "other" interests
     let allInterests = [...selectedInterests];
     if (showOtherInterests) {
-      // Remove the "other" placeholder and add individual items
       allInterests = allInterests.filter(i => i !== "other");
       allInterests = [...allInterests, ...parseOtherInterests()];
     }
     
-    // Create profile
     const newProfile = {
       id: uuidv4(),
       nickname,
@@ -260,7 +236,6 @@ const CreateProfile = () => {
       dailyCheckInCompleted: false,
     };
     
-    // Add profile to context
     addChildProfile(newProfile);
     setCurrentChildId(newProfile.id);
     
@@ -280,7 +255,6 @@ const CreateProfile = () => {
           <p className="text-gray-600 mt-2">Let's set up a profile for your child</p>
         </div>
         
-        {/* Progress indicator */}
         <div className="mb-8">
           <div className="flex justify-between">
             {Array.from({ length: totalSteps }).map((_, index) => (
@@ -313,7 +287,6 @@ const CreateProfile = () => {
         
         <div className="sprout-card">
           <form onSubmit={handleSubmit}>
-            {/* Step 1: Basic Information */}
             {currentStep === 1 && (
               <div className="space-y-6 animate-fade-in">
                 <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
@@ -385,7 +358,6 @@ const CreateProfile = () => {
               </div>
             )}
             
-            {/* Step 2: Learning Preferences */}
             {currentStep === 2 && (
               <div className="space-y-6 animate-fade-in">
                 <h2 className="text-xl font-semibold mb-4">Learning Preferences</h2>
@@ -410,7 +382,6 @@ const CreateProfile = () => {
               </div>
             )}
             
-            {/* Step 3: Interests and Challenges */}
             {currentStep === 3 && (
               <div className="space-y-6 animate-fade-in">
                 <h2 className="text-xl font-semibold mb-4">Interests and Challenges</h2>
@@ -523,7 +494,6 @@ const CreateProfile = () => {
               </div>
             )}
             
-            {/* Navigation buttons */}
             <div className="mt-8 flex justify-between">
               {currentStep > 1 ? (
                 <Button
