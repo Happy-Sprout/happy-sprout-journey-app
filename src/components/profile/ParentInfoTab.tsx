@@ -24,6 +24,11 @@ const ParentInfoTab = () => {
   const { parentInfo, updateParentInfo, setParentInfo, refreshParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
   
+  // Add a console log to check parentInfo on mount and updates
+  useEffect(() => {
+    console.log("ParentInfoTab - parentInfo updated:", parentInfo);
+  }, [parentInfo]);
+  
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
     resolver: zodResolver(parentProfileSchema),
     defaultValues: {
@@ -37,6 +42,7 @@ const ParentInfoTab = () => {
   // Update form values when parentInfo changes
   useEffect(() => {
     if (parentInfo) {
+      console.log("Resetting form with parent info:", parentInfo);
       parentForm.reset({
         name: parentInfo.name,
         email: parentInfo.email,
@@ -49,11 +55,13 @@ const ParentInfoTab = () => {
   const saveParentProfile = async (data: z.infer<typeof parentProfileSchema>) => {
     try {
       if (parentInfo) {
+        console.log("Updating existing parent profile with:", data);
         await updateParentInfo({
           ...data,
           id: parentInfo.id,
         });
       } else {
+        console.log("Creating new parent profile with:", data);
         await setParentInfo({
           id: uuidv4(),
           name: data.name,

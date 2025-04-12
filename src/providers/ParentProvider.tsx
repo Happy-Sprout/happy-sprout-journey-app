@@ -28,14 +28,18 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   
   const fetchParentInfo = async (userId: string) => {
     try {
+      console.log("Fetching parent info for user:", userId);
       const data = await fetchParentInfoById(userId);
       
       if (data) {
+        console.log("Parent data fetched successfully:", data);
         setParentInfoState(data);
       } else if (user) {
         // If parent record doesn't exist and we have user data, create one
+        console.log("No parent record found, creating new one");
         const newParent = await createParentInfo(user);
         if (newParent) {
+          console.log("New parent record created:", newParent);
           setParentInfoState(newParent);
         }
       }
@@ -58,6 +62,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
+      console.log("Saving parent info:", info);
       const success = await saveParentInfo(info);
       
       if (!success) {
@@ -69,12 +74,16 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      setParentInfoState(info);
+      // Update state with a new object to ensure React detects the change
+      setParentInfoState({...info});
       
       toast({
         title: "Success",
         description: "Profile saved successfully!"
       });
+      
+      // Refresh data from the server to ensure consistency
+      await refreshParentInfo();
     } catch (error) {
       console.error("Error in setParentInfo:", error);
       toast({
@@ -92,6 +101,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
+      console.log("Updating parent info with:", updatedInfo);
       const success = await updateParentInfoFields(parentInfo.id, updatedInfo);
       
       if (!success) {
@@ -103,8 +113,8 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Immediately update local state with the new data
-      setParentInfoState((prev) => {
+      // Immediately update local state with the new data immutably
+      setParentInfoState(prev => {
         if (!prev) {
           if (
             !updatedInfo.name ||
@@ -120,16 +130,17 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           return updatedInfo as ParentInfo;
         }
         
+        // Create a new object instead of mutating the existing one
         return { ...prev, ...updatedInfo };
       });
-      
-      // Also refresh from the database to ensure we have the latest data
-      await fetchParentInfo(parentInfo.id);
       
       toast({
         title: "Success",
         description: "Profile updated successfully!"
       });
+      
+      // Also refresh from the database to ensure we have the latest data
+      await refreshParentInfo();
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
       toast({
