@@ -1,10 +1,9 @@
 
 import React from "react";
 import ProfileLayout from "@/components/profile/ProfileLayout";
-import { Helmet } from "react-helmet";
 
 const Profile = () => {
-  // Set the document title directly as a fallback in case Helmet has issues
+  // Set the document title directly
   React.useEffect(() => {
     document.title = "Profiles | Happy Sprout";
     return () => {
@@ -15,9 +14,6 @@ const Profile = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Profiles | Happy Sprout</title>
-      </Helmet>
       <ProfileLayout />
     </>
   );
