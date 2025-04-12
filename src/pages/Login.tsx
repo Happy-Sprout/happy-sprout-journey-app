@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,36 +30,24 @@ const Login = () => {
 
   // Check if already logged in - but only redirect if not on the login page
   useEffect(() => {
-    let isMounted = true;
+    if (!isLoggedIn || !user) return;
     
     const checkAuthAndRedirect = async () => {
-      if (isLoggedIn && user && location.pathname === "/login" && isMounted) {
-        try {
-          const isAdmin = await checkAdminStatus();
-          if (isMounted) {
-            if (isAdmin) {
-              navigate("/admin");
-            } else {
-              navigate("/dashboard");
-            }
-          }
-        } catch (error) {
-          console.error("Error checking admin status:", error);
-          if (isMounted) {
-            navigate("/dashboard");
-          }
+      try {
+        const isAdmin = await checkAdminStatus();
+        if (isAdmin) {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
         }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        navigate("/dashboard");
       }
     };
     
-    // Use a slight delay to avoid potential race conditions
-    const timer = setTimeout(checkAuthAndRedirect, 10);
-    
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
-  }, [isLoggedIn, user, navigate, checkAdminStatus, location]);
+    checkAuthAndRedirect();
+  }, [isLoggedIn, user, navigate, checkAdminStatus]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,9 +64,7 @@ const Login = () => {
     try {
       console.log("Login attempt with:", email);
       await loginWithEmail(email, password);
-      
-      // Don't navigate here - let the useEffect handle navigation
-      // after auth state is fully updated
+      // Navigation is handled by the useEffect hook
     } catch (error: any) {
       console.error("Login error in component:", error);
       setError(error.message || "Login failed. Please check your credentials.");
