@@ -1,18 +1,23 @@
 
 import { useState, useEffect } from "react";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
-import { Trophy, Check, Star, Award } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Trophy, Check, Star, Award, Filter } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChildProfile } from "@/contexts/UserContext";
 import { BADGES, getBadgeInfo } from "@/utils/childUtils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface AchievementsSectionProps {
   currentChild: ChildProfile;
   currentChildId: string;
 }
 
+type BadgeFilterType = "all" | "unlocked" | "locked";
+
 const AchievementsSection = ({ currentChild, currentChildId }: AchievementsSectionProps) => {
   const [journalCompleted, setJournalCompleted] = useState(false);
+  const [filterType, setFilterType] = useState<BadgeFilterType>("all");
   const { getTodayEntry } = useJournalEntries(currentChildId);
   
   useEffect(() => {
@@ -45,70 +50,101 @@ const AchievementsSection = ({ currentChild, currentChildId }: AchievementsSecti
     return a.title.localeCompare(b.title);
   });
 
-  // Earned badges
-  const earnedBadges = sortedBadges.filter(badge => badge.completed);
-  
-  // Upcoming badges (not yet earned)
-  const upcomingBadges = sortedBadges.filter(badge => !badge.completed);
+  // Filter badges based on selected filter
+  const filteredBadges = sortedBadges.filter(badge => {
+    if (filterType === "all") return true;
+    if (filterType === "unlocked") return badge.completed;
+    if (filterType === "locked") return !badge.completed;
+    return true;
+  });
+
+  // Earned badges count - used for display in stats
+  const earnedBadgesCount = allBadges.filter(badge => badge.completed).length;
 
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <Trophy className="h-6 w-6 text-sprout-orange" />
-        Achievements
-      </h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {earnedBadges.map((badge, index) => (
-          <div 
-            key={index} 
-            className="p-4 rounded-lg border bg-sprout-green/10 border-sprout-green"
-          >
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">{badge.icon}</div>
-              <div>
-                <h3 className="font-medium flex items-center gap-2">
-                  {badge.title}
-                  <Check className="h-4 w-4 text-sprout-green" />
-                </h3>
-                <p className="text-sm text-gray-600">{badge.description}</p>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Trophy className="h-6 w-6 text-sprout-orange" />
+          Achievements
+        </h2>
         
-        {earnedBadges.length === 0 && (
-          <div className="col-span-full text-center py-6 text-gray-500">
-            <Award className="mx-auto h-8 w-8 mb-2 text-sprout-yellow" />
-            <p>Complete activities to earn your first badge!</p>
+        <div className="flex items-center space-x-2">
+          <Filter className="h-4 w-4 text-gray-500" />
+          <div className="flex rounded-md border overflow-hidden">
+            <button 
+              className={`px-3 py-1 text-sm ${filterType === "all" ? "bg-sprout-purple text-white" : "bg-gray-100"}`}
+              onClick={() => setFilterType("all")}
+            >
+              All
+            </button>
+            <button 
+              className={`px-3 py-1 text-sm ${filterType === "unlocked" ? "bg-sprout-purple text-white" : "bg-gray-100"}`}
+              onClick={() => setFilterType("unlocked")}
+            >
+              Unlocked
+            </button>
+            <button 
+              className={`px-3 py-1 text-sm ${filterType === "locked" ? "bg-sprout-purple text-white" : "bg-gray-100"}`}
+              onClick={() => setFilterType("locked")}
+            >
+              Locked
+            </button>
           </div>
-        )}
+        </div>
       </div>
+      
+      {filteredBadges.length === 0 && (
+        <div className="text-center py-10 bg-gray-50 rounded-lg">
+          <Award className="mx-auto h-10 w-10 mb-3 text-gray-300" />
+          <p className="text-gray-500">No badges found with the selected filter.</p>
+        </div>
+      )}
 
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Star className="h-5 w-5 text-sprout-yellow" />
-          Badges to Unlock
-        </h3>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-3">
-              {upcomingBadges.slice(0, 5).map((nextBadge, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
-                  <div className="text-xl text-gray-400">{nextBadge.icon}</div>
-                  <div>
-                    <h4 className="font-medium">{nextBadge.title}</h4>
-                    <p className="text-sm text-gray-500">{nextBadge.description}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {filteredBadges.map((badge, index) => (
+          <TooltipProvider key={index}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div 
+                  className={`p-4 rounded-lg border transition-all hover:shadow-md 
+                    ${badge.completed 
+                      ? "bg-sprout-green/10 border-sprout-green" 
+                      : "bg-gray-50 border-gray-200 opacity-75"}`}
+                >
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className={`text-4xl mb-2 ${!badge.completed ? "grayscale opacity-70" : ""}`}>
+                      {badge.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-medium flex items-center justify-center gap-2">
+                        {badge.title}
+                        {badge.completed && <Check className="h-4 w-4 text-sprout-green" />}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">{badge.description}</p>
+                    </div>
+                    {badge.completed && (
+                      <Badge className="bg-sprout-green text-white mt-1">Unlocked!</Badge>
+                    )}
                   </div>
                 </div>
-              ))}
-              {upcomingBadges.length === 0 && (
-                <p className="text-center text-gray-500">Great job! You've earned all available badges!</p>
+              </TooltipTrigger>
+              {!badge.completed && (
+                <TooltipContent>
+                  <p>Complete {badge.description.toLowerCase()} to unlock!</p>
+                </TooltipContent>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </Tooltip>
+          </TooltipProvider>
+        ))}
       </div>
+
+      {filteredBadges.length === 0 && earnedBadgesCount === 0 && (
+        <div className="text-center py-6 mt-4">
+          <Award className="mx-auto h-8 w-8 mb-2 text-sprout-yellow" />
+          <p className="text-gray-500">Complete activities to earn your first badge!</p>
+        </div>
+      )}
     </div>
   );
 };

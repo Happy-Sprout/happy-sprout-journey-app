@@ -97,10 +97,8 @@ const StatsCards = ({ currentChild }: StatsCardsProps) => {
           <div className="text-2xl font-bold">{badgeCount}</div>
           <p className="text-xs text-muted-foreground">Keep going to earn more!</p>
           <div className="flex flex-wrap mt-3 gap-1">
-            {badgeCount === 0 ? (
-              <div className="text-sm text-gray-500">No badges yet</div>
-            ) : (
-              currentChild.badges.map((badge, index) => {
+            {badgeCount > 0 ? (
+              currentChild.badges.slice(0, 5).map((badge, index) => {
                 const badgeInfo = getBadgeInfo(badge);
                 return (
                   <div key={index} className="flex items-center justify-center w-8 h-8 rounded-full bg-sprout-yellow/10 text-sprout-orange" title={badgeInfo.title}>
@@ -108,6 +106,13 @@ const StatsCards = ({ currentChild }: StatsCardsProps) => {
                   </div>
                 );
               })
+            ) : (
+              <div className="text-sm text-gray-500">No badges yet</div>
+            )}
+            {badgeCount > 5 && (
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-sprout-purple/10 text-sprout-purple" title="More badges">
+                <span>+{badgeCount - 5}</span>
+              </div>
             )}
           </div>
         </CardContent>
