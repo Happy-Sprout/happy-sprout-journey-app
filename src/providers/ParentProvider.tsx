@@ -1,84 +1,23 @@
-import { useState, ReactNode, useEffect, useCallback, useMemo, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
+
+import { ReactNode, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import ParentContext from "@/contexts/ParentContext";
-import { ParentInfo } from "@/types/parentInfo";
-import { 
-  fetchParentInfoById,
-  createParentInfo,
-  saveParentInfo
-} from "@/utils/parent";
+import { ParentInfo } from "@/utils/parent";
+import { useParentState } from "@/hooks/useParentState";
+import { useParentUpdate } from "@/hooks/useParentUpdate";
+import { useParentFetch } from "@/hooks/useParentFetch";
+import { saveParentInfo } from "@/utils/parent";
 
 export const ParentProvider = ({ children }: { children: ReactNode }) => {
-  const [parentInfo, setParentInfoState] = useState<ParentInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { parentInfo, isLoading, setParentInfo: setParentInfoState, setIsLoading, updateParentInfoState } = useParentState();
+  const { updateParentInfo: saveParentInfoToDb, preventApiCalls, isApiCallPrevented } = useParentUpdate();
+  const { fetchParentInfo, resetFetchState } = useParentFetch();
   const { user } = useAuth();
   
-  const fetchInProgress = useRef(false);
   const initialFetchDone = useRef(false);
-  const preventApiCallsFlag = useRef(false);
-  const lastUserIdFetched = useRef<string | null>(null);
-  const fetchInFlightPromise = useRef<Promise<any> | null>(null);
   const componentMounted = useRef(true);
 
-  const fetchParentInfo = useCallback(async (userId: string) => {
-    if (fetchInProgress.current && fetchInFlightPromise.current && lastUserIdFetched.current === userId) {
-      console.log("Reusing in-flight parent info fetch for:", userId);
-      return fetchInFlightPromise.current;
-    }
-    
-    if (fetchInProgress.current || preventApiCallsFlag.current || !componentMounted.current) {
-      console.log("Skipping parent info fetch - already in progress or prevented");
-      return;
-    }
-
-    try {
-      console.log("Starting new parent info fetch for:", userId);
-      fetchInProgress.current = true;
-      setIsLoading(true);
-      lastUserIdFetched.current = userId;
-      
-      fetchInFlightPromise.current = (async () => {
-        try {
-          const data = await fetchParentInfoById(userId);
-          
-          if (!componentMounted.current) return null;
-          
-          if (data) {
-            setParentInfoState(prevState => {
-              if (JSON.stringify(prevState) !== JSON.stringify(data)) {
-                return data;
-              }
-              return prevState;
-            });
-            return data;
-          } else if (user) {
-            const newParent = await createParentInfo(user);
-            if (newParent && componentMounted.current) {
-              setParentInfoState(newParent);
-              return newParent;
-            }
-          }
-          return null;
-        } finally {
-          if (componentMounted.current) {
-            setIsLoading(false);
-          }
-        }
-      })();
-      
-      const result = await fetchInFlightPromise.current;
-      return result;
-    } catch (error) {
-      console.error("Error in fetchParentInfo:", error);
-      return null;
-    } finally {
-      fetchInProgress.current = false;
-      fetchInFlightPromise.current = null;
-    }
-  }, [user]);
-
+  // Handle initial fetch of parent info when user logs in
   useEffect(() => {
     componentMounted.current = true;
     
@@ -88,9 +27,18 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       try {
         initialFetchDone.current = true;
         console.log("Performing initial parent info fetch");
-        await fetchParentInfo(user.id);
+        setIsLoading(true);
+        const data = await fetchParentInfo(user.id, user);
+        
+        if (componentMounted.current && data) {
+          setParentInfoState(data);
+        }
       } catch (err) {
         console.error("Error in initial parent info fetch:", err);
+      } finally {
+        if (componentMounted.current) {
+          setIsLoading(false);
+        }
       }
     };
     
@@ -100,29 +48,31 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       componentMounted.current = false;
       initialFetchDone.current = false;
     };
-  }, [user?.id, fetchParentInfo]);
-  
-  const preventApiCalls = useCallback(() => {
-    preventApiCallsFlag.current = true;
-    return () => {
-      preventApiCallsFlag.current = false;
-    };
-  }, []);
+  }, [user?.id, fetchParentInfo, setParentInfoState, setIsLoading, user]);
   
   const refreshParentInfo = useCallback(async () => {
-    if (!user?.id || fetchInProgress.current || preventApiCallsFlag.current || !componentMounted.current) {
-      console.log("Skipping parent info refresh - fetch in progress or prevented");
+    if (!user?.id || isApiCallPrevented() || !componentMounted.current) {
+      console.log("Skipping parent info refresh - fetch prevented or component unmounted");
       return;
     }
     
     console.log("Forcing parent info refresh");
-    lastUserIdFetched.current = null;
+    resetFetchState();
+    setIsLoading(true);
+    
     try {
-      await fetchParentInfo(user.id);
+      const data = await fetchParentInfo(user.id, user);
+      if (componentMounted.current && data) {
+        setParentInfoState(data);
+      }
     } catch (err) {
       console.error("Error refreshing parent info:", err);
+    } finally {
+      if (componentMounted.current) {
+        setIsLoading(false);
+      }
     }
-  }, [user?.id, fetchParentInfo]);
+  }, [user?.id, fetchParentInfo, resetFetchState, setParentInfoState, setIsLoading, isApiCallPrevented, user]);
 
   const setParentInfo = useCallback(async (info: ParentInfo | null) => {
     if (!info) {
@@ -130,38 +80,11 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    try {
-      const releaseFlag = preventApiCalls();
-      
-      const success = await saveParentInfo(info);
-      
-      if (!success) {
-        toast({
-          title: "Error",
-          description: "Could not save profile. Please try again.",
-          variant: "destructive"
-        });
-        releaseFlag();
-        return;
-      }
-      
-      setParentInfoState(() => ({...info}));
-      
-      toast({
-        title: "Success",
-        description: "Profile saved successfully!"
-      });
-      
-      setTimeout(releaseFlag, 100);
-    } catch (error) {
-      console.error("Error in setParentInfo:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save profile. Please try again.",
-        variant: "destructive"
-      });
+    const success = await saveParentInfo(info);
+    if (success) {
+      setParentInfoState({...info});
     }
-  }, [toast, preventApiCalls]);
+  }, [setParentInfoState]);
 
   const updateParentInfo = useCallback(async (updatedInfo: Partial<ParentInfo>) => {
     if (!user?.id || !parentInfo) {
@@ -169,64 +92,25 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    try {
-      console.log("updateParentInfo called with:", updatedInfo);
-      const releaseFlag = preventApiCalls();
-      
-      const dataToUpdate = {
-        ...updatedInfo,
-        id: parentInfo.id
-      };
-      
-      console.log("Calling saveParentInfo with:", dataToUpdate);
-      const success = await saveParentInfo(dataToUpdate as ParentInfo);
-      
-      if (!success) {
-        console.error("saveParentInfo failed");
-        toast({
-          title: "Error",
-          description: "Could not update profile. Please try again.",
-          variant: "destructive"
-        });
-        releaseFlag();
-        return;
-      }
-      
-      setParentInfoState(prev => {
-        if (!prev) {
-          return dataToUpdate as ParentInfo;
-        }
-        
-        return {
-          ...prev,
-          ...dataToUpdate
-        };
-      });
-      
-      toast({
-        title: "Success",
-        description: "Profile updated successfully!"
-      });
-      
-      setTimeout(releaseFlag, 100);
-    } catch (error) {
-      console.error("Error in updateParentInfo:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive"
-      });
+    const dataToUpdate = {
+      ...updatedInfo,
+      id: parentInfo.id
+    };
+    
+    const success = await saveParentInfoToDb(dataToUpdate);
+    if (success) {
+      updateParentInfoState(updatedInfo);
     }
-  }, [user?.id, parentInfo, toast, preventApiCalls]);
+  }, [user?.id, parentInfo, saveParentInfoToDb, updateParentInfoState]);
 
   const contextValue = useMemo(() => ({
     parentInfo,
     isLoading,
     setParentInfo,
     updateParentInfo,
-    fetchParentInfo,
+    fetchParentInfo: useCallback((userId: string) => fetchParentInfo(userId, user), [fetchParentInfo, user]),
     refreshParentInfo
-  }), [parentInfo, isLoading, setParentInfo, updateParentInfo, fetchParentInfo, refreshParentInfo]);
+  }), [parentInfo, isLoading, setParentInfo, updateParentInfo, fetchParentInfo, refreshParentInfo, user]);
 
   return (
     <ParentContext.Provider value={contextValue}>
