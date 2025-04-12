@@ -1,33 +1,10 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-
-export type ParentInfo = {
-  id: string;
-  name: string;
-  relationship: string;
-  email: string;
-  emergencyContact: string;
-  additionalInfo?: string;
-};
-
-type ParentContextType = {
-  parentInfo: ParentInfo | null;
-  setParentInfo: (info: ParentInfo | null) => Promise<void>;
-  updateParentInfo: (info: Partial<ParentInfo>) => Promise<void>;
-  fetchParentInfo: (userId: string) => Promise<void>;
-  refreshParentInfo: () => Promise<void>;
-};
-
-const ParentContext = createContext<ParentContextType>({
-  parentInfo: null,
-  setParentInfo: async () => {},
-  updateParentInfo: async () => {},
-  fetchParentInfo: async () => {},
-  refreshParentInfo: async () => {},
-});
+import ParentContext from "@/contexts/ParentContext";
+import { ParentInfo } from "@/types/parentInfo";
 
 export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const [parentInfo, setParentInfoState] = useState<ParentInfo | null>(null);
@@ -237,4 +214,4 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useParent = () => useContext(ParentContext);
+export default ParentProvider;
