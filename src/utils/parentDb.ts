@@ -78,7 +78,7 @@ export async function createParentInfo(user: any) {
 
 export async function saveParentInfo(info: ParentInfo) {
   try {
-    console.log("Setting parent info:", info);
+    console.log("Saving parent info:", info);
     const { error } = await supabase
       .from('parents')
       .upsert({
@@ -91,7 +91,7 @@ export async function saveParentInfo(info: ParentInfo) {
       });
       
     if (error) {
-      console.error("Error setting parent info:", error);
+      console.error("Error saving parent info:", error);
       return false;
     }
     

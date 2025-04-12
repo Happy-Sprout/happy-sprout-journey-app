@@ -18,12 +18,13 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const fetchInProgress = useRef(false);
   const initialFetchDone = useRef(false);
+  const preventApiCallsFlag = useRef(false);
 
   // Memoize fetchParentInfo to prevent recreation on each render
   const fetchParentInfo = useCallback(async (userId: string) => {
     // Prevent multiple concurrent fetches
-    if (fetchInProgress.current) {
-      console.log("Fetch already in progress, skipping redundant request");
+    if (fetchInProgress.current || preventApiCallsFlag.current) {
+      console.log("Fetch already in progress or API calls prevented, skipping redundant request");
       return;
     }
 
@@ -35,7 +36,13 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       
       if (data) {
         console.log("Parent data fetched successfully:", data);
-        setParentInfoState(data);
+        setParentInfoState(prevState => {
+          // Only update if data is different to prevent unnecessary re-renders
+          if (JSON.stringify(prevState) !== JSON.stringify(data)) {
+            return data;
+          }
+          return prevState;
+        });
       } else if (user) {
         // If parent record doesn't exist and we have user data, create one
         console.log("No parent record found, creating new one");
@@ -70,9 +77,17 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user?.id, fetchParentInfo]);
   
+  // Temporarily prevent API calls during state updates
+  const preventApiCalls = useCallback(() => {
+    preventApiCallsFlag.current = true;
+    return () => {
+      preventApiCallsFlag.current = false;
+    };
+  }, []);
+  
   // Use useCallback for functions passed through context to prevent unnecessary re-renders
   const refreshParentInfo = useCallback(async () => {
-    if (!user?.id || fetchInProgress.current) return;
+    if (!user?.id || fetchInProgress.current || preventApiCallsFlag.current) return;
     
     console.log("Explicitly refreshing parent info for user:", user.id);
     try {
@@ -89,6 +104,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
+      // Prevent concurrent API calls during this operation
+      const releaseFlag = preventApiCalls();
+      
       console.log("Saving parent info:", info);
       const success = await saveParentInfo(info);
       
@@ -98,6 +116,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           description: "Could not save profile. Please try again.",
           variant: "destructive"
         });
+        releaseFlag();
         return;
       }
       
@@ -111,6 +130,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         title: "Success",
         description: "Profile saved successfully!"
       });
+      
+      // Release the flag after state is updated
+      setTimeout(releaseFlag, 100);
     } catch (error) {
       console.error("Error in setParentInfo:", error);
       toast({
@@ -119,7 +141,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
     }
-  }, [toast]);
+  }, [toast, preventApiCalls]);
 
   const updateParentInfo = useCallback(async (updatedInfo: Partial<ParentInfo>) => {
     if (!user?.id || !parentInfo) {
@@ -130,6 +152,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     console.log("Updating parent info with:", updatedInfo);
     
     try {
+      // Prevent concurrent API calls during this operation
+      const releaseFlag = preventApiCalls();
+      
       const success = await updateParentInfoFields(parentInfo.id, updatedInfo);
       
       if (!success) {
@@ -138,6 +163,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
           description: "Could not update profile. Please try again.",
           variant: "destructive"
         });
+        releaseFlag();
         return;
       }
       
@@ -170,6 +196,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         title: "Success",
         description: "Profile updated successfully!"
       });
+      
+      // Release the flag after state is updated
+      setTimeout(releaseFlag, 100);
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
       toast({
@@ -178,7 +207,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
     }
-  }, [user?.id, parentInfo, toast]);
+  }, [user?.id, parentInfo, toast, preventApiCalls]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({

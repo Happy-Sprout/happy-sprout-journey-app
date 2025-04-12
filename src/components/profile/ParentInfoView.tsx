@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { ParentInfo } from "@/types/parentInfo";
 import { Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import React from "react";
+import React, { useCallback } from "react";
 
 interface ParentInfoViewProps {
   parentInfo: ParentInfo;
@@ -27,7 +27,7 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
     );
   }
   
-  const handleChangePassword = (e: React.MouseEvent) => {
+  const handleChangePassword = useCallback((e: React.MouseEvent) => {
     // Prevent any default behavior
     e.preventDefault();
     e.stopPropagation();
@@ -36,14 +36,14 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
       title: "Change Password",
       description: "This feature is coming soon!",
     });
-  };
+  }, [toast]);
   
-  const handleEdit = (e: React.MouseEvent) => {
+  const handleEdit = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     console.log("ParentInfoView - Edit button clicked");
     onEdit();
-  };
+  }, [onEdit]);
   
   return (
     <>

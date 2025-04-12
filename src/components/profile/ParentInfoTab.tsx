@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -61,15 +61,15 @@ const ParentInfoTab = () => {
     }
   }, [editParentMode, parentInfo, parentForm]);
 
-  const saveParentProfile = async (data: z.infer<typeof parentProfileSchema>) => {
+  const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
     try {
       console.log("ParentInfoTab - Form data to save:", data);
       
       if (parentInfo) {
         console.log("ParentInfoTab - Updating existing parent profile");
         await updateParentInfo({
-          ...data,
-          id: parentInfo.id,
+          ...parentInfo, // Keep existing fields
+          ...data, // Update with new data
         });
       } else {
         console.log("ParentInfoTab - Creating new parent profile");
@@ -96,9 +96,9 @@ const ParentInfoTab = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [parentInfo, updateParentInfo, setParentInfo, toast]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     console.log("ParentInfoTab - Canceling edit mode");
     setEditParentMode(false);
     
@@ -111,7 +111,51 @@ const ParentInfoTab = () => {
         emergencyContact: parentInfo.emergencyContact || "",
       });
     }
-  };
+  }, [parentInfo, parentForm]);
+
+  const handleStartEdit = useCallback(() => {
+    console.log("ParentInfoTab - Starting edit mode");
+    setEditParentMode(true);
+  }, []);
+
+  // Memoize the content based on loading and edit state
+  const cardContent = useMemo(() => {
+    if (isLoading) {
+      return (
+        <div className="text-center py-6">
+          <p className="text-gray-500">Loading parent information...</p>
+        </div>
+      );
+    }
+
+    if (!editParentMode) {
+      if (parentInfo) {
+        return (
+          <ParentInfoView 
+            parentInfo={parentInfo} 
+            onEdit={handleStartEdit}
+          />
+        );
+      }
+      
+      return (
+        <div className="text-center py-6">
+          <p className="text-gray-500 mb-4">No parent information available. Please add your information.</p>
+          <Button onClick={handleStartEdit} className="sprout-button">
+            Add Parent Information
+          </Button>
+        </div>
+      );
+    }
+    
+    return (
+      <ParentInfoForm 
+        parentForm={parentForm} 
+        onSubmit={saveParentProfile}
+        onCancel={handleCancelEdit}
+      />
+    );
+  }, [isLoading, editParentMode, parentInfo, handleStartEdit, parentForm, saveParentProfile, handleCancelEdit]);
 
   return (
     <Card>
@@ -126,7 +170,7 @@ const ParentInfoTab = () => {
           {!editParentMode && parentInfo && (
             <Button 
               variant="outline" 
-              onClick={() => setEditParentMode(true)}
+              onClick={handleStartEdit}
             >
               <Edit className="mr-2 h-4 w-4" />
               Edit Information
@@ -135,31 +179,7 @@ const ParentInfoTab = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isLoading ? (
-          <div className="text-center py-6">
-            <p className="text-gray-500">Loading parent information...</p>
-          </div>
-        ) : !editParentMode ? (
-          parentInfo ? (
-            <ParentInfoView 
-              parentInfo={parentInfo} 
-              onEdit={() => setEditParentMode(true)}
-            />
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-500 mb-4">No parent information available. Please add your information.</p>
-              <Button onClick={() => setEditParentMode(true)} className="sprout-button">
-                Add Parent Information
-              </Button>
-            </div>
-          )
-        ) : (
-          <ParentInfoForm 
-            parentForm={parentForm} 
-            onSubmit={saveParentProfile}
-            onCancel={handleCancelEdit}
-          />
-        )}
+        {cardContent}
       </CardContent>
     </Card>
   );

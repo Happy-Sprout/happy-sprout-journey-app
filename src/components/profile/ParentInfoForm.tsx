@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
-import { memo } from "react";
+import { memo, useCallback } from "react";
 
 interface ParentInfoFormProps {
   parentForm: UseFormReturn<any>;
@@ -17,10 +17,15 @@ interface ParentInfoFormProps {
 const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormProps) => {
   console.log("ParentInfoForm - Rendering with values:", parentForm.getValues());
   
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = useCallback((data: any) => {
     console.log("ParentInfoForm - Submitting form with data:", data);
     onSubmit(data);
-  };
+  }, [onSubmit]);
+
+  const handleCancel = useCallback(() => {
+    console.log("ParentInfoForm - Cancel button clicked");
+    onCancel();
+  }, [onCancel]);
 
   return (
     <Form {...parentForm}>
@@ -114,10 +119,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormP
           <Button 
             type="button" 
             variant="outline" 
-            onClick={() => {
-              console.log("ParentInfoForm - Cancel button clicked");
-              onCancel();
-            }}
+            onClick={handleCancel}
           >
             Cancel
           </Button>
