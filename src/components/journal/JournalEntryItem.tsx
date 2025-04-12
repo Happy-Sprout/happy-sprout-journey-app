@@ -58,35 +58,35 @@ export const JournalEntryItem = ({ entry }: JournalEntryItemProps) => {
         <div className="space-y-4 mt-4">
           {entry.wentWell && (
             <div className="p-3 bg-sprout-green/10 rounded-md">
-              <div className="font-medium text-sprout-green mb-1">What went well:</div>
+              <div className="font-medium text-sprout-green mb-1 text-left">What went well:</div>
               <p className="text-gray-700">{entry.wentWell}</p>
             </div>
           )}
           
           {entry.wentBadly && (
             <div className="p-3 bg-sprout-orange/10 rounded-md">
-              <div className="font-medium text-sprout-orange mb-1">What didn't go well:</div>
+              <div className="font-medium text-sprout-orange mb-1 text-left">What didn't go well:</div>
               <p className="text-gray-700">{entry.wentBadly}</p>
             </div>
           )}
           
           {entry.gratitude && (
             <div className="p-3 bg-sprout-purple/10 rounded-md">
-              <div className="font-medium text-sprout-purple mb-1">Gratitude:</div>
+              <div className="font-medium text-sprout-purple mb-1 text-left">Gratitude:</div>
               <p className="text-gray-700">{entry.gratitude}</p>
             </div>
           )}
           
           {entry.challenge && (
             <div className="p-3 bg-sprout-orange/10 rounded-md">
-              <div className="font-medium text-sprout-orange mb-1">Challenge:</div>
+              <div className="font-medium text-sprout-orange mb-1 text-left">Challenge:</div>
               <p className="text-gray-700">{entry.challenge}</p>
             </div>
           )}
           
           {entry.tomorrowPlan && (
             <div className="p-3 bg-sprout-green/10 rounded-md">
-              <div className="font-medium text-sprout-green mb-1">Tomorrow's Plan:</div>
+              <div className="font-medium text-sprout-green mb-1 text-left">Tomorrow's Plan:</div>
               <p className="text-gray-700">{entry.tomorrowPlan}</p>
             </div>
           )}
