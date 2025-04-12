@@ -19,7 +19,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
   // Fetch parent info whenever user changes
   useEffect(() => {
     if (user?.id) {
-      fetchParentInfo(user.id);
+      fetchParentInfo(user.id).catch(err => {
+        console.error("Error in initial parent info fetch:", err);
+      });
     } else {
       // Clear parent info if user is not logged in
       setParentInfoState(null);
@@ -45,13 +47,18 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("Error in fetchParentInfo:", error);
+      // Don't set parent info to null on error to prevent UI issues
     }
   };
 
   const refreshParentInfo = async () => {
     if (user?.id) {
       console.log("Refreshing parent info for user:", user.id);
-      await fetchParentInfo(user.id);
+      try {
+        await fetchParentInfo(user.id);
+      } catch (err) {
+        console.error("Error refreshing parent info:", err);
+      }
     }
   };
 

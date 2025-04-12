@@ -4,10 +4,29 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import { useUser } from "@/contexts/UserContext";
+import { useEffect, useState } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useUser();
+  const [pageReady, setPageReady] = useState(false);
+
+  // Add a safety check to ensure page renders even if auth state is slow
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageReady(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Ensure the UI renders even if user state is loading
+  if (!pageReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <Layout hideNav>
