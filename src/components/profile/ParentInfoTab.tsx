@@ -38,7 +38,6 @@ const ParentInfoTab = () => {
   // Only update form when parent info changes and we're not in edit mode
   useEffect(() => {
     if (parentInfo && !editParentMode) {
-      console.log("ParentInfoTab - Resetting form with parent info:", parentInfo);
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -51,7 +50,6 @@ const ParentInfoTab = () => {
   // When entering edit mode, initialize the form with current values
   useEffect(() => {
     if (editParentMode && parentInfo) {
-      console.log("ParentInfoTab - Entering edit mode, initializing form with:", parentInfo);
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -63,16 +61,12 @@ const ParentInfoTab = () => {
 
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
     try {
-      console.log("ParentInfoTab - Form data to save:", data);
-      
       if (parentInfo) {
-        console.log("ParentInfoTab - Updating existing parent profile");
         await updateParentInfo({
           ...parentInfo, // Keep existing fields
           ...data, // Update with new data
         });
       } else {
-        console.log("ParentInfoTab - Creating new parent profile");
         await setParentInfo({
           id: uuidv4(),
           name: data.name,
@@ -99,7 +93,6 @@ const ParentInfoTab = () => {
   }, [parentInfo, updateParentInfo, setParentInfo, toast]);
 
   const handleCancelEdit = useCallback(() => {
-    console.log("ParentInfoTab - Canceling edit mode");
     setEditParentMode(false);
     
     // Reset form to current parent info values when canceling
@@ -114,7 +107,6 @@ const ParentInfoTab = () => {
   }, [parentInfo, parentForm]);
 
   const handleStartEdit = useCallback(() => {
-    console.log("ParentInfoTab - Starting edit mode");
     setEditParentMode(true);
   }, []);
 

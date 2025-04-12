@@ -15,11 +15,8 @@ interface ParentInfoViewProps {
 const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) => {
   const { toast } = useToast();
   
-  console.log("ParentInfoView - Rendering with parent info:", parentInfo?.id);
-  
   // Added safety check to prevent rendering with invalid data
   if (!parentInfo || !parentInfo.id) {
-    console.error("ParentInfoView - Received invalid parent info");
     return (
       <div className="text-center py-4">
         <p className="text-gray-500">Could not display parent information. Please try again.</p>
@@ -41,7 +38,6 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
   const handleEdit = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("ParentInfoView - Edit button clicked");
     onEdit();
   }, [onEdit]);
   
