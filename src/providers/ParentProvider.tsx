@@ -1,5 +1,5 @@
 
-import { useState, ReactNode, useEffect } from "react";
+import { useState, ReactNode, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ParentContext from "@/contexts/ParentContext";
@@ -13,24 +13,15 @@ import {
 
 export const ParentProvider = ({ children }: { children: ReactNode }) => {
   const [parentInfo, setParentInfoState] = useState<ParentInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Fetch parent info whenever user changes
-  useEffect(() => {
-    if (user?.id) {
-      fetchParentInfo(user.id).catch(err => {
-        console.error("Error in initial parent info fetch:", err);
-      });
-    } else {
-      // Clear parent info if user is not logged in
-      setParentInfoState(null);
-    }
-  }, [user]);
-  
-  const fetchParentInfo = async (userId: string) => {
+  // Memoize fetchParentInfo to prevent recreation on each render
+  const fetchParentInfo = useCallback(async (userId: string) => {
     try {
       console.log("Fetching parent info for user:", userId);
+      setIsLoading(true);
       const data = await fetchParentInfoById(userId);
       
       if (data) {
@@ -48,21 +39,37 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Error in fetchParentInfo:", error);
       // Don't set parent info to null on error to prevent UI issues
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [user]);
 
-  const refreshParentInfo = async () => {
+  // Fetch parent info whenever user changes
+  useEffect(() => {
     if (user?.id) {
-      console.log("Refreshing parent info for user:", user.id);
+      console.log("User ID changed, fetching parent info:", user.id);
+      fetchParentInfo(user.id).catch(err => {
+        console.error("Error in initial parent info fetch:", err);
+      });
+    } else {
+      // Clear parent info if user is not logged in
+      setParentInfoState(null);
+    }
+  }, [user?.id, fetchParentInfo]);
+  
+  // Use useCallback for functions passed through context to prevent unnecessary re-renders
+  const refreshParentInfo = useCallback(async () => {
+    if (user?.id) {
+      console.log("Explicitly refreshing parent info for user:", user.id);
       try {
         await fetchParentInfo(user.id);
       } catch (err) {
         console.error("Error refreshing parent info:", err);
       }
     }
-  };
+  }, [user?.id, fetchParentInfo]);
 
-  const setParentInfo = async (info: ParentInfo | null) => {
+  const setParentInfo = useCallback(async (info: ParentInfo | null) => {
     if (!info) {
       setParentInfoState(null);
       return;
@@ -88,9 +95,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         title: "Success",
         description: "Profile saved successfully!"
       });
-      
-      // Refresh data from the server to ensure consistency
-      await refreshParentInfo();
     } catch (error) {
       console.error("Error in setParentInfo:", error);
       toast({
@@ -99,9 +103,9 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
 
-  const updateParentInfo = async (updatedInfo: Partial<ParentInfo>) => {
+  const updateParentInfo = useCallback(async (updatedInfo: Partial<ParentInfo>) => {
     if (!user?.id || !parentInfo) {
       console.error("Cannot update parent info: no user logged in or no parent info available");
       return;
@@ -145,9 +149,6 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         title: "Success",
         description: "Profile updated successfully!"
       });
-      
-      // Also refresh from the database to ensure we have the latest data
-      await refreshParentInfo();
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
       toast({
@@ -156,12 +157,13 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
     }
-  };
+  }, [user?.id, parentInfo, toast]);
 
   return (
     <ParentContext.Provider
       value={{
         parentInfo,
+        isLoading,
         setParentInfo,
         updateParentInfo,
         fetchParentInfo,

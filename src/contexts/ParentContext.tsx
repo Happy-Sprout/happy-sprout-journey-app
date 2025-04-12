@@ -5,6 +5,7 @@ import { ParentContextType } from "@/types/parentInfo";
 // Create the context with default values
 const ParentContext = createContext<ParentContextType>({
   parentInfo: null,
+  isLoading: false,
   setParentInfo: async () => {},
   updateParentInfo: async () => {},
   fetchParentInfo: async () => {},

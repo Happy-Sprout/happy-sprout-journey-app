@@ -21,7 +21,7 @@ const parentProfileSchema = z.object({
 
 const ParentInfoTab = () => {
   const { toast } = useToast();
-  const { parentInfo, updateParentInfo, setParentInfo, refreshParentInfo } = useParent();
+  const { parentInfo, isLoading, updateParentInfo, setParentInfo, refreshParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
   
   // Add a console log to check parentInfo on mount and updates
@@ -77,9 +77,6 @@ const ParentInfoTab = () => {
       });
       
       setEditParentMode(false);
-      
-      // Refresh parent info after update
-      await refreshParentInfo();
     } catch (error) {
       console.error("Error saving parent profile:", error);
       toast({
@@ -112,7 +109,11 @@ const ParentInfoTab = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!editParentMode ? (
+        {isLoading ? (
+          <div className="text-center py-6">
+            <p className="text-gray-500">Loading parent information...</p>
+          </div>
+        ) : !editParentMode ? (
           parentInfo ? (
             <ParentInfoView 
               parentInfo={parentInfo} 

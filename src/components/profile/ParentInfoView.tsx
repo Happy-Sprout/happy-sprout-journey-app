@@ -14,6 +14,16 @@ interface ParentInfoViewProps {
 const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) => {
   const { toast } = useToast();
   
+  // Added safety check to prevent rendering with invalid data
+  if (!parentInfo || !parentInfo.id) {
+    console.error("ParentInfoView received invalid parent info:", parentInfo);
+    return (
+      <div className="text-center py-4">
+        <p className="text-gray-500">Could not display parent information. Please try again.</p>
+      </div>
+    );
+  }
+  
   const handleChangePassword = (e: React.MouseEvent) => {
     // Prevent any default behavior
     e.preventDefault();

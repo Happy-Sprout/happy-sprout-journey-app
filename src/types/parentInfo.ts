@@ -12,6 +12,7 @@ export type ParentInfo = {
 // Define the ParentContextType
 export type ParentContextType = {
   parentInfo: ParentInfo | null;
+  isLoading: boolean;
   setParentInfo: (info: ParentInfo | null) => Promise<void>;
   updateParentInfo: (info: Partial<ParentInfo>) => Promise<void>;
   fetchParentInfo: (userId: string) => Promise<void>;
