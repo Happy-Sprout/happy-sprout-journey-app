@@ -86,7 +86,7 @@ export function useParentUpdate() {
         
         // Type assertion to ensure type compatibility
         // This is safe because saveParentInfo will validate required fields server-side
-        const success = await saveParentInfo(parentInfo as unknown as ParentInfo);
+        const success = await saveParentInfo(parentInfo);
         
         console.log("saveParentInfo result:", success);
         

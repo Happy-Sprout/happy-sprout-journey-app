@@ -13,9 +13,10 @@ interface ParentInfoFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  isEditing?: boolean; // Added isEditing prop
 }
 
-const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false }: ParentInfoFormProps) => {
+const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false, isEditing = true }: ParentInfoFormProps) => {
   const submittedOnce = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const componentMounted = useRef(true);
@@ -62,6 +63,8 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
     }
   }, [onCancel, isSubmitting]);
 
+  console.log("ParentInfoForm render - isEditing:", isEditing, "isSubmitting:", isSubmitting);
+
   return (
     <Form {...parentForm}>
       <form 
@@ -80,7 +83,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                   <Input 
                     placeholder="Enter your full name" 
                     {...field} 
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !isEditing}
                     className="bg-white"
                   />
                 </FormControl>
@@ -100,7 +103,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                     placeholder="Enter your email" 
                     type="email" 
                     {...field} 
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !isEditing}
                     className="bg-white"
                   />
                 </FormControl>
@@ -119,7 +122,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                   value={field.value}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !isEditing}
                 >
                   <FormControl>
                     <SelectTrigger className="bg-white">
@@ -148,7 +151,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                   <Input 
                     placeholder="Enter emergency contact" 
                     {...field} 
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !isEditing}
                     className="bg-white"
                   />
                 </FormControl>
@@ -170,23 +173,25 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            className="sprout-button"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Profile
-              </>
-            )}
-          </Button>
+          {isEditing && (
+            <Button 
+              type="submit" 
+              className="sprout-button"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Profile
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </form>
     </Form>

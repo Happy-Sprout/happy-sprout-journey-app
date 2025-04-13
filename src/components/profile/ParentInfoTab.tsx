@@ -50,7 +50,7 @@ const ParentInfoTab = () => {
 
   // Initialize form with parent info once
   useEffect(() => {
-    if (parentInfo && !editParentMode && !formInitialized.current && componentMounted.current) {
+    if (parentInfo && !formInitialized.current && componentMounted.current) {
       console.log("Initializing parent form with data - one time only");
       formInitialized.current = true;
       
@@ -61,7 +61,7 @@ const ParentInfoTab = () => {
         emergencyContact: parentInfo.emergencyContact || "",
       });
     }
-  }, [parentInfo, parentForm, editParentMode]);
+  }, [parentInfo, parentForm]);
 
   // Reset form when entering edit mode
   useEffect(() => {
@@ -212,12 +212,15 @@ const ParentInfoTab = () => {
       );
     }
     
+    console.log("Rendering form in edit mode", { isEditing: true, isSubmitting });
+    
     return (
       <ParentInfoForm 
         parentForm={parentForm} 
         onSubmit={saveParentProfile}
         onCancel={handleCancelEdit}
         isSubmitting={isSubmitting}
+        isEditing={true}
       />
     );
   }, [isLoading, editParentMode, parentInfo, handleStartEdit, parentForm, saveParentProfile, handleCancelEdit, isSubmitting]);
