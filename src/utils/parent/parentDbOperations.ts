@@ -129,7 +129,7 @@ export async function createParentInfo(user: any) {
 /**
  * Save parent information
  */
-export async function saveParentInfo(info: ParentInfo) {
+export async function saveParentInfo(info: Partial<ParentInfo> & { id: string }) {
   try {
     console.log("saveParentInfo called with data:", info);
     
@@ -159,24 +159,26 @@ export async function saveParentInfo(info: ParentInfo) {
       return false;
     }
     
-    console.log("Preparing update with data:", {
-      name: info.name,
-      relationship: info.relationship,
-      email: info.email,
-      emergency_contact: info.emergencyContact,
-      additional_info: info.additionalInfo
-    });
+    // Create the update object with only the fields that are provided
+    const updateData: any = {};
+    if (info.name !== undefined) updateData.name = info.name;
+    if (info.relationship !== undefined) updateData.relationship = info.relationship;
+    if (info.email !== undefined) updateData.email = info.email;
+    if (info.emergencyContact !== undefined) updateData.emergency_contact = info.emergencyContact;
+    if (info.additionalInfo !== undefined) updateData.additional_info = info.additionalInfo;
+    
+    // If no fields to update, return success
+    if (Object.keys(updateData).length === 0) {
+      console.log("No fields to update provided, returning success");
+      return true;
+    }
+    
+    console.log("Preparing update with data:", updateData);
     
     // Update the parent record using the DB structure column names
     const { data, error } = await supabase
       .from('parents')
-      .update({
-        name: info.name,
-        relationship: info.relationship,
-        email: info.email,
-        emergency_contact: info.emergencyContact,
-        additional_info: info.additionalInfo
-      })
+      .update(updateData)
       .eq('id', info.id)
       .select();
       
