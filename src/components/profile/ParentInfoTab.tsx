@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { useParent } from "@/hooks/useParent";
+import { LoadingSpinner } from "../ui/loading-spinner";
 
 const parentProfileSchema = z.object({
   name: z.string().min(2, "Name must have at least 2 characters"),
@@ -22,11 +24,11 @@ const ParentInfoTab = () => {
   const { toast } = useToast();
   const { parentInfo, isLoading, updateParentInfo, setParentInfo } = useParent();
   const [editParentMode, setEditParentMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Better form state handling with refs
   const formInitialized = useRef(false);
   const componentMounted = useRef(true);
-  const isSubmitting = useRef(false);
   
   // Create the form with resolver
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
@@ -75,10 +77,10 @@ const ParentInfoTab = () => {
   }, [editParentMode, parentInfo, parentForm]);
 
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
-    if (!componentMounted.current || isSubmitting.current) return;
+    if (!componentMounted.current || isSubmitting) return;
     
     console.log("saveParentProfile called with data:", data);
-    isSubmitting.current = true;
+    setIsSubmitting(true);
     
     try {
       if (parentInfo) {
@@ -112,24 +114,26 @@ const ParentInfoTab = () => {
         variant: "destructive"
       });
     } finally {
-      isSubmitting.current = false;
+      setIsSubmitting(false);
     }
-  }, [parentInfo, updateParentInfo, setParentInfo, toast]);
+  }, [parentInfo, updateParentInfo, setParentInfo, toast, isSubmitting]);
 
   const handleCancelEdit = useCallback(() => {
     console.log("Cancel edit clicked");
-    setEditParentMode(false);
-    
-    // Reset form to current parent info values when canceling
-    if (parentInfo) {
-      parentForm.reset({
-        name: parentInfo.name,
-        email: parentInfo.email,
-        relationship: parentInfo.relationship || "Parent",
-        emergencyContact: parentInfo.emergencyContact || "",
-      });
+    if (!isSubmitting) {
+      setEditParentMode(false);
+      
+      // Reset form to current parent info values when canceling
+      if (parentInfo) {
+        parentForm.reset({
+          name: parentInfo.name,
+          email: parentInfo.email,
+          relationship: parentInfo.relationship || "Parent",
+          emergencyContact: parentInfo.emergencyContact || "",
+        });
+      }
     }
-  }, [parentInfo, parentForm]);
+  }, [parentInfo, parentForm, isSubmitting]);
 
   const handleStartEdit = useCallback(() => {
     console.log("Start edit clicked");
@@ -140,8 +144,8 @@ const ParentInfoTab = () => {
   const cardContent = useMemo(() => {
     if (isLoading) {
       return (
-        <div className="text-center py-6">
-          <p className="text-gray-500">Loading parent information...</p>
+        <div className="flex justify-center items-center py-6">
+          <LoadingSpinner message="Loading parent information..." />
         </div>
       );
     }
@@ -171,9 +175,10 @@ const ParentInfoTab = () => {
         parentForm={parentForm} 
         onSubmit={saveParentProfile}
         onCancel={handleCancelEdit}
+        isSubmitting={isSubmitting}
       />
     );
-  }, [isLoading, editParentMode, parentInfo, handleStartEdit, parentForm, saveParentProfile, handleCancelEdit]);
+  }, [isLoading, editParentMode, parentInfo, handleStartEdit, parentForm, saveParentProfile, handleCancelEdit, isSubmitting]);
 
   return (
     <Card>
@@ -192,6 +197,6 @@ const ParentInfoTab = () => {
       </CardContent>
     </Card>
   );
-};
+});
 
 export default React.memo(ParentInfoTab);

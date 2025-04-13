@@ -3,28 +3,40 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 
 interface ParentInfoFormProps {
   parentForm: UseFormReturn<any>;
   onSubmit: (data: any) => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
-const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormProps) => {
+const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false }: ParentInfoFormProps) => {
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+  const submitting = isSubmitting || localSubmitting;
+
   const handleFormSubmit = useCallback((data: any) => {
     console.log("ParentInfoForm - Form submitted with data:", data);
+    setLocalSubmitting(true);
+    
     // Call onSubmit asynchronously to prevent React state batching issues
-    setTimeout(() => onSubmit(data), 0);
+    setTimeout(() => {
+      onSubmit(data);
+      // We don't reset localSubmitting here because the parent component
+      // should control the overall submission state through the isSubmitting prop
+    }, 0);
   }, [onSubmit]);
 
   const handleCancel = useCallback(() => {
     console.log("ParentInfoForm - Cancel button clicked");
-    onCancel();
-  }, [onCancel]);
+    if (!submitting) {
+      onCancel();
+    }
+  }, [onCancel, submitting]);
 
   return (
     <Form {...parentForm}>
@@ -40,6 +52,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormP
                   <Input 
                     placeholder="Enter your full name" 
                     {...field} 
+                    disabled={submitting}
                   />
                 </FormControl>
                 <FormMessage />
@@ -58,6 +71,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormP
                     placeholder="Enter your email" 
                     type="email" 
                     {...field} 
+                    disabled={submitting}
                   />
                 </FormControl>
                 <FormMessage />
@@ -75,6 +89,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormP
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                   value={field.value}
+                  disabled={submitting}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -103,6 +118,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormP
                   <Input 
                     placeholder="Enter emergency contact" 
                     {...field} 
+                    disabled={submitting}
                   />
                 </FormControl>
                 <FormDescription className="text-left">
@@ -119,15 +135,26 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel }: ParentInfoFormP
             type="button" 
             variant="outline" 
             onClick={handleCancel}
+            disabled={submitting}
           >
             Cancel
           </Button>
           <Button 
             type="submit" 
             className="sprout-button"
+            disabled={submitting}
           >
-            <Save className="w-4 h-4 mr-2" />
-            Save Profile
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Profile
+              </>
+            )}
           </Button>
         </div>
       </form>

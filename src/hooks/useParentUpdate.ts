@@ -28,6 +28,18 @@ export function useParentUpdate() {
       console.log("Calling saveParentInfo with:", parentInfo);
       const releaseFlag = preventApiCalls();
       
+      // Make sure we have the required fields
+      if (!parentInfo.id) {
+        console.error("Missing required parent ID for update");
+        toast({
+          title: "Error",
+          description: "Missing required information for update",
+          variant: "destructive"
+        });
+        releaseFlag();
+        return false;
+      }
+      
       const success = await saveParentInfo(parentInfo as ParentInfo);
       
       if (!success) {
@@ -45,7 +57,8 @@ export function useParentUpdate() {
         description: "Profile updated successfully!"
       });
       
-      setTimeout(releaseFlag, 100);
+      // Use timeout to ensure state updates complete before releasing
+      setTimeout(releaseFlag, 300);
       return true;
     } catch (error) {
       console.error("Error in updateParentInfo:", error);

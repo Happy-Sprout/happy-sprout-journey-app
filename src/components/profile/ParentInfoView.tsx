@@ -45,7 +45,7 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
   
   return (
     <div className="bg-white rounded-lg p-4 sm:p-6 border border-gray-100 shadow-sm w-full max-w-full overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6">
         <div className="bg-sprout-purple/5 p-3 sm:p-4 rounded-lg border border-sprout-purple/10">
           <div className="flex items-center mb-2">
             <User className="h-5 w-5 text-sprout-purple mr-2 flex-shrink-0" />
@@ -63,7 +63,7 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6">
         <div className="bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-100">
           <div className="flex items-center mb-2">
             <Mail className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
@@ -89,7 +89,7 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
         <Button 
           variant="outline"
           onClick={handleEdit}
-          className="bg-sprout-purple/10 border-sprout-purple/20 text-sprout-purple hover:bg-sprout-purple/20 w-full xs:w-auto"
+          className="bg-sprout-purple/10 border-sprout-purple/20 text-sprout-purple hover:bg-sprout-purple/20 w-full"
         >
           <Edit className="w-4 h-4 mr-2" />
           Edit Information
@@ -97,7 +97,7 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
         <Button
           variant="outline"
           onClick={handleChangePassword}
-          className="bg-sprout-cream border-sprout-orange/20 text-sprout-orange hover:bg-sprout-orange/10 w-full xs:w-auto"
+          className="bg-sprout-cream border-sprout-orange/20 text-sprout-orange hover:bg-sprout-orange/10 w-full"
         >
           Change Password
         </Button>
