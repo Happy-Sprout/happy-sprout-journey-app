@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState } from "react";
 import { ParentInfo, saveParentInfo } from "@/utils/parent";
 import { useToast } from "@/hooks/use-toast";
@@ -84,9 +83,9 @@ export function useParentUpdate() {
         // Call the API to save parent info
         console.log("Calling saveParentInfo to update the database", parentInfo);
         
-        // Type assertion to ensure type compatibility
+        // Use type assertion to treat the partial info as full info for the API call
         // This is safe because saveParentInfo will validate required fields server-side
-        const success = await saveParentInfo(parentInfo);
+        const success = await saveParentInfo(parentInfo as ParentInfo);
         
         console.log("saveParentInfo result:", success);
         
