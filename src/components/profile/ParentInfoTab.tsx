@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,10 +78,14 @@ const ParentInfoTab = () => {
     try {
       if (parentInfo) {
         console.log("Updating existing parent profile");
-        await updateParentInfo({
+        const success = await updateParentInfo({
           ...parentInfo,
           ...data,
         });
+        
+        if (!success) {
+          throw new Error("Failed to update parent profile");
+        }
       } else {
         console.log("Creating new parent profile");
         await setParentInfo({
@@ -106,6 +111,7 @@ const ParentInfoTab = () => {
         variant: "destructive"
       });
     } finally {
+      // Ensure this runs even if there's an error
       setIsSubmitting(false);
     }
   }, [parentInfo, updateParentInfo, setParentInfo, toast, isSubmitting]);

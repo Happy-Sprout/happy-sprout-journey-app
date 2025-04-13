@@ -21,15 +21,20 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
 
   const handleFormSubmit = useCallback((data: any) => {
     console.log("ParentInfoForm - Form submitted with data:", data);
+    
+    if (submitting) {
+      console.log("Form submission already in progress, ignoring duplicate submission");
+      return;
+    }
+    
     setLocalSubmitting(true);
     
     // Call onSubmit asynchronously to prevent React state batching issues
     setTimeout(() => {
       onSubmit(data);
-      // We don't reset localSubmitting here because the parent component
-      // should control the overall submission state through the isSubmitting prop
+      // Don't reset localSubmitting here - parent component controls isSubmitting
     }, 0);
-  }, [onSubmit]);
+  }, [onSubmit, submitting]);
 
   const handleCancel = useCallback(() => {
     console.log("ParentInfoForm - Cancel button clicked");

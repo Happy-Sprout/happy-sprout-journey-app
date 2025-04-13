@@ -58,7 +58,10 @@ export function useParentUpdate() {
       });
       
       // Use timeout to ensure state updates complete before releasing
-      setTimeout(releaseFlag, 300);
+      setTimeout(() => {
+        releaseFlag();
+      }, 300);
+      
       return true;
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
@@ -67,6 +70,9 @@ export function useParentUpdate() {
         description: "Failed to update profile. Please try again.",
         variant: "destructive"
       });
+      
+      // Make sure to release the flag even on error
+      preventApiCallsFlag.current = false;
       return false;
     }
   }, [toast, preventApiCalls]);
