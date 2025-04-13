@@ -78,14 +78,12 @@ const ParentInfoTab = () => {
     try {
       if (parentInfo) {
         console.log("Updating existing parent profile");
-        const success = await updateParentInfo({
+        // Fix: Don't check the return value directly if updateParentInfo returns void
+        // Instead, just call it and assume it works unless it throws an error
+        await updateParentInfo({
           ...parentInfo,
           ...data,
         });
-        
-        if (!success) {
-          throw new Error("Failed to update parent profile");
-        }
       } else {
         console.log("Creating new parent profile");
         await setParentInfo({

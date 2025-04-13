@@ -18,7 +18,7 @@ export function useParentUpdate() {
     return preventApiCallsFlag.current;
   }, []);
   
-  const updateParentInfo = useCallback(async (parentInfo: Partial<ParentInfo> & { id: string }) => {
+  const updateParentInfo = useCallback(async (parentInfo: Partial<ParentInfo> & { id: string }): Promise<boolean> => {
     if (preventApiCallsFlag.current) {
       console.log("API calls are currently prevented");
       return false;
