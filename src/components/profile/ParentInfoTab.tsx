@@ -28,6 +28,8 @@ const ParentInfoTab = () => {
   
   const formInitialized = useRef(false);
   const componentMounted = useRef(true);
+  // Add a submission lock ref
+  const submissionLock = useRef(false);
   
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
     resolver: zodResolver(parentProfileSchema),
@@ -70,17 +72,17 @@ const ParentInfoTab = () => {
   }, [editParentMode, parentInfo, parentForm]);
 
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
-    // Debug log to track function execution
     console.log("saveParentProfile called with data:", data);
     
-    // Prevent duplicate submissions
-    if (!componentMounted.current || isSubmitting) {
+    // Prevent duplicate submissions with multiple checks
+    if (!componentMounted.current || isSubmitting || submissionLock.current) {
       console.log("Submission prevented: component unmounted or already submitting");
       return;
     }
     
-    // Set submitting state to true to show loading UI
+    // Set both state and ref lock
     setIsSubmitting(true);
+    submissionLock.current = true;
     
     try {
       if (parentInfo) {
@@ -92,13 +94,13 @@ const ParentInfoTab = () => {
         
         console.log("Update result:", success);
         
-        if (success) {
+        if (success && componentMounted.current) {
           toast({
             title: "Profile Updated",
             description: "Your profile has been successfully updated.",
           });
           setEditParentMode(false);
-        } else {
+        } else if (componentMounted.current) {
           toast({
             title: "Update Failed",
             description: "Could not update the profile. Please try again.",
@@ -115,13 +117,13 @@ const ParentInfoTab = () => {
           emergencyContact: data.emergencyContact || "",
         });
         
-        if (success) {
+        if (success && componentMounted.current) {
           toast({
             title: "Profile Created",
             description: "Your profile has been successfully created.",
           });
           setEditParentMode(false);
-        } else {
+        } else if (componentMounted.current) {
           toast({
             title: "Creation Failed",
             description: "Could not create the profile. Please try again.",
@@ -131,16 +133,23 @@ const ParentInfoTab = () => {
       }
     } catch (error) {
       console.error("ParentInfoTab - Error saving parent profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save profile. Please try again.",
-        variant: "destructive"
-      });
+      if (componentMounted.current) {
+        toast({
+          title: "Error",
+          description: "Failed to save profile. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       // Always reset the submitting state, regardless of outcome
       if (componentMounted.current) {
         console.log("Resetting isSubmitting state");
         setIsSubmitting(false);
+        
+        // Add a small delay before unlocking the submission lock
+        setTimeout(() => {
+          submissionLock.current = false;
+        }, 1000);
       }
     }
   }, [parentInfo, updateParentInfo, setParentInfo, toast, isSubmitting]);

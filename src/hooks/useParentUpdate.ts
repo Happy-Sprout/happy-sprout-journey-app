@@ -19,6 +19,7 @@ export function useParentUpdate() {
   }, []);
   
   const updateParentInfo = useCallback(async (parentInfo: Partial<ParentInfo> & { id: string }): Promise<boolean> => {
+    // Check if API calls are prevented BEFORE trying to update
     if (preventApiCallsFlag.current) {
       console.log("API calls are currently prevented");
       return false;
@@ -38,21 +39,32 @@ export function useParentUpdate() {
         return false;
       }
       
-      // Store the release function in a variable so we can call it in finally
+      // Set the flag BEFORE making the API call
       preventApiCallsFlag.current = true;
       
-      const success = await saveParentInfo(parentInfo as ParentInfo);
+      // Use a timeout to ensure the flag is reset after a reasonable time
+      // This prevents the API call from being blocked indefinitely if there's an error
+      const resetTimer = setTimeout(() => {
+        preventApiCallsFlag.current = false;
+      }, 10000); // 10 seconds timeout
       
-      if (!success) {
-        toast({
-          title: "Error",
-          description: "Could not update profile. Please try again.",
-          variant: "destructive"
-        });
-        return false;
+      try {
+        const success = await saveParentInfo(parentInfo as ParentInfo);
+        
+        if (!success) {
+          toast({
+            title: "Error",
+            description: "Could not update profile. Please try again.",
+            variant: "destructive"
+          });
+          return false;
+        }
+        
+        return true;
+      } finally {
+        // Clear the timeout to prevent unnecessary flag resets
+        clearTimeout(resetTimer);
       }
-      
-      return true;
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
       toast({
@@ -63,7 +75,6 @@ export function useParentUpdate() {
       return false;
     } finally {
       // IMPORTANT: Always release the flag, even in case of errors
-      // This ensures we don't get stuck in a state where API calls are prevented
       preventApiCallsFlag.current = false;
     }
   }, [toast]);
