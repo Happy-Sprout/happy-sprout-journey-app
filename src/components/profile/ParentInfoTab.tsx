@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,11 +25,9 @@ const ParentInfoTab = () => {
   const [editParentMode, setEditParentMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Better form state handling with refs
   const formInitialized = useRef(false);
   const componentMounted = useRef(true);
   
-  // Create the form with resolver
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
     resolver: zodResolver(parentProfileSchema),
     defaultValues: {
@@ -41,14 +38,11 @@ const ParentInfoTab = () => {
     },
   });
 
-  // Reset form to prevent unnecessary re-renders
   useEffect(() => {
-    // Only update form on initial load or when parent info changes significantly
     if (parentInfo && !editParentMode && !formInitialized.current && componentMounted.current) {
       console.log("Initializing parent form with data - one time only");
       formInitialized.current = true;
       
-      // Batch update to prevent multiple re-renders
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -62,11 +56,9 @@ const ParentInfoTab = () => {
     };
   }, [parentInfo, parentForm, editParentMode]);
 
-  // When entering edit mode, initialize the form with current values - only once
   useEffect(() => {
     if (editParentMode && parentInfo && componentMounted.current) {
       console.log("Entering edit mode - resetting form with current values");
-      // Form values only need to be set once when entering edit mode
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",
@@ -86,8 +78,8 @@ const ParentInfoTab = () => {
       if (parentInfo) {
         console.log("Updating existing parent profile");
         await updateParentInfo({
-          ...parentInfo, // Keep existing fields
-          ...data, // Update with new data
+          ...parentInfo,
+          ...data,
         });
       } else {
         console.log("Creating new parent profile");
@@ -123,7 +115,6 @@ const ParentInfoTab = () => {
     if (!isSubmitting) {
       setEditParentMode(false);
       
-      // Reset form to current parent info values when canceling
       if (parentInfo) {
         parentForm.reset({
           name: parentInfo.name,
@@ -140,7 +131,6 @@ const ParentInfoTab = () => {
     setEditParentMode(true);
   }, []);
 
-  // Memoize the content based on loading and edit state
   const cardContent = useMemo(() => {
     if (isLoading) {
       return (
@@ -197,6 +187,6 @@ const ParentInfoTab = () => {
       </CardContent>
     </Card>
   );
-});
+};
 
 export default React.memo(ParentInfoTab);
