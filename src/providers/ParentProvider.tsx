@@ -89,10 +89,10 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [setParentInfoState, saveParentInfoToDb]);
 
-  const updateParentInfo = useCallback(async (updatedInfo: Partial<ParentInfo>) => {
+  const updateParentInfo = useCallback(async (updatedInfo: Partial<ParentInfo>): Promise<boolean> => {
     if (!user?.id || !parentInfo) {
       console.error("Cannot update parent info: no user logged in or no parent info available");
-      return;
+      return false;
     }
     
     const dataToUpdate = {
@@ -104,6 +104,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     if (success) {
       updateParentInfoState(updatedInfo);
     }
+    return success;
   }, [user?.id, parentInfo, saveParentInfoToDb, updateParentInfoState]);
 
   // Create context value with useMemo to ensure consistent reference
