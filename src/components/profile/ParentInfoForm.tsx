@@ -1,3 +1,4 @@
+
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
-import { memo, useCallback, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 
 interface ParentInfoFormProps {
   parentForm: UseFormReturn<any>;
@@ -15,28 +16,32 @@ interface ParentInfoFormProps {
 }
 
 const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false }: ParentInfoFormProps) => {
-  const submissionInProgress = useRef(false);
+  const submittedOnce = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Reset submission state when component mounts or isSubmitting changes
+  useEffect(() => {
+    if (!isSubmitting) {
+      submittedOnce.current = false;
+    }
+  }, [isSubmitting]);
 
   const handleFormSubmit = useCallback((data: any) => {
     console.log("ParentInfoForm - Form submitted with data:", data);
     
-    if (isSubmitting || submissionInProgress.current) {
-      console.log("Form submission already in progress, ignoring duplicate submission");
+    if (submittedOnce.current || isSubmitting) {
+      console.log("Preventing duplicate form submission");
       return;
     }
     
-    submissionInProgress.current = true;
-    
+    // Mark as submitted to prevent duplicate submissions
+    submittedOnce.current = true;
     onSubmit(data);
-    
-    setTimeout(() => {
-      submissionInProgress.current = false;
-    }, 1000);
   }, [onSubmit, isSubmitting]);
 
   const handleCancel = useCallback(() => {
     console.log("ParentInfoForm - Cancel button clicked");
-    if (!isSubmitting && !submissionInProgress.current) {
+    if (!isSubmitting) {
       onCancel();
     }
   }, [onCancel, isSubmitting]);
@@ -44,14 +49,9 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
   return (
     <Form {...parentForm}>
       <form 
+        ref={formRef}
         onSubmit={parentForm.handleSubmit(handleFormSubmit)}
         className="space-y-6"
-        onSubmitCapture={(e) => {
-          if (isSubmitting || submissionInProgress.current) {
-            e.preventDefault();
-            console.log("Preventing duplicate form submission");
-          }
-        }}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
@@ -147,14 +147,14 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
             type="button" 
             variant="outline" 
             onClick={handleCancel}
-            disabled={isSubmitting || submissionInProgress.current}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button 
             type="submit" 
             className="sprout-button"
-            disabled={isSubmitting || submissionInProgress.current}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>

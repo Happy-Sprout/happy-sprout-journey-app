@@ -1,10 +1,12 @@
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ParentInfo, saveParentInfo } from "@/utils/parent";
 import { useToast } from "@/hooks/use-toast";
 
 export function useParentUpdate() {
   const preventApiCallsFlag = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
   const preventApiCalls = useCallback(() => {
@@ -15,13 +17,22 @@ export function useParentUpdate() {
   }, []);
   
   const isApiCallPrevented = useCallback(() => {
-    return preventApiCallsFlag.current;
+    return preventApiCallsFlag.current || isSubmitting;
+  }, [isSubmitting]);
+  
+  const resetPrevention = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    preventApiCallsFlag.current = false;
+    setIsSubmitting(false);
   }, []);
   
   const updateParentInfo = useCallback(async (parentInfo: Partial<ParentInfo> & { id: string }): Promise<boolean> => {
-    // Check if API calls are prevented BEFORE trying to update
-    if (preventApiCallsFlag.current) {
-      console.log("API calls are currently prevented");
+    // If already submitting or prevented, don't proceed
+    if (preventApiCallsFlag.current || isSubmitting) {
+      console.log("API calls are currently prevented or already submitting");
       return false;
     }
     
@@ -39,16 +50,16 @@ export function useParentUpdate() {
         return false;
       }
       
-      // Set the flag BEFORE making the API call
-      preventApiCallsFlag.current = true;
+      // Set the submission state
+      setIsSubmitting(true);
       
       // Use a timeout to ensure the flag is reset after a reasonable time
-      // This prevents the API call from being blocked indefinitely if there's an error
-      const resetTimer = setTimeout(() => {
-        preventApiCallsFlag.current = false;
+      timeoutRef.current = setTimeout(() => {
+        resetPrevention();
       }, 10000); // 10 seconds timeout
       
       try {
+        // Call the API to save parent info
         const success = await saveParentInfo(parentInfo as ParentInfo);
         
         if (!success) {
@@ -60,10 +71,18 @@ export function useParentUpdate() {
           return false;
         }
         
+        toast({
+          title: "Success",
+          description: "Profile updated successfully.",
+        });
+        
         return true;
       } finally {
         // Clear the timeout to prevent unnecessary flag resets
-        clearTimeout(resetTimer);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
       }
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
@@ -74,14 +93,15 @@ export function useParentUpdate() {
       });
       return false;
     } finally {
-      // IMPORTANT: Always release the flag, even in case of errors
-      preventApiCallsFlag.current = false;
+      // IMPORTANT: Always release the flags, even in case of errors
+      resetPrevention();
     }
-  }, [toast]);
+  }, [toast, isSubmitting, resetPrevention]);
 
   return {
     updateParentInfo,
     preventApiCalls,
-    isApiCallPrevented
+    isApiCallPrevented,
+    isSubmitting
   };
 }

@@ -138,22 +138,27 @@ export async function saveParentInfo(info: ParentInfo) {
       return false;
     }
     
-    // debug log the JWT token by checking the auth state
+    // Check authentication state
     const { data: authData } = await supabase.auth.getSession();
     console.log("Current auth state during save operation:", authData?.session ? "Authenticated" : "Not authenticated");
     
+    if (!authData?.session) {
+      console.error("User is not authenticated, cannot save parent info");
+      return false;
+    }
+    
+    // Update the parent record using the DB structure column names
     const { data, error } = await supabase
       .from('parents')
-      .upsert({
-        id: info.id,
+      .update({
         name: info.name,
         relationship: info.relationship,
         email: info.email,
         emergency_contact: info.emergencyContact,
         additional_info: info.additionalInfo
-      }, {
-        onConflict: 'id' // Explicitly set onConflict
-      });
+      })
+      .eq('id', info.id)
+      .select();
       
     if (error) {
       console.error("Error saving parent info:", error.message, error.details, error.hint);

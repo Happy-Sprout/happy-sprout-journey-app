@@ -1,9 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Edit } from "lucide-react";
 import ParentInfoForm from "./ParentInfoForm";
 import ParentInfoView from "./ParentInfoView";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,8 +26,6 @@ const ParentInfoTab = () => {
   
   const formInitialized = useRef(false);
   const componentMounted = useRef(true);
-  // Add a submission lock ref
-  const submissionLock = useRef(false);
   
   const parentForm = useForm<z.infer<typeof parentProfileSchema>>({
     resolver: zodResolver(parentProfileSchema),
@@ -74,15 +70,14 @@ const ParentInfoTab = () => {
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
     console.log("saveParentProfile called with data:", data);
     
-    // Prevent duplicate submissions with multiple checks
-    if (!componentMounted.current || isSubmitting || submissionLock.current) {
-      console.log("Submission prevented: component unmounted or already submitting");
+    // Prevent submission if component is unmounted
+    if (!componentMounted.current) {
+      console.log("Component unmounted, not saving");
       return;
     }
     
-    // Set both state and ref lock
+    // Set submitting state
     setIsSubmitting(true);
-    submissionLock.current = true;
     
     try {
       if (parentInfo) {
@@ -141,18 +136,12 @@ const ParentInfoTab = () => {
         });
       }
     } finally {
-      // Always reset the submitting state, regardless of outcome
+      // Reset submitting state if still mounted
       if (componentMounted.current) {
-        console.log("Resetting isSubmitting state");
         setIsSubmitting(false);
-        
-        // Add a small delay before unlocking the submission lock
-        setTimeout(() => {
-          submissionLock.current = false;
-        }, 1000);
       }
     }
-  }, [parentInfo, updateParentInfo, setParentInfo, toast, isSubmitting]);
+  }, [parentInfo, updateParentInfo, setParentInfo, toast]);
 
   const handleCancelEdit = useCallback(() => {
     console.log("Cancel edit clicked");
@@ -197,9 +186,12 @@ const ParentInfoTab = () => {
       return (
         <div className="text-center py-6">
           <p className="text-gray-500 mb-4">No parent information available. Please add your information.</p>
-          <Button onClick={handleStartEdit} className="sprout-button">
+          <button 
+            onClick={handleStartEdit} 
+            className="sprout-button bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+          >
             Add Parent Information
-          </Button>
+          </button>
         </div>
       );
     }
