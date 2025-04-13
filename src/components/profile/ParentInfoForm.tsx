@@ -1,4 +1,3 @@
-
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback } from "react";
 
 interface ParentInfoFormProps {
   parentForm: UseFormReturn<any>;
@@ -16,32 +15,26 @@ interface ParentInfoFormProps {
 }
 
 const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false }: ParentInfoFormProps) => {
-  const [localSubmitting, setLocalSubmitting] = useState(false);
-  const submitting = isSubmitting || localSubmitting;
-
   const handleFormSubmit = useCallback((data: any) => {
     console.log("ParentInfoForm - Form submitted with data:", data);
     
-    if (submitting) {
+    if (isSubmitting) {
       console.log("Form submission already in progress, ignoring duplicate submission");
       return;
     }
     
-    setLocalSubmitting(true);
-    
     // Call onSubmit asynchronously to prevent React state batching issues
     setTimeout(() => {
       onSubmit(data);
-      // Don't reset localSubmitting here - parent component controls isSubmitting
     }, 0);
-  }, [onSubmit, submitting]);
+  }, [onSubmit, isSubmitting]);
 
   const handleCancel = useCallback(() => {
     console.log("ParentInfoForm - Cancel button clicked");
-    if (!submitting) {
+    if (!isSubmitting) {
       onCancel();
     }
-  }, [onCancel, submitting]);
+  }, [onCancel, isSubmitting]);
 
   return (
     <Form {...parentForm}>
@@ -57,7 +50,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                   <Input 
                     placeholder="Enter your full name" 
                     {...field} 
-                    disabled={submitting}
+                    disabled={isSubmitting}
                   />
                 </FormControl>
                 <FormMessage />
@@ -76,7 +69,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                     placeholder="Enter your email" 
                     type="email" 
                     {...field} 
-                    disabled={submitting}
+                    disabled={isSubmitting}
                   />
                 </FormControl>
                 <FormMessage />
@@ -94,7 +87,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                   value={field.value}
-                  disabled={submitting}
+                  disabled={isSubmitting}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -123,7 +116,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                   <Input 
                     placeholder="Enter emergency contact" 
                     {...field} 
-                    disabled={submitting}
+                    disabled={isSubmitting}
                   />
                 </FormControl>
                 <FormDescription className="text-left">
@@ -140,16 +133,16 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
             type="button" 
             variant="outline" 
             onClick={handleCancel}
-            disabled={submitting}
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button 
             type="submit" 
             className="sprout-button"
-            disabled={submitting}
+            disabled={isSubmitting}
           >
-            {submitting ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Saving...
