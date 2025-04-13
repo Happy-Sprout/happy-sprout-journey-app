@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,19 +20,18 @@ const ChildrenContext = createContext<ChildrenContextType>({
   markDailyCheckInComplete: () => {},
   fetchChildProfiles: async () => {},
   setRelationshipToParent: async () => {},
+  isSubmittingProfile: false
 });
 
 export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
-  // Always define all state hooks at the top level
   const [childProfiles, setChildProfiles] = useState<ChildProfile[]>([]);
   const [currentChildId, setCurrentChildId] = useState<string | null>(null);
+  const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   
-  // Define all hooks at the top level
   const { toast } = useToast();
   const { user } = useAuth();
   const { parentInfo } = useParent();
   
-  // Define fetch function with useCallback to prevent recreating on each render
   const fetchChildProfiles = useCallback(async (parentId: string) => {
     if (!parentInfo) {
       console.log("Parent info not available yet, will fetch children later");
@@ -55,15 +53,12 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [parentInfo, currentChildId]);
   
-  // Use a persistent useEffect for fetching child profiles
   useEffect(() => {
     if (user?.id) {
       fetchChildProfiles(user.id);
     }
-    // Adding parentInfo as a dependency to refresh when parent info changes
-  }, [user?.id, parentInfo, fetchChildProfiles]); // Added fetchChildProfiles to dependencies
+  }, [user?.id, parentInfo, fetchChildProfiles]);
   
-  // Load saved child ID on initial render
   useEffect(() => {
     const savedChildId = localStorage.getItem("currentChildId");
     if (savedChildId) {
@@ -71,7 +66,6 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Save child ID when it changes
   useEffect(() => {
     if (currentChildId) {
       localStorage.setItem("currentChildId", currentChildId);
@@ -80,8 +74,12 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [currentChildId]);
   
-  // Define all handler functions with useCallback
   const addChildProfile = useCallback(async (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">): Promise<string | undefined> => {
+    if (isSubmittingProfile) {
+      console.log("Submission already in progress, ignoring duplicate request");
+      return undefined;
+    }
+    
     if (!user || !parentInfo) {
       console.error("Cannot add child profile: no user logged in or parent profile not created");
       toast({
@@ -93,24 +91,35 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      // Create child profile in the database
+      setIsSubmittingProfile(true);
+      
+      const existingProfile = childProfiles.find(
+        child => child.nickname === profile.nickname && 
+                child.dateOfBirth === profile.dateOfBirth
+      );
+      
+      if (existingProfile) {
+        toast({
+          title: "Profile already exists",
+          description: `A profile for ${profile.nickname} with the same date of birth already exists.`,
+          variant: "destructive"
+        });
+        return undefined;
+      }
+      
       const childId = await childrenDb.createChildProfile(user.id, profile);
       console.log("Child profile created with ID:", childId);
       
-      // Directly fetch the updated profiles instead of relying on a separate call
       const updatedProfiles = await childrenDb.fetchChildrenProfiles(user.id);
       console.log("Updated child profiles after creation:", updatedProfiles);
       
-      // Update the state with the new profiles
       setChildProfiles(updatedProfiles);
       
-      // Show success message
       toast({
         title: "Success",
         description: `Profile for ${profile.nickname} created successfully!`
       });
       
-      // Set the newly created profile as current
       setCurrentChildId(childId);
       
       return childId;
@@ -122,9 +131,11 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive"
       });
       return undefined;
+    } finally {
+      setIsSubmittingProfile(false);
     }
-  }, [user, parentInfo, toast]);
-
+  }, [user, parentInfo, toast, childProfiles, isSubmittingProfile]);
+  
   const updateChildProfile = useCallback(async (id: string, updatedInfo: Partial<ChildProfile>) => {
     try {
       const childIndex = childProfiles.findIndex((profile) => profile.id === id);
@@ -151,7 +162,7 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       });
     }
   }, [childProfiles, toast]);
-
+  
   const deleteChildProfile = useCallback(async (id: string) => {
     try {
       await childrenDb.deleteChildProfile(id);
@@ -176,18 +187,17 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
       });
     }
   }, [childProfiles, currentChildId, toast]);
-
+  
   const getChildById = useCallback(() => getCurrentChild(childProfiles, currentChildId), [childProfiles, currentChildId]);
-
+  
   const handleMarkDailyCheckInComplete = useCallback((childId: string, date = new Date().toISOString()) => {
     markDailyCheckInComplete(childId, childProfiles, setChildProfiles, date);
   }, [childProfiles]);
-
+  
   const handleSetRelationshipToParent = useCallback(async (childId: string, relationship: string) => {
     await setChildRelationship(childId, relationship, updateChildProfile);
   }, [updateChildProfile]);
-
-  // Create context value with useMemo to prevent unnecessary rerenders
+  
   const contextValue = useMemo(() => ({
     childProfiles,
     setChildProfiles,
@@ -200,7 +210,8 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     calculateAgeFromDOB,
     markDailyCheckInComplete: handleMarkDailyCheckInComplete,
     setRelationshipToParent: handleSetRelationshipToParent,
-    fetchChildProfiles
+    fetchChildProfiles,
+    isSubmittingProfile
   }), [
     childProfiles, 
     setChildProfiles,
@@ -212,9 +223,10 @@ export const ChildrenProvider = ({ children }: { children: ReactNode }) => {
     getChildById, 
     handleMarkDailyCheckInComplete, 
     handleSetRelationshipToParent,
-    fetchChildProfiles
+    fetchChildProfiles,
+    isSubmittingProfile
   ]);
-
+  
   return (
     <ChildrenContext.Provider value={contextValue}>
       {children}

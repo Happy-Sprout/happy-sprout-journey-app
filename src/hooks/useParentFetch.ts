@@ -9,11 +9,24 @@ export function useParentFetch() {
   const fetchInProgress = useRef(false);
   const lastUserIdFetched = useRef<string | null>(null);
   const fetchInFlightPromise = useRef<Promise<ParentInfo | null> | null>(null);
+  const lastFetchTime = useRef<number>(0);
+  const FETCH_COOLDOWN_MS = 5000; // 5 seconds cooldown between identical fetches
   
   const fetchParentInfo = useCallback(async (userId: string, currentUser?: User | null) => {
     if (!userId) {
       console.log("No user ID provided for parent info fetch");
       return null;
+    }
+    
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTime.current;
+    
+    // If we recently fetched this user's data and we're within cooldown, return the in-flight promise
+    if (timeSinceLastFetch < FETCH_COOLDOWN_MS && 
+        lastUserIdFetched.current === userId && 
+        fetchInFlightPromise.current) {
+      console.log(`Using cached parent info for ${userId}, last fetch was ${timeSinceLastFetch}ms ago`);
+      return fetchInFlightPromise.current;
     }
     
     // Return existing promise if we're already fetching for this user
@@ -26,6 +39,7 @@ export function useParentFetch() {
     console.log("Starting new parent info fetch for:", userId);
     fetchInProgress.current = true;
     lastUserIdFetched.current = userId;
+    lastFetchTime.current = now;
     
     // Create a promise for this fetch and store it
     fetchInFlightPromise.current = (async () => {
@@ -70,6 +84,7 @@ export function useParentFetch() {
       fetchInProgress.current = false;
       lastUserIdFetched.current = null;
       fetchInFlightPromise.current = null;
+      lastFetchTime.current = 0;
     }, [])
   };
 }

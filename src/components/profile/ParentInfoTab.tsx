@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -176,22 +175,6 @@ const ParentInfoTab = () => {
     );
   }, [isLoading, editParentMode, parentInfo, handleStartEdit, parentForm, saveParentProfile, handleCancelEdit]);
 
-  // Memoize the header actions to prevent re-renders
-  const headerActions = useMemo(() => {
-    if (!editParentMode && parentInfo) {
-      return (
-        <Button 
-          variant="outline" 
-          onClick={handleStartEdit}
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          Edit Information
-        </Button>
-      );
-    }
-    return null;
-  }, [editParentMode, parentInfo, handleStartEdit]);
-
   return (
     <Card>
       <CardHeader>
@@ -202,7 +185,6 @@ const ParentInfoTab = () => {
               Your contact information and account details
             </CardDescription>
           </div>
-          {headerActions}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

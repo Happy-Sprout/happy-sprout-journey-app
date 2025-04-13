@@ -1,4 +1,3 @@
-
 export type ChildProfile = {
   id: string;
   nickname: string;
@@ -24,17 +23,18 @@ export type ChildProfile = {
   relationshipToParent?: string;
 };
 
-export type ChildrenContextType = {
+export interface ChildrenContextType {
   childProfiles: ChildProfile[];
   setChildProfiles: (profiles: ChildProfile[]) => void;
   addChildProfile: (profile: Omit<ChildProfile, "id" | "createdAt" | "xpPoints" | "streakCount" | "badges">) => Promise<string | undefined>;
-  updateChildProfile: (id: string, profile: Partial<ChildProfile>) => Promise<void>;
+  updateChildProfile: (id: string, updatedInfo: Partial<ChildProfile>) => Promise<void>;
   deleteChildProfile: (id: string) => Promise<void>;
   currentChildId: string | null;
   setCurrentChildId: (id: string | null) => void;
   getCurrentChild: () => ChildProfile | undefined;
-  calculateAgeFromDOB: (dob: string) => number;
+  calculateAgeFromDOB: (dateOfBirth: string) => number;
   markDailyCheckInComplete: (childId: string, date?: string) => void;
-  fetchChildProfiles: (userId: string) => Promise<void>;
+  fetchChildProfiles: (parentId: string) => Promise<void>;
   setRelationshipToParent: (childId: string, relationship: string) => Promise<void>;
-};
+  isSubmittingProfile: boolean;
+}
