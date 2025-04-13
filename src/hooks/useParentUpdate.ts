@@ -45,6 +45,7 @@ export function useParentUpdate() {
   
   // Check if API calls are currently prevented
   const isApiCallPrevented = useCallback(() => {
+    console.log("Checking if API calls are prevented, flag:", preventApiCallsFlag.current, "isSubmitting:", isSubmitting);
     return preventApiCallsFlag.current || isSubmitting;
   }, [isSubmitting]);
   
@@ -81,8 +82,8 @@ export function useParentUpdate() {
       
       try {
         // Call the API to save parent info
-        console.log("Calling saveParentInfo to update the database");
-        const success = await saveParentInfo(parentInfo as ParentInfo);
+        console.log("Calling saveParentInfo to update the database", parentInfo);
+        const success = await saveParentInfo(parentInfo);
         
         console.log("saveParentInfo result:", success);
         
@@ -104,7 +105,9 @@ export function useParentUpdate() {
       } finally {
         // Always reset the state, even in case of error
         console.log("Resetting submission state in finally block");
-        resetPrevention();
+        setTimeout(() => {
+          resetPrevention();
+        }, 500); // Small delay to ensure UI state is consistent
       }
     } catch (error) {
       console.error("Error in updateParentInfo:", error);

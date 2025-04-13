@@ -35,6 +35,7 @@ const ParentInfoTab = () => {
       relationship: "Parent",
       emergencyContact: "",
     },
+    mode: "onChange" // Add this to make validation more responsive
   });
 
   // Set up cleanup when component unmounts
@@ -65,7 +66,7 @@ const ParentInfoTab = () => {
   // Reset form when entering edit mode
   useEffect(() => {
     if (editParentMode && parentInfo && componentMounted.current) {
-      console.log("Entering edit mode - resetting form with current values");
+      console.log("Entering edit mode - resetting form with current values", parentInfo);
       parentForm.reset({
         name: parentInfo.name || "",
         email: parentInfo.email || "",

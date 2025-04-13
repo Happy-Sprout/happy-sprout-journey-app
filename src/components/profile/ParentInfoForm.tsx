@@ -81,6 +81,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                     placeholder="Enter your full name" 
                     {...field} 
                     disabled={isSubmitting}
+                    className="bg-white"
                   />
                 </FormControl>
                 <FormMessage />
@@ -100,6 +101,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                     type="email" 
                     {...field} 
                     disabled={isSubmitting}
+                    className="bg-white"
                   />
                 </FormControl>
                 <FormMessage />
@@ -120,7 +122,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                   disabled={isSubmitting}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white">
                       <SelectValue placeholder="Select relationship" />
                     </SelectTrigger>
                   </FormControl>
@@ -147,6 +149,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                     placeholder="Enter emergency contact" 
                     {...field} 
                     disabled={isSubmitting}
+                    className="bg-white"
                   />
                 </FormControl>
                 <FormDescription className="text-left">
