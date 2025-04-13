@@ -9,18 +9,9 @@ export function useParentUpdate() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
-  const preventApiCalls = useCallback(() => {
-    preventApiCallsFlag.current = true;
-    return () => {
-      preventApiCallsFlag.current = false;
-    };
-  }, []);
-  
-  const isApiCallPrevented = useCallback(() => {
-    return preventApiCallsFlag.current || isSubmitting;
-  }, [isSubmitting]);
-  
+  // Cleanup function to ensure all flags are reset
   const resetPrevention = useCallback(() => {
+    console.log("Resetting prevention flags and submission state");
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -29,16 +20,50 @@ export function useParentUpdate() {
     setIsSubmitting(false);
   }, []);
   
+  // New function to set a prevention flag with timeout
+  const preventApiCalls = useCallback(() => {
+    console.log("Setting API call prevention flag");
+    preventApiCallsFlag.current = true;
+    
+    // Set a timeout to automatically clear the flag after 10 seconds
+    // This is a safety mechanism in case clearPrevention is never called
+    timeoutRef.current = setTimeout(() => {
+      console.log("Auto-clearing prevention flag after timeout");
+      preventApiCallsFlag.current = false;
+    }, 10000);
+    
+    // Return function to manually clear the prevention
+    return () => {
+      console.log("Manually clearing prevention flag");
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      preventApiCallsFlag.current = false;
+    };
+  }, []);
+  
+  // Check if API calls are currently prevented
+  const isApiCallPrevented = useCallback(() => {
+    return preventApiCallsFlag.current || isSubmitting;
+  }, [isSubmitting]);
+  
+  // Main function to update parent info
   const updateParentInfo = useCallback(async (parentInfo: Partial<ParentInfo> & { id: string }): Promise<boolean> => {
+    console.log("updateParentInfo called with:", parentInfo);
+    
     // If already submitting or prevented, don't proceed
-    if (preventApiCallsFlag.current || isSubmitting) {
-      console.log("API calls are currently prevented or already submitting");
+    if (preventApiCallsFlag.current) {
+      console.log("API calls are currently prevented - not submitting");
+      return false;
+    }
+    
+    if (isSubmitting) {
+      console.log("Already submitting - not proceeding with new submission");
       return false;
     }
     
     try {
-      console.log("Calling saveParentInfo with:", parentInfo);
-      
       // Make sure we have the required fields
       if (!parentInfo.id) {
         console.error("Missing required parent ID for update");
@@ -52,15 +77,14 @@ export function useParentUpdate() {
       
       // Set the submission state
       setIsSubmitting(true);
-      
-      // Use a timeout to ensure the flag is reset after a reasonable time
-      timeoutRef.current = setTimeout(() => {
-        resetPrevention();
-      }, 10000); // 10 seconds timeout
+      console.log("Setting isSubmitting to true");
       
       try {
         // Call the API to save parent info
+        console.log("Calling saveParentInfo to update the database");
         const success = await saveParentInfo(parentInfo as ParentInfo);
+        
+        console.log("saveParentInfo result:", success);
         
         if (!success) {
           toast({
@@ -78,11 +102,9 @@ export function useParentUpdate() {
         
         return true;
       } finally {
-        // Clear the timeout to prevent unnecessary flag resets
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-          timeoutRef.current = null;
-        }
+        // Always reset the state, even in case of error
+        console.log("Resetting submission state in finally block");
+        resetPrevention();
       }
     } catch (error) {
       console.error("Error in updateParentInfo:", error);
@@ -92,16 +114,14 @@ export function useParentUpdate() {
         variant: "destructive"
       });
       return false;
-    } finally {
-      // IMPORTANT: Always release the flags, even in case of errors
-      resetPrevention();
     }
-  }, [toast, isSubmitting, resetPrevention]);
+  }, [toast, resetPrevention]);
 
   return {
     updateParentInfo,
     preventApiCalls,
     isApiCallPrevented,
-    isSubmitting
+    isSubmitting,
+    resetPrevention
   };
 }

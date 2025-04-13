@@ -18,6 +18,7 @@ interface ParentInfoFormProps {
 const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false }: ParentInfoFormProps) => {
   const submittedOnce = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const componentMounted = useRef(true);
 
   // Reset submission state when component mounts or isSubmitting changes
   useEffect(() => {
@@ -25,6 +26,14 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
       submittedOnce.current = false;
     }
   }, [isSubmitting]);
+
+  // Add cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      console.log("ParentInfoForm component is unmounting");
+      componentMounted.current = false;
+    };
+  }, []);
 
   const handleFormSubmit = useCallback((data: any) => {
     console.log("ParentInfoForm - Form submitted with data:", data);
@@ -36,11 +45,18 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
     
     // Mark as submitted to prevent duplicate submissions
     submittedOnce.current = true;
-    onSubmit(data);
+    
+    // Only submit if component is still mounted
+    if (componentMounted.current) {
+      onSubmit(data);
+    } else {
+      console.log("Not submitting because component is unmounted");
+    }
   }, [onSubmit, isSubmitting]);
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = useCallback((e) => {
     console.log("ParentInfoForm - Cancel button clicked");
+    e.preventDefault();
     if (!isSubmitting) {
       onCancel();
     }

@@ -37,6 +37,17 @@ const ParentInfoTab = () => {
     },
   });
 
+  // Set up cleanup when component unmounts
+  useEffect(() => {
+    componentMounted.current = true;
+    
+    return () => {
+      console.log("ParentInfoTab component unmounting");
+      componentMounted.current = false;
+    };
+  }, []);
+
+  // Initialize form with parent info once
   useEffect(() => {
     if (parentInfo && !editParentMode && !formInitialized.current && componentMounted.current) {
       console.log("Initializing parent form with data - one time only");
@@ -49,12 +60,9 @@ const ParentInfoTab = () => {
         emergencyContact: parentInfo.emergencyContact || "",
       });
     }
-    
-    return () => {
-      componentMounted.current = false;
-    };
   }, [parentInfo, parentForm, editParentMode]);
 
+  // Reset form when entering edit mode
   useEffect(() => {
     if (editParentMode && parentInfo && componentMounted.current) {
       console.log("Entering edit mode - resetting form with current values");
@@ -77,15 +85,18 @@ const ParentInfoTab = () => {
     }
     
     // Set submitting state
+    console.log("Setting isSubmitting to true");
     setIsSubmitting(true);
     
     try {
       if (parentInfo) {
         console.log("Updating existing parent profile");
-        const success = await updateParentInfo({
+        const updatedInfo = {
           ...parentInfo,
           ...data,
-        });
+        };
+        console.log("Calling updateParentInfo with:", updatedInfo);
+        const success = await updateParentInfo(updatedInfo);
         
         console.log("Update result:", success);
         
@@ -104,13 +115,15 @@ const ParentInfoTab = () => {
         }
       } else {
         console.log("Creating new parent profile");
-        const success = await setParentInfo({
+        const newParentInfo = {
           id: uuidv4(),
           name: data.name,
           email: data.email,
           relationship: data.relationship || "Parent",
           emergencyContact: data.emergencyContact || "",
-        });
+        };
+        console.log("Calling setParentInfo with:", newParentInfo);
+        const success = await setParentInfo(newParentInfo);
         
         if (success && componentMounted.current) {
           toast({
@@ -138,6 +151,7 @@ const ParentInfoTab = () => {
     } finally {
       // Reset submitting state if still mounted
       if (componentMounted.current) {
+        console.log("Resetting isSubmitting to false");
         setIsSubmitting(false);
       }
     }
@@ -164,6 +178,7 @@ const ParentInfoTab = () => {
     setEditParentMode(true);
   }, []);
 
+  // Create card content based on current state
   const cardContent = useMemo(() => {
     if (isLoading) {
       return (

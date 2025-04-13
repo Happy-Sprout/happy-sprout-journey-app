@@ -131,7 +131,7 @@ export async function createParentInfo(user: any) {
  */
 export async function saveParentInfo(info: ParentInfo) {
   try {
-    console.log("Saving parent info for:", info.id, "with data:", info);
+    console.log("saveParentInfo called with data:", info);
     
     if (!info.id) {
       console.error("Cannot save parent info without an ID");
@@ -139,13 +139,33 @@ export async function saveParentInfo(info: ParentInfo) {
     }
     
     // Check authentication state
-    const { data: authData } = await supabase.auth.getSession();
-    console.log("Current auth state during save operation:", authData?.session ? "Authenticated" : "Not authenticated");
+    const { data: authData, error: authError } = await supabase.auth.getSession();
+    if (authError) {
+      console.error("Error getting auth session:", authError.message);
+      return false;
+    }
+    
+    console.log("Current auth state during save operation:", 
+      authData?.session ? "Authenticated as " + authData.session.user.id : "Not authenticated");
     
     if (!authData?.session) {
       console.error("User is not authenticated, cannot save parent info");
       return false;
     }
+    
+    // Verify if the authenticated user ID matches the parent ID or has admin rights
+    if (authData.session.user.id !== info.id) {
+      console.error("User ID mismatch - authenticated as:", authData.session.user.id, "but trying to update:", info.id);
+      return false;
+    }
+    
+    console.log("Preparing update with data:", {
+      name: info.name,
+      relationship: info.relationship,
+      email: info.email,
+      emergency_contact: info.emergencyContact,
+      additional_info: info.additionalInfo
+    });
     
     // Update the parent record using the DB structure column names
     const { data, error } = await supabase
