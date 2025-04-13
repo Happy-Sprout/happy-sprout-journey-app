@@ -78,12 +78,18 @@ const ParentInfoTab = () => {
     try {
       if (parentInfo) {
         console.log("Updating existing parent profile");
-        // Fix: Don't check the return value directly if updateParentInfo returns void
-        // Instead, just call it and assume it works unless it throws an error
-        await updateParentInfo({
+        // Now correctly handling the boolean return value
+        const success = await updateParentInfo({
           ...parentInfo,
           ...data,
         });
+        
+        if (!success) {
+          console.error("Failed to update parent profile");
+          // No need to throw here - updateParentInfo already handles the toast
+          setIsSubmitting(false);
+          return;
+        }
       } else {
         console.log("Creating new parent profile");
         await setParentInfo({
@@ -95,10 +101,14 @@ const ParentInfoTab = () => {
         });
       }
       
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      });
+      // Only show success toast here if we're creating a new profile
+      // For updates, the toast is already handled in updateParentInfo
+      if (!parentInfo) {
+        toast({
+          title: "Profile Created",
+          description: "Your profile has been successfully created.",
+        });
+      }
       
       setEditParentMode(false);
     } catch (error) {
@@ -109,7 +119,7 @@ const ParentInfoTab = () => {
         variant: "destructive"
       });
     } finally {
-      // Ensure this runs even if there's an error
+      // Always ensure isSubmitting is set to false when done
       setIsSubmitting(false);
     }
   }, [parentInfo, updateParentInfo, setParentInfo, toast, isSubmitting]);

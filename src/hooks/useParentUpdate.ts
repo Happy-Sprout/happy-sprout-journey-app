@@ -26,6 +26,7 @@ export function useParentUpdate() {
     
     try {
       console.log("Calling saveParentInfo with:", parentInfo);
+      // Store the release function in a variable so we can call it in finally
       const releaseFlag = preventApiCalls();
       
       // Make sure we have the required fields
@@ -36,7 +37,6 @@ export function useParentUpdate() {
           description: "Missing required information for update",
           variant: "destructive"
         });
-        releaseFlag();
         return false;
       }
       
@@ -48,7 +48,6 @@ export function useParentUpdate() {
           description: "Could not update profile. Please try again.",
           variant: "destructive"
         });
-        releaseFlag();
         return false;
       }
       
@@ -56,11 +55,6 @@ export function useParentUpdate() {
         title: "Success",
         description: "Profile updated successfully!"
       });
-      
-      // Use timeout to ensure state updates complete before releasing
-      setTimeout(() => {
-        releaseFlag();
-      }, 300);
       
       return true;
     } catch (error) {
@@ -70,10 +64,11 @@ export function useParentUpdate() {
         description: "Failed to update profile. Please try again.",
         variant: "destructive"
       });
-      
-      // Make sure to release the flag even on error
-      preventApiCallsFlag.current = false;
       return false;
+    } finally {
+      // IMPORTANT: Always release the flag, even in case of errors
+      // This ensures we don't get stuck in a state where API calls are prevented
+      preventApiCallsFlag.current = false;
     }
   }, [toast, preventApiCalls]);
 
