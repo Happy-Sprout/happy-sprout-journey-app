@@ -6,8 +6,8 @@ import type { ParentInfo } from "@/types/parentInfo";
 export interface ParentContextType {
   parentInfo: ParentInfo | null;
   isLoading: boolean;
-  setParentInfo: (info: ParentInfo | null) => Promise<void>;
-  updateParentInfo: (info: Partial<ParentInfo>) => Promise<boolean>; // Updated to return boolean
+  setParentInfo: (info: ParentInfo | null) => Promise<boolean>; // Updated to return boolean
+  updateParentInfo: (info: Partial<ParentInfo>) => Promise<boolean>;
   fetchParentInfo: (userId: string) => Promise<ParentInfo | null>;
   refreshParentInfo: () => Promise<void>;
 }
@@ -16,8 +16,8 @@ export interface ParentContextType {
 const ParentContext = createContext<ParentContextType>({
   parentInfo: null,
   isLoading: false,
-  setParentInfo: async () => {},
-  updateParentInfo: async () => false, // Default return value is false
+  setParentInfo: async () => false, // Default return value is false
+  updateParentInfo: async () => false,
   fetchParentInfo: async () => null,
   refreshParentInfo: async () => {},
 });

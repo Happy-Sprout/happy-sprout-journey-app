@@ -98,10 +98,16 @@ const ParentInfoTab = () => {
             description: "Your profile has been successfully updated.",
           });
           setEditParentMode(false);
+        } else {
+          toast({
+            title: "Update Failed",
+            description: "Could not update the profile. Please try again.",
+            variant: "destructive"
+          });
         }
       } else {
         console.log("Creating new parent profile");
-        await setParentInfo({
+        const success = await setParentInfo({
           id: uuidv4(),
           name: data.name,
           email: data.email,
@@ -109,12 +115,19 @@ const ParentInfoTab = () => {
           emergencyContact: data.emergencyContact || "",
         });
         
-        toast({
-          title: "Profile Created",
-          description: "Your profile has been successfully created.",
-        });
-        
-        setEditParentMode(false);
+        if (success) {
+          toast({
+            title: "Profile Created",
+            description: "Your profile has been successfully created.",
+          });
+          setEditParentMode(false);
+        } else {
+          toast({
+            title: "Creation Failed",
+            description: "Could not create the profile. Please try again.",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error("ParentInfoTab - Error saving parent profile:", error);
