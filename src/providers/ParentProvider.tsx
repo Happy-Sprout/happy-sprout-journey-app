@@ -87,6 +87,7 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     if (success) {
       setParentInfoState(info);
     }
+    return success;
   }, [setParentInfoState, saveParentInfoToDb]);
 
   const updateParentInfo = useCallback(async (updatedInfo: Partial<ParentInfo>): Promise<boolean> => {

@@ -70,9 +70,16 @@ const ParentInfoTab = () => {
   }, [editParentMode, parentInfo, parentForm]);
 
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
-    if (!componentMounted.current || isSubmitting) return;
-    
+    // Debug log to track function execution
     console.log("saveParentProfile called with data:", data);
+    
+    // Prevent duplicate submissions
+    if (!componentMounted.current || isSubmitting) {
+      console.log("Submission prevented: component unmounted or already submitting");
+      return;
+    }
+    
+    // Set submitting state to true to show loading UI
     setIsSubmitting(true);
     
     try {
@@ -83,7 +90,13 @@ const ParentInfoTab = () => {
           ...data,
         });
         
+        console.log("Update result:", success);
+        
         if (success) {
+          toast({
+            title: "Profile Updated",
+            description: "Your profile has been successfully updated.",
+          });
           setEditParentMode(false);
         }
       } else {
@@ -111,7 +124,11 @@ const ParentInfoTab = () => {
         variant: "destructive"
       });
     } finally {
-      setIsSubmitting(false);
+      // Always reset the submitting state, regardless of outcome
+      if (componentMounted.current) {
+        console.log("Resetting isSubmitting state");
+        setIsSubmitting(false);
+      }
     }
   }, [parentInfo, updateParentInfo, setParentInfo, toast, isSubmitting]);
 
