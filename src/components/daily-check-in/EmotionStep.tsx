@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Smile, Frown, Angry, Meh } from "lucide-react";
+import { Smile, Frown, Angry, Meh, Check, CircleCheck } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const emotionFeelingMap = {
   "happy": {
@@ -39,37 +41,44 @@ interface EmotionStepProps {
 }
 
 const EmotionStep = ({ mood, setMood, selectedFeeling, setSelectedFeeling }: EmotionStepProps) => {
+  const isMobile = useIsMobile();
+  
   useEffect(() => {
     setSelectedFeeling("");
   }, [mood, setSelectedFeeling]);
   
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">How are you feeling today?</h2>
+      <h2 className="text-xl font-semibold text-sprout-purple">How are you feeling today?</h2>
       <RadioGroup value={mood} onValueChange={setMood} className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
-          { value: "happy", icon: <Smile size={32} className="text-sprout-green" />, label: "Happy", selectedBg: "bg-sprout-green/20", selectedBorder: "border-sprout-green" },
-          { value: "calm", icon: <Smile size={32} className="text-sprout-blue" />, label: "Calm", selectedBg: "bg-sprout-blue/20", selectedBorder: "border-sprout-blue" },
-          { value: "neutral", icon: <Meh size={32} className="text-gray-500" />, label: "Neutral", selectedBg: "bg-gray-400/30", selectedBorder: "border-gray-600" },
-          { value: "sad", icon: <Frown size={32} className="text-sprout-blue" />, label: "Sad", selectedBg: "bg-sprout-blue/20", selectedBorder: "border-sprout-blue" },
-          { value: "angry", icon: <Angry size={32} className="text-sprout-orange" />, label: "Angry", selectedBg: "bg-sprout-orange/20", selectedBorder: "border-sprout-orange" }
-        ].map(({ value, icon, label, selectedBg, selectedBorder }) => (
+          { value: "happy", icon: <Smile size={32} className="text-sprout-green" />, label: "Happy", selectedBg: "bg-sprout-green/20", selectedBorder: "border-sprout-green", shadowColor: "shadow-sprout-green/30" },
+          { value: "calm", icon: <Smile size={32} className="text-sprout-blue" />, label: "Calm", selectedBg: "bg-sprout-blue/20", selectedBorder: "border-sprout-blue", shadowColor: "shadow-sprout-blue/30" },
+          { value: "neutral", icon: <Meh size={32} className="text-gray-500" />, label: "Neutral", selectedBg: "bg-gray-200", selectedBorder: "border-gray-500", shadowColor: "shadow-gray-500/30" },
+          { value: "sad", icon: <Frown size={32} className="text-sprout-blue" />, label: "Sad", selectedBg: "bg-sprout-blue/20", selectedBorder: "border-sprout-blue", shadowColor: "shadow-sprout-blue/30" },
+          { value: "angry", icon: <Angry size={32} className="text-sprout-orange" />, label: "Angry", selectedBg: "bg-sprout-orange/20", selectedBorder: "border-sprout-orange", shadowColor: "shadow-sprout-orange/30" }
+        ].map(({ value, icon, label, selectedBg, selectedBorder, shadowColor }) => (
           <div key={value} className="flex flex-col items-center">
             <Label 
               htmlFor={value} 
-              className="cursor-pointer flex flex-col items-center gap-2"
+              className="cursor-pointer flex flex-col items-center gap-2 relative"
               onClick={() => setMood(value)}
             >
               <div className={`
-                w-14 h-14 flex items-center justify-center rounded-full mb-2 transition-all duration-300
+                w-16 h-16 flex items-center justify-center rounded-full mb-2 transition-all duration-300 relative
                 ${mood === value 
-                  ? `${selectedBg} border-2 ${selectedBorder} animate-pulse` 
+                  ? `${selectedBg} border-2 ${selectedBorder} ${shadowColor} shadow-lg animate-pulse` 
                   : "bg-gray-100 hover:bg-gray-200"
                 }
               `}>
                 {icon}
+                {mood === value && (
+                  <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 border-2 border-sprout-purple">
+                    <CircleCheck size={16} className="text-sprout-purple" />
+                  </div>
+                )}
               </div>
-              <span>{label}</span>
+              <span className="text-center">{label}</span>
             </Label>
             <RadioGroupItem value={value} id={value} className="sr-only" />
           </div>
@@ -77,23 +86,36 @@ const EmotionStep = ({ mood, setMood, selectedFeeling, setSelectedFeeling }: Emo
       </RadioGroup>
       
       {mood && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg animate-fade-in">
-          <h3 className="text-lg font-medium mb-3">How would you describe your {mood} feeling?</h3>
-          <div className="grid grid-cols-3 gap-2">
-            {emotionFeelingMap[mood]?.feelings.map((feeling) => (
-              <button
-                key={feeling}
-                type="button"
-                className={`px-3 py-2 text-sm rounded-md transition-colors min-h-[45px] whitespace-normal text-center ${
-                  selectedFeeling === feeling
-                    ? `bg-${emotionFeelingMap[mood].color}/20 border border-${emotionFeelingMap[mood].color} text-${emotionFeelingMap[mood].color}`
-                    : "bg-white border border-gray-200 hover:bg-gray-100"
-                }`}
-                onClick={() => setSelectedFeeling(feeling)}
-              >
-                {feeling}
-              </button>
-            ))}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg animate-fade-in shadow-sm">
+          <h3 className="text-lg font-medium mb-3 text-sprout-purple">How would you describe your {mood} feeling?</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {emotionFeelingMap[mood]?.feelings.map((feeling) => {
+              const isSelected = selectedFeeling === feeling;
+              const colorClass = emotionFeelingMap[mood].color;
+              
+              return (
+                <button
+                  key={feeling}
+                  type="button"
+                  className={`
+                    px-3 py-2 text-sm rounded-md transition-colors min-h-[45px] 
+                    whitespace-normal text-center relative
+                    ${isSelected
+                      ? `bg-${colorClass}/20 border-2 border-${colorClass} text-${colorClass} shadow-md`
+                      : "bg-white border border-gray-200 hover:bg-gray-100"
+                    }
+                  `}
+                  onClick={() => setSelectedFeeling(feeling)}
+                >
+                  <span className="block truncate">{feeling}</span>
+                  {isSelected && (
+                    <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 border border-sprout-purple">
+                      <Check size={10} className="text-sprout-purple" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
