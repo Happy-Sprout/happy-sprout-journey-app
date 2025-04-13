@@ -26,8 +26,6 @@ export function useParentUpdate() {
     
     try {
       console.log("Calling saveParentInfo with:", parentInfo);
-      // Store the release function in a variable so we can call it in finally
-      const releaseFlag = preventApiCalls();
       
       // Make sure we have the required fields
       if (!parentInfo.id) {
@@ -40,6 +38,9 @@ export function useParentUpdate() {
         return false;
       }
       
+      // Store the release function in a variable so we can call it in finally
+      preventApiCallsFlag.current = true;
+      
       const success = await saveParentInfo(parentInfo as ParentInfo);
       
       if (!success) {
@@ -50,11 +51,6 @@ export function useParentUpdate() {
         });
         return false;
       }
-      
-      toast({
-        title: "Success",
-        description: "Profile updated successfully!"
-      });
       
       return true;
     } catch (error) {
@@ -70,7 +66,7 @@ export function useParentUpdate() {
       // This ensures we don't get stuck in a state where API calls are prevented
       preventApiCallsFlag.current = false;
     }
-  }, [toast, preventApiCalls]);
+  }, [toast]);
 
   return {
     updateParentInfo,

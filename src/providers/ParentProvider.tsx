@@ -77,10 +77,10 @@ export const ParentProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id, fetchParentInfo, resetFetchState, setParentInfoState, setIsLoading, isApiCallPrevented, user]);
 
-  const setParentInfo = useCallback(async (info: ParentInfo | null) => {
+  const setParentInfo = useCallback(async (info: ParentInfo | null): Promise<boolean> => {
     if (!info) {
       setParentInfoState(null);
-      return;
+      return false;
     }
     
     const success = await saveParentInfoToDb(info);

@@ -25,6 +25,7 @@ export async function fetchParentInfoById(userId: string) {
     // Check cache first
     const cachedInfo = getCachedParentInfo(userId);
     if (cachedInfo) {
+      console.log("Returning cached parent info for:", userId);
       return cachedInfo;
     }
     
@@ -36,13 +37,14 @@ export async function fetchParentInfoById(userId: string) {
       .maybeSingle();
       
     if (error) {
-      console.error("Error fetching parent data:", error);
+      console.error("Error fetching parent data:", error.message, error.details, error.hint);
       // Add to error lock to prevent hammering
       setErrorLock(userId);
       return getCachedParentInfo(userId); // Return cached data as fallback
     }
     
     if (data) {
+      console.log("Parent data retrieved successfully:", data);
       const parentInfo = {
         id: data.id,
         name: data.name,
@@ -58,6 +60,7 @@ export async function fetchParentInfoById(userId: string) {
       return parentInfo;
     }
     
+    console.log("No parent data found for user:", userId);
     return null;
   } catch (error) {
     console.error("Error in fetchParentInfoById:", error);
@@ -98,7 +101,7 @@ export async function createParentInfo(user: any) {
       .insert([newParent]);
       
     if (insertError) {
-      console.error("Error creating parent record:", insertError);
+      console.error("Error creating parent record:", insertError.message, insertError.details, insertError.hint);
       return null;
     }
     
@@ -135,7 +138,11 @@ export async function saveParentInfo(info: ParentInfo) {
       return false;
     }
     
-    const { error } = await supabase
+    // debug log the JWT token by checking the auth state
+    const { data: authData } = await supabase.auth.getSession();
+    console.log("Current auth state during save operation:", authData?.session ? "Authenticated" : "Not authenticated");
+    
+    const { data, error } = await supabase
       .from('parents')
       .upsert({
         id: info.id,
@@ -149,11 +156,11 @@ export async function saveParentInfo(info: ParentInfo) {
       });
       
     if (error) {
-      console.error("Error saving parent info:", error);
+      console.error("Error saving parent info:", error.message, error.details, error.hint);
       return false;
     }
     
-    console.log("Parent info saved successfully for:", info.id);
+    console.log("Parent info saved successfully for:", info.id, "Response data:", data);
     
     // Update cache
     updateParentCache(info.id, info);
@@ -184,15 +191,17 @@ export async function updateParentInfoFields(parentId: string, updatedFields: Pa
       return true; // Return true as this isn't an error
     }
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('parents')
       .update(update)
       .eq('id', parentId);
       
     if (error) {
-      console.error("Error updating parent info:", error);
+      console.error("Error updating parent info:", error.message, error.details, error.hint);
       return false;
     }
+    
+    console.log("Parent info fields updated successfully. Response data:", data);
     
     // Update cache if it exists
     const cachedInfo = getCachedParentInfo(parentId);
