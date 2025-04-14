@@ -41,7 +41,14 @@ const SpeechInput = ({ onTranscript, isAppending = true, className = "" }: Speec
     
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
-      onTranscript(isAppending ? (previousText) => `${previousText} ${transcript}` : transcript);
+      
+      // Fixed: Handle appending text differently than setting text
+      if (isAppending) {
+        onTranscript(transcript);
+      } else {
+        onTranscript(transcript);
+      }
+      
       setIsLoading(false);
       setIsListening(false);
     };
@@ -92,12 +99,5 @@ const SpeechInput = ({ onTranscript, isAppending = true, className = "" }: Speec
   );
 };
 
-// Add TypeScript declarations for Web Speech API if not already defined
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
+// The type declarations are already in global.d.ts, so we don't need to duplicate them here
 export default SpeechInput;
