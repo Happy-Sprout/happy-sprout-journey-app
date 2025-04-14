@@ -23,6 +23,7 @@ const Journal = () => {
   const [currentTab, setCurrentTab] = useState("new");
   const [todayEntryExists, setTodayEntryExists] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState("");
+  const [promptHighlightId, setPromptHighlightId] = useState<number | null>(null);
   
   const { 
     journalEntries, 
@@ -70,7 +71,13 @@ const Journal = () => {
     }
     
     try {
-      const newEntry = await saveJournalEntry(entry);
+      // Include the selected prompt in the journal entry data
+      const entryWithPrompt = {
+        ...entry,
+        selectedPrompt: selectedPrompt || null
+      };
+      
+      const newEntry = await saveJournalEntry(entryWithPrompt);
       
       if (newEntry) {
         try {
@@ -83,7 +90,8 @@ const Journal = () => {
               action_type: 'journal_entry_completed',
               action_details: {
                 date: new Date().toISOString(),
-                xp_earned: 15
+                xp_earned: 15,
+                prompt_used: selectedPrompt || null
               }
             }]);
           
@@ -202,9 +210,18 @@ const Journal = () => {
   };
 
   // Handler to select a prompt for the journal
-  const handleSelectPrompt = (prompt: string) => {
+  const handleSelectPrompt = (prompt: string, index: number) => {
     setSelectedPrompt(prompt);
-    // This prompt will be passed to the JournalEntryForm
+    // Highlight the selected prompt
+    setPromptHighlightId(index);
+    
+    // Auto-scroll to the journal form
+    setTimeout(() => {
+      document.getElementById('journal-form')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 300);
   };
 
   return (
@@ -238,19 +255,21 @@ const Journal = () => {
             ) : (
               <>
                 {lowestSELArea && (
-                  <Card className="mb-6 border-l-4 border-l-amber-500">
+                  <Card className="mb-8 border-l-4 border-l-amber-500">
                     <CardHeader>
                       <CardTitle className="text-xl">Growth Opportunity: {lowestSELArea.title}</CardTitle>
                       <CardDescription>{lowestSELArea.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm mb-2">Try one of these prompts to help develop this skill:</p>
-                      <div className="space-y-2">
+                      <p className="text-sm mb-4">Try one of these prompts to help develop this skill:</p>
+                      <div className="space-y-3">
                         {lowestSELArea.prompts.map((prompt, index) => (
                           <div 
                             key={index} 
-                            className="flex items-center justify-between p-3 rounded-lg border hover:bg-slate-50 cursor-pointer transition-colors"
-                            onClick={() => handleSelectPrompt(prompt)}
+                            className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                              promptHighlightId === index ? 'bg-amber-50 border-amber-300' : 'hover:bg-slate-50 cursor-pointer'
+                            }`}
+                            onClick={() => handleSelectPrompt(prompt, index)}
                           >
                             <p className="text-sm">{prompt}</p>
                             <Button variant="ghost" size="sm">
@@ -262,11 +281,13 @@ const Journal = () => {
                     </CardContent>
                   </Card>
                 )}
-                <JournalEntryForm 
-                  onSubmit={handleSubmitJournalEntry} 
-                  loading={loading}
-                  selectedPrompt={selectedPrompt}
-                />
+                <div id="journal-form">
+                  <JournalEntryForm 
+                    onSubmit={handleSubmitJournalEntry} 
+                    loading={loading}
+                    selectedPrompt={selectedPrompt}
+                  />
+                </div>
               </>
             )}
           </TabsContent>
