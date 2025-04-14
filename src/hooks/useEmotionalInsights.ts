@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -212,7 +213,12 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       
       if (data && data.length >= MIN_DATA_POINTS_FOR_CHART) {
         // We have enough real data to show a meaningful chart
-        setHistoricalInsights(data);
+        // Sort the data by date to ensure chronological order
+        const sortedData = [...data].sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
+        setHistoricalInsights(sortedData);
         setIsFallbackData(false);
         setHasInsufficientData(false);
       } else {

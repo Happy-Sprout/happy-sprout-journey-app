@@ -131,6 +131,7 @@ const EmotionalGrowthInsights = ({
   }, [insight]);
 
   const lineChartData = useMemo(() => {
+    // Make sure data is properly formatted and sorted chronologically
     return historicalInsights.map(insight => ({
       date: format(parseISO(insight.created_at), "MMM d"),
       self_awareness: Number((insight.self_awareness * 100).toFixed(1)),
@@ -138,6 +139,7 @@ const EmotionalGrowthInsights = ({
       social_awareness: Number((insight.social_awareness * 100).toFixed(1)),
       relationship_skills: Number((insight.relationship_skills * 100).toFixed(1)),
       responsible_decision_making: Number((insight.responsible_decision_making * 100).toFixed(1)),
+      raw_date: insight.created_at, // Keep raw date for sorting if needed
     }));
   }, [historicalInsights]);
 
@@ -344,8 +346,14 @@ const EmotionalGrowthInsights = ({
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, 100]} />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 10 }} 
+                    />
+                    <YAxis 
+                      domain={[0, 100]} 
+                      tick={{ fontSize: 10 }} 
+                    />
                     <Tooltip 
                       formatter={(value) => [`${value}%`]}
                       labelFormatter={(label) => `Date: ${label}`}

@@ -1,4 +1,3 @@
-
 import { useUser } from "@/contexts/UserContext";
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
@@ -97,7 +96,6 @@ const Dashboard = () => {
                           hasInsufficientData={hasInsufficientData}
                         />
                         
-                        {/* Only show the sample data generation button in development mode */}
                         {isFallbackData && isDevelopment && (
                           <div className="mb-8 flex justify-center">
                             <Button 
