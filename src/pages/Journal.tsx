@@ -9,7 +9,7 @@ import { successToast } from "@/components/ui/toast-extensions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
-import { checkForBadgeUnlocks } from "@/utils/childUtils";
+import { checkForBadgeUnlocks, getBadgeInfo } from "@/utils/childUtils";
 
 const Journal = () => {
   const { getCurrentChild, currentChildId, childProfiles, setChildProfiles } = useUser();
