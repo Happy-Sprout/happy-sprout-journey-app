@@ -15,10 +15,12 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Beaker } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
   const currentChild = getCurrentChild();
+  const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
   const { 
     latestInsight, 
     loading: insightLoading,
@@ -33,6 +35,31 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const isDevelopment = import.meta.env.DEV;
   const { toast } = useToast();
+  
+  // Check database connection
+  useEffect(() => {
+    const checkDbConnection = async () => {
+      try {
+        const { error } = await supabase.from('sel_insights').select('count(*)').limit(1);
+        setIsDbConnected(!error);
+        
+        if (error && isDevelopment) {
+          console.error("Database connection error:", error);
+          toast({
+            title: "Database connection error",
+            description: "Using sample data for development purposes.",
+            variant: "default",
+            className: "bg-amber-50 border-amber-200 text-amber-800",
+          });
+        }
+      } catch (err) {
+        console.error("Error checking database connection:", err);
+        setIsDbConnected(false);
+      }
+    };
+    
+    checkDbConnection();
+  }, [isDevelopment, toast]);
   
   // Add a timeout to ensure loading state doesn't get stuck
   useEffect(() => {
@@ -52,7 +79,7 @@ const Dashboard = () => {
 
   // Handle offline mode or connection errors with sample data in development
   useEffect(() => {
-    if (connectionError && isDevelopment) {
+    if ((connectionError || isDbConnected === false) && isDevelopment) {
       toast({
         title: "Database connection error",
         description: "Using sample data for development purposes.",
@@ -60,7 +87,7 @@ const Dashboard = () => {
         className: "bg-amber-50 border-amber-200 text-amber-800",
       });
     }
-  }, [connectionError, isDevelopment, toast]);
+  }, [connectionError, isDbConnected, isDevelopment, toast]);
   
   return (
     <Layout requireAuth>
@@ -112,7 +139,7 @@ const Dashboard = () => {
                           hasInsufficientData={hasInsufficientData}
                         />
                         
-                        {(isFallbackData && isDevelopment) && (
+                        {((isFallbackData || connectionError || isDbConnected === false) && isDevelopment) && (
                           <div className="mb-8 flex justify-center">
                             <Button 
                               variant="outline" 
