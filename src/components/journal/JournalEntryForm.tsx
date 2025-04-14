@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { EmotionTrackingSlider } from "@/components/EmotionTrackingSlider";
+import EmotionTrackingSlider from "@/components/EmotionTrackingSlider";
 import { Loader2 } from "lucide-react";
 
 type JournalEntryFormProps = {
