@@ -75,8 +75,9 @@ export const JournalEntryForm = ({
                 onChange={(value) => setValue("mood", value)} 
                 min={1} 
                 max={10}
-                lowLabel="Not Great"
-                highLabel="Excellent"
+                leftLabel="Not Great"
+                rightLabel="Excellent"
+                label="Mood"
               />
             </div>
 
@@ -88,9 +89,10 @@ export const JournalEntryForm = ({
                   onChange={(value) => setValue("sleep", value)} 
                   min={0} 
                   max={12}
-                  lowLabel="0 hrs"
-                  highLabel="12+ hrs"
+                  leftLabel="0 hrs"
+                  rightLabel="12+ hrs"
                   step={0.5}
+                  label="Sleep"
                 />
               </div>
 
@@ -101,8 +103,9 @@ export const JournalEntryForm = ({
                   onChange={(value) => setValue("water", value)} 
                   min={0} 
                   max={8}
-                  lowLabel="None"
-                  highLabel="8+ cups"
+                  leftLabel="None"
+                  rightLabel="8+ cups"
+                  label="Water"
                 />
               </div>
             </div>
@@ -115,8 +118,9 @@ export const JournalEntryForm = ({
                   onChange={(value) => setValue("exercise", value)} 
                   min={0} 
                   max={7}
-                  lowLabel="None"
-                  highLabel="Lots"
+                  leftLabel="None"
+                  rightLabel="Lots"
+                  label="Exercise"
                 />
               </div>
 
@@ -127,8 +131,9 @@ export const JournalEntryForm = ({
                   onChange={(value) => setValue("mindfulness", value)} 
                   min={0} 
                   max={10}
-                  lowLabel="None"
-                  highLabel="Lots"
+                  leftLabel="None"
+                  rightLabel="Lots"
+                  label="Mindfulness"
                 />
               </div>
             </div>
@@ -141,8 +146,9 @@ export const JournalEntryForm = ({
                   onChange={(value) => setValue("kindness", value)} 
                   min={0} 
                   max={10}
-                  lowLabel="None"
-                  highLabel="Many"
+                  leftLabel="None"
+                  rightLabel="Many"
+                  label="Kindness"
                 />
               </div>
 
@@ -153,8 +159,9 @@ export const JournalEntryForm = ({
                   onChange={(value) => setValue("positivity", value)} 
                   min={0} 
                   max={10}
-                  lowLabel="Few"
-                  highLabel="Many"
+                  leftLabel="Few"
+                  rightLabel="Many"
+                  label="Positivity"
                 />
               </div>
             </div>
@@ -166,8 +173,9 @@ export const JournalEntryForm = ({
                 onChange={(value) => setValue("confidence", value)} 
                 min={0} 
                 max={10}
-                lowLabel="Low"
-                highLabel="High"
+                leftLabel="Low"
+                rightLabel="High"
+                label="Confidence"
               />
             </div>
           </div>
