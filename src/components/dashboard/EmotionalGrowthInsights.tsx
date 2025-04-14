@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO } from "date-fns";
-import { Brain, Heart, Users, MessageCircle, Lightbulb } from "lucide-react";
+import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle } from "lucide-react";
 import { 
   HoverCard,
   HoverCardTrigger,
@@ -28,6 +28,7 @@ import { Tooltip as UITooltip, TooltipTrigger, TooltipContent, TooltipProvider }
 import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import { ChildProfile } from "@/hooks/useChildren";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SEL_DESCRIPTIONS = {
   self_awareness: "Understanding one's emotions, personal goals, and values.",
@@ -68,6 +69,7 @@ interface EmotionalGrowthInsightsProps {
   fetchHistoricalInsights: (period: Period) => Promise<void>;
   historicalInsights: EmotionalInsight[];
   historicalLoading: boolean;
+  isFallbackData?: boolean;
 }
 
 const EmotionalGrowthInsights = ({ 
@@ -76,7 +78,8 @@ const EmotionalGrowthInsights = ({
   loading = false,
   fetchHistoricalInsights,
   historicalInsights,
-  historicalLoading = false
+  historicalLoading = false,
+  isFallbackData = false
 }: EmotionalGrowthInsightsProps) => {
   const [selectedTab, setSelectedTab] = useState("latest");
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
@@ -232,6 +235,15 @@ const EmotionalGrowthInsights = ({
       </CardHeader>
       
       <CardContent>
+        {isFallbackData && (
+          <Alert variant="warning" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Using example data. Connect to the database to see actual insights.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="mb-4 w-full grid grid-cols-3">
             <TabsTrigger value="latest">Latest Snapshot</TabsTrigger>
@@ -313,7 +325,7 @@ const EmotionalGrowthInsights = ({
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={lineChartData}
-                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
@@ -404,7 +416,7 @@ const EmotionalGrowthInsights = ({
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={lineChartData}
-                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />

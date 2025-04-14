@@ -21,7 +21,8 @@ const Dashboard = () => {
     loading: insightLoading,
     fetchHistoricalInsights,
     historicalInsights,
-    historicalLoading
+    historicalLoading,
+    isFallbackData
   } = useEmotionalInsights(currentChildId);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -86,6 +87,7 @@ const Dashboard = () => {
                         fetchHistoricalInsights={fetchHistoricalInsights}
                         historicalInsights={historicalInsights}
                         historicalLoading={historicalLoading}
+                        isFallbackData={isFallbackData}
                       />
                     )}
                   </>
