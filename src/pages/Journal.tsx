@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -10,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
 import { checkForBadgeUnlocks, getBadgeInfo } from "@/utils/childUtils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowRightCircle } from "lucide-react";
 
 const Journal = () => {
   const { getCurrentChild, currentChildId, childProfiles, setChildProfiles } = useUser();
@@ -18,6 +22,7 @@ const Journal = () => {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [currentTab, setCurrentTab] = useState("new");
   const [todayEntryExists, setTodayEntryExists] = useState(false);
+  const [selectedPrompt, setSelectedPrompt] = useState("");
   
   const { 
     journalEntries, 
@@ -26,7 +31,11 @@ const Journal = () => {
     getTodayEntry
   } = useJournalEntries(currentChildId);
   
-  const { analyzeEntry, latestInsight } = useEmotionalInsights(currentChildId);
+  const { 
+    analyzeEntry, 
+    latestInsight,
+    lowestSELArea
+  } = useEmotionalInsights(currentChildId);
 
   useEffect(() => {
     if (!currentChildId) return;
@@ -192,6 +201,12 @@ const Journal = () => {
     }
   };
 
+  // Handler to select a prompt for the journal
+  const handleSelectPrompt = (prompt: string) => {
+    setSelectedPrompt(prompt);
+    // This prompt will be passed to the JournalEntryForm
+  };
+
   return (
     <Layout requireAuth>
       <div className="container mx-auto max-w-4xl px-4">
@@ -221,10 +236,38 @@ const Journal = () => {
                 </button>
               </div>
             ) : (
-              <JournalEntryForm 
-                onSubmit={handleSubmitJournalEntry} 
-                loading={loading} 
-              />
+              <>
+                {lowestSELArea && (
+                  <Card className="mb-6 border-l-4 border-l-amber-500">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Growth Opportunity: {lowestSELArea.title}</CardTitle>
+                      <CardDescription>{lowestSELArea.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-2">Try one of these prompts to help develop this skill:</p>
+                      <div className="space-y-2">
+                        {lowestSELArea.prompts.map((prompt, index) => (
+                          <div 
+                            key={index} 
+                            className="flex items-center justify-between p-3 rounded-lg border hover:bg-slate-50 cursor-pointer transition-colors"
+                            onClick={() => handleSelectPrompt(prompt)}
+                          >
+                            <p className="text-sm">{prompt}</p>
+                            <Button variant="ghost" size="sm">
+                              <ArrowRightCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                <JournalEntryForm 
+                  onSubmit={handleSubmitJournalEntry} 
+                  loading={loading}
+                  selectedPrompt={selectedPrompt}
+                />
+              </>
             )}
           </TabsContent>
           

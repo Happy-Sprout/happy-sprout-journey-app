@@ -84,19 +84,39 @@ You are an educational psychologist specializing in Social Emotional Learning (S
 Analyze the following text from a child's journal entry and/or daily check-in.
 Based solely on this text, rate the child's development in the following 5 SEL dimensions on a scale from 0.0 to 1.0:
 
-1. Self-Awareness: Understanding one's emotions, personal goals, and values.
-2. Self-Management: Regulating emotions and behaviors to achieve goals.
-3. Social Awareness: Showing understanding and empathy for others.
-4. Relationship Skills: Forming positive relationships, teamwork, conflict resolution.
-5. Responsible Decision-Making: Making ethical, constructive choices.
+1. Self-Awareness: Understanding one's emotions, personal goals, and values. This includes accurately assessing strengths and limitations, having positive mindsets, and possessing a well-grounded sense of self-efficacy and optimism.
 
-Provide your analysis in a JSON format with only these keys and numeric values between 0 and 1:
+2. Self-Management: Regulating emotions and behaviors to achieve goals. This includes managing stress, controlling impulses, motivating oneself, setting and working toward personal and academic goals.
+
+3. Social Awareness: Understanding others' perspectives and empathizing with them. This includes appreciating diversity, respecting others, and understanding social and ethical norms for behavior.
+
+4. Relationship Skills: Forming positive relationships, teamwork, conflict resolution. This includes communicating clearly, listening actively, cooperating, resisting inappropriate social pressure, negotiating conflict constructively, and seeking and offering help when needed.
+
+5. Responsible Decision-Making: Making ethical, constructive choices about personal behavior and social interactions. This includes considering ethical standards, safety concerns, appropriate social norms, and the well-being of self and others.
+
+For each dimension, provide a score between 0 and 1, where:
+- 0.0-0.2: Significant growth needed
+- 0.3-0.4: Developing
+- 0.5-0.6: Moderate competence
+- 0.7-0.8: Strong competence
+- 0.9-1.0: Exceptional competence
+
+Also include a brief rationale for each score to help understand why you assigned it.
+
+Provide your analysis in a JSON format with these keys and numeric values between 0 and 1:
 {
   "self_awareness": 0.0-1.0,
   "self_management": 0.0-1.0,
   "social_awareness": 0.0-1.0,
   "relationship_skills": 0.0-1.0,
-  "responsible_decision_making": 0.0-1.0
+  "responsible_decision_making": 0.0-1.0,
+  "analysis": {
+    "self_awareness_notes": "brief explanation",
+    "self_management_notes": "brief explanation",
+    "social_awareness_notes": "brief explanation",
+    "relationship_skills_notes": "brief explanation",
+    "responsible_decision_making_notes": "brief explanation"
+  }
 }
 
 Text to analyze:
@@ -116,7 +136,7 @@ ${text}
           { role: 'user', content: prompt }
         ],
         temperature: 0.3,
-        max_tokens: 500,
+        max_tokens: 800,
         response_format: { type: "json_object" }
       }),
     });
@@ -130,7 +150,18 @@ ${text}
 
     // Parse the JSON response
     const content = data.choices[0].message.content;
-    return JSON.parse(content);
+    const parsedResponse = JSON.parse(content);
+    
+    // Extract just the numerical scores for saving to the database
+    const scores = {
+      self_awareness: parsedResponse.self_awareness,
+      self_management: parsedResponse.self_management,
+      social_awareness: parsedResponse.social_awareness,
+      relationship_skills: parsedResponse.relationship_skills,
+      responsible_decision_making: parsedResponse.responsible_decision_making
+    };
+    
+    return scores;
   } catch (error) {
     console.error('Error calling OpenAI API:', error);
     return null;
