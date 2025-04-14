@@ -30,6 +30,7 @@ import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import { ChildProfile } from "@/hooks/useChildren";
 import { Badge } from "@/components/ui/badge";
 import { useLayoutEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SEL_DESCRIPTIONS = {
   self_awareness: "Understanding one's emotions, personal goals, and values.",
@@ -53,6 +54,15 @@ const SEL_LABELS = {
   social_awareness: "Social Awareness 🤝",
   relationship_skills: "Relationship Skills 💬",
   responsible_decision_making: "Decision-Making 🧠"
+};
+
+// For mobile view, use shorter labels
+const SEL_LABELS_MOBILE = {
+  self_awareness: "Awareness 🌱",
+  self_management: "Management 💪",
+  social_awareness: "Social 🤝",
+  relationship_skills: "Relations 💬",
+  responsible_decision_making: "Decisions 🧠"
 };
 
 const SEL_COLORS = {
@@ -92,14 +102,17 @@ const EmotionalGrowthInsights = ({
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [connectionError, setConnectionError] = useState(false);
   const previousDataFetchedRef = useRef<boolean>(false);
-
+  const isMobile = useIsMobile();
+  
   // Set chart dimensions based on container size
   useLayoutEffect(() => {
     if (chartContainerRef.current) {
       const updateSize = () => {
         if (chartContainerRef.current) {
           setChartWidth(chartContainerRef.current.clientWidth);
-          setChartHeight(Math.max(chartContainerRef.current.clientHeight, 300));
+          // Mobile gets taller charts for better visibility
+          const minHeight = isMobile ? 360 : 300;
+          setChartHeight(Math.max(chartContainerRef.current.clientHeight, minHeight));
         }
       };
       
@@ -109,7 +122,7 @@ const EmotionalGrowthInsights = ({
       
       return () => resizeObserver.disconnect();
     }
-  }, []);
+  }, [isMobile]);
 
   const fetchHistoricalData = useCallback(async () => {
     if (selectedTab !== "latest" && !previousDataFetchedRef.current) {
@@ -135,39 +148,42 @@ const EmotionalGrowthInsights = ({
   const radarChartData = useMemo(() => {
     if (!insight) return [];
     
+    // Use mobile labels on small screens
+    const labels = isMobile ? SEL_LABELS_MOBILE : SEL_LABELS;
+    
     return [
       {
-        subject: SEL_LABELS.self_awareness,
+        subject: labels.self_awareness,
         A: insight.self_awareness * 100,
         fullMark: 100,
         key: "self_awareness"
       },
       {
-        subject: SEL_LABELS.self_management,
+        subject: labels.self_management,
         A: insight.self_management * 100,
         fullMark: 100,
         key: "self_management"
       },
       {
-        subject: SEL_LABELS.social_awareness,
+        subject: labels.social_awareness,
         A: insight.social_awareness * 100,
         fullMark: 100,
         key: "social_awareness"
       },
       {
-        subject: SEL_LABELS.relationship_skills,
+        subject: labels.relationship_skills,
         A: insight.relationship_skills * 100,
         fullMark: 100,
         key: "relationship_skills"
       },
       {
-        subject: SEL_LABELS.responsible_decision_making,
+        subject: labels.responsible_decision_making,
         A: insight.responsible_decision_making * 100,
         fullMark: 100,
         key: "responsible_decision_making"
       }
     ];
-  }, [insight]);
+  }, [insight, isMobile]);
 
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) return [];
@@ -177,8 +193,11 @@ const EmotionalGrowthInsights = ({
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
     
+    // Format dates differently for mobile
+    const dateFormat = isMobile ? "MMM d" : "MMM d";
+    
     return sortedInsights.map(insight => ({
-      date: format(parseISO(insight.created_at), "MMM d"),
+      date: format(parseISO(insight.created_at), dateFormat),
       self_awareness: Number((insight.self_awareness * 100).toFixed(1)),
       self_management: Number((insight.self_management * 100).toFixed(1)),
       social_awareness: Number((insight.social_awareness * 100).toFixed(1)),
@@ -186,7 +205,7 @@ const EmotionalGrowthInsights = ({
       responsible_decision_making: Number((insight.responsible_decision_making * 100).toFixed(1)),
       raw_date: insight.created_at,
     }));
-  }, [historicalInsights]);
+  }, [historicalInsights, isMobile]);
 
   const getGrowthFeedback = useMemo(() => {
     if (!insight) return null;
@@ -256,7 +275,7 @@ const EmotionalGrowthInsights = ({
   return (
     <Card className="w-full mb-8 overflow-hidden">
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
             <CardTitle>Emotional Growth Insights</CardTitle>
             <CardDescription>
@@ -275,7 +294,7 @@ const EmotionalGrowthInsights = ({
                       What is this?
                     </button>
                   </HoverCardTrigger>
-                  <HoverCardContent className="w-80 p-4">
+                  <HoverCardContent className="w-80 p-4 z-50">
                     <div className="space-y-2">
                       <h4 className="font-semibold">Emotional Growth Insights</h4>
                       <p className="text-sm">
@@ -323,28 +342,38 @@ const EmotionalGrowthInsights = ({
         )}
         
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="mb-4 w-full grid grid-cols-3">
-            <TabsTrigger value="latest">Latest Snapshot</TabsTrigger>
-            <TabsTrigger value="trends">Growth Trends</TabsTrigger>
-            <TabsTrigger value="compare">Compare Areas</TabsTrigger>
+          {/* Improved TabsList for better mobile wrap handling */}
+          <TabsList className="mb-4 w-full grid-cols-3 gap-1 flex flex-wrap sm:grid">
+            <TabsTrigger value="latest" className="flex-1 min-width-0 text-xs sm:text-sm">Latest Snapshot</TabsTrigger>
+            <TabsTrigger value="trends" className="flex-1 min-width-0 text-xs sm:text-sm">Growth Trends</TabsTrigger>
+            <TabsTrigger value="compare" className="flex-1 min-width-0 text-xs sm:text-sm">Compare Areas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="latest">
             {insight ? (
               <>
                 <div 
-                  className="w-full h-64" 
+                  className="w-full h-64 sm:h-72" 
                   ref={chartContainerRef}
                 >
-                  <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-                    <RadarChart outerRadius="80%" data={radarChartData}>
+                  <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 360 : 300}>
+                    <RadarChart 
+                      outerRadius={isMobile ? "70%" : "80%"} 
+                      data={radarChartData}
+                      margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                    >
                       <PolarGrid />
-                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
+                      <PolarAngleAxis 
+                        dataKey="subject" 
+                        tick={{ fontSize: isMobile ? 10 : 12 }}
+                        // Increase labelOffset for mobile to prevent overlap
+                        tickLine={false}
+                      />
                       <PolarRadiusAxis 
                         angle={90} 
                         domain={[0, 100]} 
                         tickCount={5}
-                        tick={{ fontSize: 10 }}
+                        tick={{ fontSize: isMobile ? 9 : 10 }}
                       />
                       <Radar 
                         name="Skill Level" 
@@ -353,7 +382,18 @@ const EmotionalGrowthInsights = ({
                         fill="#8884d8" 
                         fillOpacity={0.6} 
                       />
-                      <Tooltip formatter={(value) => [`${value}%`, "Skill Level"]} />
+                      <Tooltip 
+                        formatter={(value) => [`${value}%`, "Skill Level"]}
+                        // Improved tooltip positioning for mobile
+                        wrapperStyle={{ zIndex: 100 }} 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          fontSize: isMobile ? '10px' : '12px',
+                          padding: '8px',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px'
+                        }}
+                      />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
@@ -365,26 +405,27 @@ const EmotionalGrowthInsights = ({
           </TabsContent>
           
           <TabsContent value="trends">
-            <div className="flex justify-between items-center mb-3">
+            {/* Improved period selector for mobile */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-start sm:items-center mb-3">
               <div className="text-sm font-medium text-slate-700">View period:</div>
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <Badge 
                   variant={selectedPeriod === "weekly" ? "default" : "outline"} 
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => setSelectedPeriod("weekly")}
                 >
                   Weekly
                 </Badge>
                 <Badge 
                   variant={selectedPeriod === "monthly" ? "default" : "outline"} 
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => setSelectedPeriod("monthly")}
                 >
                   Monthly
                 </Badge>
                 <Badge 
                   variant={selectedPeriod === "all" ? "default" : "outline"} 
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => setSelectedPeriod("all")}
                 >
                   All Time
@@ -395,75 +436,106 @@ const EmotionalGrowthInsights = ({
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
-              <div className="w-full h-64" ref={chartContainerRef}>
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+              <div className="w-full h-72 sm:h-80" ref={chartContainerRef}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 360 : 300}>
                   <LineChart
                     data={lineChartData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    margin={isMobile ? 
+                      { top: 5, right: 5, left: 0, bottom: 60 } : // More bottom space on mobile for legend
+                      { top: 5, right: 30, left: 0, bottom: 30 }
+                    }
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="date" 
-                      tick={{ fontSize: 10 }}
-                      height={30}
+                      tick={{ fontSize: isMobile ? 9 : 10 }}
+                      height={isMobile ? 40 : 30}
                       padding={{ left: 10, right: 10 }}
+                      // Angle the labels on mobile for better fit
+                      tickMargin={isMobile ? 10 : 5}
+                      interval={isMobile ? 'preserveEnd' : 0}
+                      angle={isMobile ? -45 : 0}
+                      textAnchor={isMobile ? "end" : "middle"}
                     />
                     <YAxis 
                       domain={[0, 100]} 
-                      tick={{ fontSize: 10 }}
-                      width={40}
+                      tick={{ fontSize: isMobile ? 9 : 10 }}
+                      width={isMobile ? 30 : 40}
+                      tickMargin={isMobile ? 3 : 5}
                     />
                     <Tooltip 
                       formatter={(value) => [`${value}%`]}
                       labelFormatter={(label) => `Date: ${label}`}
-                      contentStyle={{ fontSize: '12px' }}
+                      contentStyle={{ 
+                        fontSize: '12px',
+                        zIndex: 1000,
+                        backgroundColor: 'white',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        padding: '8px'
+                      }}
+                      // Position tooltip to avoid overlapping chart
+                      position={isMobile ? { x: 10, y: 50 } : undefined}
+                      wrapperStyle={{ zIndex: 100 }}
                     />
                     <Legend 
-                      height={36}
-                      iconSize={8} 
+                      height={isMobile ? 60 : 36}
+                      iconSize={isMobile ? 7 : 8} 
                       iconType="circle"
-                      wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
+                      wrapperStyle={{ 
+                        fontSize: isMobile ? '8px' : '10px', 
+                        paddingTop: '10px',
+                        // Wrap legend items on mobile
+                        width: '100%',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        justifyContent: 'center',
+                        gap: '4px'
+                      }}
+                      layout={isMobile ? "vertical" : "horizontal"}
+                      margin={{ top: 0, left: 0, right: 0, bottom: 0 }}
+                      align="center"
                     />
                     <Line 
                       type="monotone" 
                       dataKey="self_awareness" 
                       name="Self-Awareness" 
                       stroke={SEL_COLORS.self_awareness} 
-                      activeDot={{ r: 8 }} 
-                      dot={{ r: 3 }}
-                      strokeWidth={2}
+                      activeDot={{ r: isMobile ? 6 : 8 }} 
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="self_management" 
                       name="Self-Management" 
                       stroke={SEL_COLORS.self_management}
-                      dot={{ r: 3 }}
-                      strokeWidth={2}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="social_awareness" 
                       name="Social Awareness" 
                       stroke={SEL_COLORS.social_awareness}
-                      dot={{ r: 3 }}
-                      strokeWidth={2}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="relationship_skills" 
                       name="Relationship Skills" 
                       stroke={SEL_COLORS.relationship_skills}
-                      dot={{ r: 3 }}
-                      strokeWidth={2}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="responsible_decision_making" 
                       name="Decision-Making" 
                       stroke={SEL_COLORS.responsible_decision_making}
-                      dot={{ r: 3 }}
-                      strokeWidth={2}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -474,26 +546,26 @@ const EmotionalGrowthInsights = ({
           </TabsContent>
           
           <TabsContent value="compare">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-start sm:items-center mb-3">
               <div className="text-sm font-medium text-slate-700">View period:</div>
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <Badge 
                   variant={selectedPeriod === "weekly" ? "default" : "outline"} 
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => setSelectedPeriod("weekly")}
                 >
                   Weekly
                 </Badge>
                 <Badge 
                   variant={selectedPeriod === "monthly" ? "default" : "outline"} 
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => setSelectedPeriod("monthly")}
                 >
                   Monthly
                 </Badge>
                 <Badge 
                   variant={selectedPeriod === "all" ? "default" : "outline"} 
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => setSelectedPeriod("all")}
                 >
                   All Time
@@ -504,58 +576,120 @@ const EmotionalGrowthInsights = ({
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
-              <div className="w-full h-64" ref={chartContainerRef}>
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+              <div className="w-full h-72 sm:h-80" ref={chartContainerRef}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 360 : 300}>
                   <LineChart
                     data={lineChartData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    margin={isMobile ? 
+                      { top: 5, right: 5, left: 0, bottom: 60 } : 
+                      { top: 5, right: 30, left: 20, bottom: 30 }
+                    }
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, 100]} />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: isMobile ? 9 : 10 }}
+                      height={isMobile ? 40 : 30}
+                      padding={{ left: 10, right: 10 }}
+                      tickMargin={isMobile ? 10 : 5}
+                      interval={isMobile ? 'preserveEnd' : 0}
+                      angle={isMobile ? -45 : 0}
+                      textAnchor={isMobile ? "end" : "middle"}
+                    />
+                    <YAxis 
+                      domain={[0, 100]} 
+                      tick={{ fontSize: isMobile ? 9 : 10 }}
+                      width={isMobile ? 30 : 40}
+                      tickMargin={isMobile ? 3 : 5}
+                    />
                     <Tooltip 
                       formatter={(value, name) => {
+                        // Simplify names on mobile
                         let displayName = name;
-                        if (name === "self_awareness") displayName = "Self-Awareness";
-                        if (name === "self_management") displayName = "Self-Management";
-                        if (name === "social_awareness") displayName = "Social Awareness";
-                        if (name === "relationship_skills") displayName = "Relationship Skills";
-                        if (name === "responsible_decision_making") displayName = "Decision-Making";
+                        if (isMobile) {
+                          if (name === "self_awareness") displayName = "Awareness";
+                          if (name === "self_management") displayName = "Management";
+                          if (name === "social_awareness") displayName = "Social";
+                          if (name === "relationship_skills") displayName = "Relations";
+                          if (name === "responsible_decision_making") displayName = "Decisions";
+                        } else {
+                          if (name === "self_awareness") displayName = "Self-Awareness";
+                          if (name === "self_management") displayName = "Self-Management";
+                          if (name === "social_awareness") displayName = "Social Awareness";
+                          if (name === "relationship_skills") displayName = "Relationship Skills";
+                          if (name === "responsible_decision_making") displayName = "Decision-Making";
+                        }
                         return [`${value}%`, displayName];
                       }}
                       labelFormatter={(label) => `Date: ${label}`}
+                      contentStyle={{ 
+                        fontSize: isMobile ? '10px' : '12px',
+                        zIndex: 1000,
+                        backgroundColor: 'white',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        padding: '8px'
+                      }}
+                      position={isMobile ? { x: 10, y: 50 } : undefined}
+                      wrapperStyle={{ zIndex: 100 }}
                     />
-                    <Legend />
+                    <Legend 
+                      height={isMobile ? 60 : 36}
+                      iconSize={isMobile ? 7 : 8}
+                      iconType="circle"
+                      wrapperStyle={{ 
+                        fontSize: isMobile ? '8px' : '10px', 
+                        paddingTop: '10px',
+                        width: '100%',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        justifyContent: 'center',
+                        gap: '4px'
+                      }}
+                      layout={isMobile ? "vertical" : "horizontal"}
+                      margin={{ top: 0, left: 0, right: 0, bottom: 0 }}
+                      align="center"
+                    />
                     <Line 
                       type="monotone" 
                       dataKey="self_awareness" 
-                      name="Self-Awareness" 
+                      name={isMobile ? "Awareness" : "Self-Awareness"}
                       stroke={SEL_COLORS.self_awareness} 
-                      activeDot={{ r: 8 }} 
+                      activeDot={{ r: isMobile ? 6 : 8 }}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="self_management" 
-                      name="Self-Management" 
-                      stroke={SEL_COLORS.self_management} 
+                      name={isMobile ? "Management" : "Self-Management"}
+                      stroke={SEL_COLORS.self_management}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="social_awareness" 
-                      name="Social Awareness" 
+                      name={isMobile ? "Social" : "Social Awareness"}
                       stroke={SEL_COLORS.social_awareness}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="relationship_skills" 
-                      name="Relationship Skills" 
+                      name={isMobile ? "Relations" : "Relationship Skills"}
                       stroke={SEL_COLORS.relationship_skills}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="responsible_decision_making" 
-                      name="Decision-Making" 
+                      name={isMobile ? "Decisions" : "Decision-Making"}
                       stroke={SEL_COLORS.responsible_decision_making}
+                      dot={{ r: isMobile ? 2 : 3 }}
+                      strokeWidth={isMobile ? 1.5 : 2}
                     />
                   </LineChart>
                 </ResponsiveContainer>
