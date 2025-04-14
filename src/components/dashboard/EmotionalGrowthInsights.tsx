@@ -1,4 +1,4 @@
-
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -28,7 +28,6 @@ import { Tooltip as UITooltip, TooltipTrigger, TooltipContent, TooltipProvider }
 import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import { ChildProfile } from "@/hooks/useChildren";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SEL_DESCRIPTIONS = {
   self_awareness: "Understanding one's emotions, personal goals, and values.",
@@ -236,7 +235,7 @@ const EmotionalGrowthInsights = ({
       
       <CardContent>
         {isFallbackData && (
-          <Alert variant="warning" className="mb-4">
+          <Alert variant="default">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               Using example data. Connect to the database to see actual insights.
