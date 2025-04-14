@@ -111,7 +111,7 @@ const EmotionalGrowthInsights = ({
         if (chartContainerRef.current) {
           setChartWidth(chartContainerRef.current.clientWidth);
           // Mobile gets taller charts for better visibility
-          const minHeight = isMobile ? 360 : 300;
+          const minHeight = isMobile ? 380 : 300;
           setChartHeight(Math.max(chartContainerRef.current.clientHeight, minHeight));
         }
       };
@@ -343,10 +343,10 @@ const EmotionalGrowthInsights = ({
         
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           {/* Improved TabsList for better mobile wrap handling */}
-          <TabsList className="mb-4 w-full grid-cols-3 gap-1 flex flex-wrap sm:grid">
-            <TabsTrigger value="latest" className="flex-1 min-width-0 text-xs sm:text-sm">Latest Snapshot</TabsTrigger>
-            <TabsTrigger value="trends" className="flex-1 min-width-0 text-xs sm:text-sm">Growth Trends</TabsTrigger>
-            <TabsTrigger value="compare" className="flex-1 min-width-0 text-xs sm:text-sm">Compare Areas</TabsTrigger>
+          <TabsList className="mb-4 w-full flex flex-wrap sm:grid sm:grid-cols-3 gap-1">
+            <TabsTrigger value="latest" className="flex-1 text-xs sm:text-sm px-2 py-1.5 whitespace-normal h-auto min-h-[2.5rem]">Latest Snapshot</TabsTrigger>
+            <TabsTrigger value="trends" className="flex-1 text-xs sm:text-sm px-2 py-1.5 whitespace-normal h-auto min-h-[2.5rem]">Growth Trends</TabsTrigger>
+            <TabsTrigger value="compare" className="flex-1 text-xs sm:text-sm px-2 py-1.5 whitespace-normal h-auto min-h-[2.5rem]">Compare Areas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="latest">
@@ -356,17 +356,16 @@ const EmotionalGrowthInsights = ({
                   className="w-full h-64 sm:h-72" 
                   ref={chartContainerRef}
                 >
-                  <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 360 : 300}>
+                  <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 380 : 300}>
                     <RadarChart 
-                      outerRadius={isMobile ? "70%" : "80%"} 
+                      outerRadius={isMobile ? "65%" : "80%"} 
                       data={radarChartData}
-                      margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                      margin={{ top: 10, right: 10, bottom: 20, left: 10 }}
                     >
                       <PolarGrid />
                       <PolarAngleAxis 
                         dataKey="subject" 
-                        tick={{ fontSize: isMobile ? 10 : 12 }}
-                        // Increase labelOffset for mobile to prevent overlap
+                        tick={{ fontSize: isMobile ? 9 : 12 }}
                         tickLine={false}
                       />
                       <PolarRadiusAxis 
@@ -384,7 +383,6 @@ const EmotionalGrowthInsights = ({
                       />
                       <Tooltip 
                         formatter={(value) => [`${value}%`, "Skill Level"]}
-                        // Improved tooltip positioning for mobile
                         wrapperStyle={{ zIndex: 100 }} 
                         contentStyle={{ 
                           backgroundColor: 'white', 
@@ -437,22 +435,22 @@ const EmotionalGrowthInsights = ({
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
               <div className="w-full h-72 sm:h-80" ref={chartContainerRef}>
-                <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 360 : 300}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 380 : 300}>
                   <LineChart
                     data={lineChartData}
                     margin={isMobile ? 
-                      { top: 5, right: 5, left: 0, bottom: 60 } : // More bottom space on mobile for legend
-                      { top: 5, right: 30, left: 0, bottom: 30 }
+                      { top: 5, right: 5, left: 0, bottom: 95 } : // Much more bottom space on mobile for legend
+                      { top: 5, right: 20, left: 0, bottom: 40 }
                     }
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="date" 
                       tick={{ fontSize: isMobile ? 9 : 10 }}
-                      height={isMobile ? 40 : 30}
+                      height={isMobile ? 45 : 30}
                       padding={{ left: 10, right: 10 }}
                       // Angle the labels on mobile for better fit
-                      tickMargin={isMobile ? 10 : 5}
+                      tickMargin={isMobile ? 12 : 5}
                       interval={isMobile ? 'preserveEnd' : 0}
                       angle={isMobile ? -45 : 0}
                       textAnchor={isMobile ? "end" : "middle"}
@@ -474,27 +472,28 @@ const EmotionalGrowthInsights = ({
                         borderRadius: '4px',
                         padding: '8px'
                       }}
-                      // Position tooltip to avoid overlapping chart
-                      position={isMobile ? { x: 10, y: 50 } : undefined}
+                      position={isMobile ? { x: 5, y: 75 } : undefined}
                       wrapperStyle={{ zIndex: 100 }}
+                      coordinate={{ x: 100, y: 100 }} // Control positioning
                     />
                     <Legend 
-                      height={isMobile ? 60 : 36}
-                      iconSize={isMobile ? 7 : 8} 
+                      height={isMobile ? 80 : 36}
+                      iconSize={isMobile ? 6 : 8} 
                       iconType="circle"
                       wrapperStyle={{ 
                         fontSize: isMobile ? '8px' : '10px', 
                         paddingTop: '10px',
-                        // Wrap legend items on mobile
                         width: '100%',
                         display: 'flex',
                         flexWrap: 'wrap',
                         justifyContent: 'center',
-                        gap: '4px'
+                        gap: '5px',
+                        bottom: 0
                       }}
                       layout={isMobile ? "vertical" : "horizontal"}
                       margin={{ top: 0, left: 0, right: 0, bottom: 0 }}
                       align="center"
+                      verticalAlign="bottom"
                     />
                     <Line 
                       type="monotone" 
@@ -577,21 +576,21 @@ const EmotionalGrowthInsights = ({
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
               <div className="w-full h-72 sm:h-80" ref={chartContainerRef}>
-                <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 360 : 300}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 380 : 300}>
                   <LineChart
                     data={lineChartData}
                     margin={isMobile ? 
-                      { top: 5, right: 5, left: 0, bottom: 60 } : 
-                      { top: 5, right: 30, left: 20, bottom: 30 }
+                      { top: 5, right: 5, left: 0, bottom: 95 } : 
+                      { top: 5, right: 30, left: 20, bottom: 40 }
                     }
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="date" 
                       tick={{ fontSize: isMobile ? 9 : 10 }}
-                      height={isMobile ? 40 : 30}
+                      height={isMobile ? 45 : 30}
                       padding={{ left: 10, right: 10 }}
-                      tickMargin={isMobile ? 10 : 5}
+                      tickMargin={isMobile ? 12 : 5}
                       interval={isMobile ? 'preserveEnd' : 0}
                       angle={isMobile ? -45 : 0}
                       textAnchor={isMobile ? "end" : "middle"}
@@ -630,12 +629,13 @@ const EmotionalGrowthInsights = ({
                         borderRadius: '4px',
                         padding: '8px'
                       }}
-                      position={isMobile ? { x: 10, y: 50 } : undefined}
+                      position={isMobile ? { x: 5, y: 75 } : undefined}
                       wrapperStyle={{ zIndex: 100 }}
+                      coordinate={{ x: 100, y: 100 }} // Control positioning
                     />
                     <Legend 
-                      height={isMobile ? 60 : 36}
-                      iconSize={isMobile ? 7 : 8}
+                      height={isMobile ? 80 : 36}
+                      iconSize={isMobile ? 6 : 8}
                       iconType="circle"
                       wrapperStyle={{ 
                         fontSize: isMobile ? '8px' : '10px', 
@@ -644,11 +644,13 @@ const EmotionalGrowthInsights = ({
                         display: 'flex',
                         flexWrap: 'wrap',
                         justifyContent: 'center',
-                        gap: '4px'
+                        gap: '5px',
+                        bottom: 0
                       }}
                       layout={isMobile ? "vertical" : "horizontal"}
                       margin={{ top: 0, left: 0, right: 0, bottom: 0 }}
                       align="center"
+                      verticalAlign="bottom"
                     />
                     <Line 
                       type="monotone" 
