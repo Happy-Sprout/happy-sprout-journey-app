@@ -1,6 +1,6 @@
 
 import { useUser } from "@/contexts/UserContext";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import NoActiveChildPrompt from "@/components/dashboard/NoActiveChildPrompt";
 import ChildProfileSelector from "@/components/dashboard/ChildProfileSelector";
@@ -25,9 +25,11 @@ const Dashboard = () => {
     historicalInsights,
     historicalLoading,
     isFallbackData,
+    hasInsufficientData,
     insertSampleData
   } = useEmotionalInsights(currentChildId);
   const [isLoading, setIsLoading] = useState(true);
+  const isDevelopment = import.meta.env.DEV;
   
   // Add a timeout to ensure loading state doesn't get stuck
   useEffect(() => {
@@ -92,9 +94,11 @@ const Dashboard = () => {
                           historicalInsights={historicalInsights}
                           historicalLoading={historicalLoading}
                           isFallbackData={isFallbackData}
+                          hasInsufficientData={hasInsufficientData}
                         />
                         
-                        {isFallbackData && (
+                        {/* Only show the sample data generation button in development mode */}
+                        {isFallbackData && isDevelopment && (
                           <div className="mb-8 flex justify-center">
                             <Button 
                               variant="outline" 

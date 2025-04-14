@@ -1,3 +1,4 @@
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,7 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO } from "date-fns";
-import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle } from "lucide-react";
+import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen } from "lucide-react";
 import { 
   HoverCard,
   HoverCardTrigger,
@@ -69,6 +70,7 @@ interface EmotionalGrowthInsightsProps {
   historicalInsights: EmotionalInsight[];
   historicalLoading: boolean;
   isFallbackData?: boolean;
+  hasInsufficientData?: boolean;
 }
 
 const EmotionalGrowthInsights = ({ 
@@ -78,10 +80,12 @@ const EmotionalGrowthInsights = ({
   fetchHistoricalInsights,
   historicalInsights,
   historicalLoading = false,
-  isFallbackData = false
+  isFallbackData = false,
+  hasInsufficientData = false
 }: EmotionalGrowthInsightsProps) => {
   const [selectedTab, setSelectedTab] = useState("latest");
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
+  const isDevelopment = import.meta.env.DEV;
 
   useEffect(() => {
     if (selectedTab !== "latest") {
@@ -171,6 +175,26 @@ const EmotionalGrowthInsights = ({
     );
   };
 
+  const renderNoDataMessage = (type: string) => {
+    const messages = {
+      latest: `${currentChild.nickname}'s emotional insights will appear here after completing journal entries or daily check-ins.`,
+      trends: `Keep tracking ${currentChild.nickname}'s feelings! Growth trends will appear here after a few entries.`,
+      compare: `Not enough data yet to compare emotional skills. Complete more journal entries or check-ins.`
+    };
+    
+    return (
+      <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6">
+        <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
+        <p className="text-slate-600 text-center font-medium mb-2">
+          Start your SEL journey!
+        </p>
+        <p className="text-sm text-slate-500 text-center max-w-md">
+          {messages[type as keyof typeof messages]}
+        </p>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <Card className="w-full mb-8 animate-pulse">
@@ -234,11 +258,11 @@ const EmotionalGrowthInsights = ({
       </CardHeader>
       
       <CardContent>
-        {isFallbackData && (
+        {isFallbackData && isDevelopment && (
           <Alert variant="default" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Using example data. Click the "Generate Sample Emotional Data" button below to save sample data to the database.
+              Using example data for development. Connect to the database to see actual insights.
             </AlertDescription>
           </Alert>
         )}
@@ -278,14 +302,7 @@ const EmotionalGrowthInsights = ({
                 {getGrowthFeedback()}
               </>
             ) : (
-              <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg">
-                <p className="text-slate-500 text-center mb-2">
-                  No emotional growth data available yet
-                </p>
-                <p className="text-sm text-slate-400 text-center max-w-sm">
-                  Complete journal entries and daily check-ins to see insights about emotional growth
-                </p>
-              </div>
+              renderNoDataMessage("latest")
             )}
           </TabsContent>
           
@@ -319,7 +336,7 @@ const EmotionalGrowthInsights = ({
             
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
-            ) : lineChartData.length > 0 ? (
+            ) : historicalInsights.length >= 2 ? (
               <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
@@ -369,14 +386,7 @@ const EmotionalGrowthInsights = ({
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg">
-                <p className="text-slate-500 text-center mb-2">
-                  No trend data available yet
-                </p>
-                <p className="text-sm text-slate-400 text-center max-w-sm">
-                  Complete more journal entries and daily check-ins to see emotional growth trends
-                </p>
-              </div>
+              renderNoDataMessage("trends")
             )}
           </TabsContent>
           
@@ -410,7 +420,7 @@ const EmotionalGrowthInsights = ({
             
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
-            ) : lineChartData.length > 0 ? (
+            ) : historicalInsights.length >= 2 ? (
               <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
@@ -468,14 +478,7 @@ const EmotionalGrowthInsights = ({
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg">
-                <p className="text-slate-500 text-center mb-2">
-                  No comparison data available yet
-                </p>
-                <p className="text-sm text-slate-400 text-center max-w-sm">
-                  Complete more journal entries and daily check-ins to compare emotional growth areas
-                </p>
-              </div>
+              renderNoDataMessage("compare")
             )}
           </TabsContent>
         </Tabs>

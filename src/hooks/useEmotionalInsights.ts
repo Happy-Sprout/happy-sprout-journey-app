@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +16,11 @@ export type EmotionalInsight = {
 
 export type Period = 'weekly' | 'monthly' | 'all';
 
-// Sample data as fallback for when fetching fails
+// Constants and configuration
+const MIN_DATA_POINTS_FOR_CHART = 2; // Minimum number of data points needed for a meaningful chart
+const IS_DEVELOPMENT = import.meta.env.DEV; // Check if we're in development mode
+
+// Sample data as fallback for when fetching fails (only for development)
 const sampleInsightsData: EmotionalInsight[] = [
   {
     id: 'sample-1',
@@ -58,6 +61,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
   const [historicalInsights, setHistoricalInsights] = useState<EmotionalInsight[]>([]);
   const [historicalLoading, setHistoricalLoading] = useState(false);
   const [isFallbackData, setIsFallbackData] = useState(false);
+  const [hasInsufficientData, setHasInsufficientData] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -68,6 +72,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       setInsights([]);
       setLatestInsight(null);
       setIsFallbackData(false);
+      setHasInsufficientData(false);
     }
   }, [childId]);
 
@@ -76,6 +81,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     
     setLoading(true);
     setIsFallbackData(false);
+    setHasInsufficientData(false);
     
     try {
       console.log("Fetching insights for child ID:", childId);
@@ -107,9 +113,36 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         setInsights(data);
         setLatestInsight(data[0]); // Most recent insight
       } else {
-        console.log("No insights found, using sample data");
-        // Handle case where there are no insights yet
-        // Populate with sample data for development/demo
+        console.log("No insights found in database");
+        setHasInsufficientData(true);
+        
+        // Only use sample data in development, not for end users
+        if (IS_DEVELOPMENT) {
+          console.log("Using sample data for development");
+          // Create sample data with the actual childId
+          const sampleData = sampleInsightsData.map(item => ({
+            ...item,
+            child_id: childId
+          }));
+          
+          setInsights(sampleData);
+          setLatestInsight(sampleData[sampleData.length - 1]);
+          setIsFallbackData(true);
+        } else {
+          setInsights([]);
+          setLatestInsight(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error in fetchInsights:", error);
+      setHasInsufficientData(true);
+      
+      // Only use sample data in development, not for end users
+      if (IS_DEVELOPMENT) {
+        warningToast({
+          title: "Using sample data",
+          description: "Failed to fetch emotional growth insights. Using sample data for development."
+        });
         
         // Create sample data with the actual childId
         const sampleData = sampleInsightsData.map(item => ({
@@ -117,49 +150,14 @@ export const useEmotionalInsights = (childId: string | undefined) => {
           child_id: childId
         }));
         
+        // Use sample data as fallback in development
         setInsights(sampleData);
         setLatestInsight(sampleData[sampleData.length - 1]);
         setIsFallbackData(true);
-        
-        // Insert sample data into the database if it's empty (optional)
-        // Uncomment the following code to automatically add sample data to the database
-        /*
-        try {
-          // Insert sample data into the database
-          const { error: insertError } = await supabase
-            .from('sel_insights')
-            .insert(sampleData);
-            
-          if (insertError) {
-            console.error("Error inserting sample insights:", insertError);
-          } else {
-            console.log("Sample insights added to the database");
-            // Re-fetch from the database
-            fetchInsights();
-            return;
-          }
-        } catch (insertErr) {
-          console.error("Failed to insert sample data:", insertErr);
-        }
-        */
+      } else {
+        setInsights([]);
+        setLatestInsight(null);
       }
-    } catch (error) {
-      console.error("Error in fetchInsights:", error);
-      warningToast({
-        title: "Error",
-        description: "Failed to fetch emotional growth insights. Using sample data instead."
-      });
-      
-      // Create sample data with the actual childId
-      const sampleData = sampleInsightsData.map(item => ({
-        ...item,
-        child_id: childId
-      }));
-      
-      // Use sample data as fallback
-      setInsights(sampleData);
-      setLatestInsight(sampleData[sampleData.length - 1]);
-      setIsFallbackData(true);
     } finally {
       setLoading(false);
     }
@@ -169,18 +167,10 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     if (!childId) return;
     
     setHistoricalLoading(true);
+    setHasInsufficientData(false);
     
     try {
       console.log(`Fetching historical insights for period: ${period}, childId: ${childId}`);
-      
-      // If we're already using fallback data, generate more sample data for historical view
-      if (isFallbackData) {
-        // Generate appropriate sample data based on period
-        const sampleHistorical = generateSampleHistoricalData(period, childId);
-        setHistoricalInsights(sampleHistorical);
-        setHistoricalLoading(false);
-        return;
-      }
       
       // Define date range based on period
       let startDate: string | null = null;
@@ -220,21 +210,39 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       
       console.log("Fetched historical data:", data);
       
-      if (data && data.length > 0) {
+      if (data && data.length >= MIN_DATA_POINTS_FOR_CHART) {
+        // We have enough real data to show a meaningful chart
         setHistoricalInsights(data);
+        setIsFallbackData(false);
+        setHasInsufficientData(false);
       } else {
-        console.log("No historical data found, using sample data");
-        // No real data, use samples
-        const sampleHistorical = generateSampleHistoricalData(period, childId);
-        setHistoricalInsights(sampleHistorical);
-        setIsFallbackData(true);
+        console.log(`Insufficient data for ${period} chart (need at least ${MIN_DATA_POINTS_FOR_CHART} points)`);
+        setHasInsufficientData(true);
+        
+        // Only use sample data in development mode
+        if (IS_DEVELOPMENT) {
+          console.log("Using sample historical data for development");
+          const sampleHistorical = generateSampleHistoricalData(period, childId);
+          setHistoricalInsights(sampleHistorical);
+          setIsFallbackData(true);
+        } else {
+          // For production, just set empty array to show "not enough data" message
+          setHistoricalInsights([]);
+        }
       }
     } catch (error) {
       console.error("Error in fetchHistoricalInsights:", error);
-      // Use sample historical data as fallback
-      const sampleHistorical = generateSampleHistoricalData(period, childId);
-      setHistoricalInsights(sampleHistorical);
-      setIsFallbackData(true);
+      setHasInsufficientData(true);
+      
+      // Only use sample data in development
+      if (IS_DEVELOPMENT) {
+        // Use sample historical data as fallback in development
+        const sampleHistorical = generateSampleHistoricalData(period, childId);
+        setHistoricalInsights(sampleHistorical);
+        setIsFallbackData(true);
+      } else {
+        setHistoricalInsights([]);
+      }
     } finally {
       setHistoricalLoading(false);
     }
@@ -318,9 +326,9 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     }
   };
 
-  // Function to insert sample data for testing
+  // Function to insert sample data for testing - ONLY available in development mode
   const insertSampleData = async () => {
-    if (!childId) return;
+    if (!childId || !IS_DEVELOPMENT) return;
     
     try {
       // Check if data already exists
@@ -371,6 +379,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     historicalInsights,
     historicalLoading,
     isFallbackData,
+    hasInsufficientData,
     insertSampleData
   };
 };
