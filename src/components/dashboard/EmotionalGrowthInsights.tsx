@@ -235,10 +235,10 @@ const EmotionalGrowthInsights = ({
       
       <CardContent>
         {isFallbackData && (
-          <Alert variant="default">
+          <Alert variant="default" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Using example data. Connect to the database to see actual insights.
+              Using example data. Click the "Generate Sample Emotional Data" button below to save sample data to the database.
             </AlertDescription>
           </Alert>
         )}

@@ -12,6 +12,8 @@ import WelcomePrompt from "@/components/dashboard/WelcomePrompt";
 import EmotionalGrowthInsights from "@/components/dashboard/EmotionalGrowthInsights";
 import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Button } from "@/components/ui/button";
+import { Beaker } from "lucide-react";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
@@ -22,7 +24,8 @@ const Dashboard = () => {
     fetchHistoricalInsights,
     historicalInsights,
     historicalLoading,
-    isFallbackData
+    isFallbackData,
+    insertSampleData
   } = useEmotionalInsights(currentChildId);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -80,15 +83,31 @@ const Dashboard = () => {
                     />
                     
                     {currentChild && (
-                      <EmotionalGrowthInsights 
-                        currentChild={currentChild} 
-                        insight={latestInsight}
-                        loading={insightLoading}
-                        fetchHistoricalInsights={fetchHistoricalInsights}
-                        historicalInsights={historicalInsights}
-                        historicalLoading={historicalLoading}
-                        isFallbackData={isFallbackData}
-                      />
+                      <>
+                        <EmotionalGrowthInsights 
+                          currentChild={currentChild} 
+                          insight={latestInsight}
+                          loading={insightLoading}
+                          fetchHistoricalInsights={fetchHistoricalInsights}
+                          historicalInsights={historicalInsights}
+                          historicalLoading={historicalLoading}
+                          isFallbackData={isFallbackData}
+                        />
+                        
+                        {isFallbackData && (
+                          <div className="mb-8 flex justify-center">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={insertSampleData}
+                              className="flex items-center gap-1 text-sm text-muted-foreground"
+                            >
+                              <Beaker className="h-4 w-4" />
+                              Generate Sample Emotional Data
+                            </Button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </>
                 )}
