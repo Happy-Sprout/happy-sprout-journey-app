@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -63,6 +62,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
   const [historicalLoading, setHistoricalLoading] = useState(false);
   const [isFallbackData, setIsFallbackData] = useState(false);
   const [hasInsufficientData, setHasInsufficientData] = useState(false);
+  const [connectionError, setConnectionError] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -74,6 +74,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       setLatestInsight(null);
       setIsFallbackData(false);
       setHasInsufficientData(false);
+      setConnectionError(false);
     }
   }, [childId]);
 
@@ -83,6 +84,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     setLoading(true);
     setIsFallbackData(false);
     setHasInsufficientData(false);
+    setConnectionError(false);
     
     try {
       console.log("Fetching insights for child ID:", childId);
@@ -141,14 +143,10 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     } catch (error) {
       console.error("Error in fetchInsights:", error);
       setHasInsufficientData(true);
+      setConnectionError(true);
       
       // Only use sample data in development, not for end users
       if (IS_DEVELOPMENT) {
-        warningToast({
-          title: "Using sample data",
-          description: "Failed to fetch emotional growth insights. Using sample data for development."
-        });
-        
         // Create sample data with the actual childId
         const sampleData = sampleInsightsData.map(item => ({
           ...item,
@@ -227,6 +225,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         setHistoricalInsights(sortedData);
         setIsFallbackData(false);
         setHasInsufficientData(false);
+        setConnectionError(false);
       } else {
         console.log(`Insufficient data for ${period} chart (need at least ${MIN_DATA_POINTS_FOR_CHART} points)`);
         setHasInsufficientData(true);
@@ -246,6 +245,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     } catch (error) {
       console.error("Error in fetchHistoricalInsights:", error);
       setHasInsufficientData(true);
+      setConnectionError(true);
       
       // Only use sample data in development
       if (IS_DEVELOPMENT) {
@@ -393,6 +393,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     historicalLoading,
     isFallbackData,
     hasInsufficientData,
-    insertSampleData
+    insertSampleData,
+    connectionError
   };
 };

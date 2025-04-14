@@ -14,6 +14,7 @@ import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Beaker } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
@@ -26,10 +27,12 @@ const Dashboard = () => {
     historicalLoading,
     isFallbackData,
     hasInsufficientData,
-    insertSampleData
+    insertSampleData,
+    connectionError
   } = useEmotionalInsights(currentChildId);
   const [isLoading, setIsLoading] = useState(true);
   const isDevelopment = import.meta.env.DEV;
+  const { toast } = useToast();
   
   // Add a timeout to ensure loading state doesn't get stuck
   useEffect(() => {
@@ -46,6 +49,18 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   }, [childProfiles, currentChildId]);
+
+  // Handle offline mode or connection errors with sample data in development
+  useEffect(() => {
+    if (connectionError && isDevelopment) {
+      toast({
+        title: "Database connection error",
+        description: "Using sample data for development purposes.",
+        variant: "default",
+        className: "bg-amber-50 border-amber-200 text-amber-800",
+      });
+    }
+  }, [connectionError, isDevelopment, toast]);
   
   return (
     <Layout requireAuth>
@@ -97,7 +112,7 @@ const Dashboard = () => {
                           hasInsufficientData={hasInsufficientData}
                         />
                         
-                        {isFallbackData && isDevelopment && (
+                        {(isFallbackData && isDevelopment) && (
                           <div className="mb-8 flex justify-center">
                             <Button 
                               variant="outline" 

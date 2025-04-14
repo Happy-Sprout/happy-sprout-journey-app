@@ -19,7 +19,7 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO } from "date-fns";
-import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen } from "lucide-react";
+import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon } from "lucide-react";
 import { 
   HoverCard,
   HoverCardTrigger,
@@ -29,6 +29,7 @@ import { Tooltip as UITooltip, TooltipTrigger, TooltipContent, TooltipProvider }
 import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import { ChildProfile } from "@/hooks/useChildren";
 import { Badge } from "@/components/ui/badge";
+import { useEffect as useEffectLayoutEffect, useLayoutEffect } from "react";
 
 const SEL_DESCRIPTIONS = {
   self_awareness: "Understanding one's emotions, personal goals, and values.",
@@ -86,10 +87,36 @@ const EmotionalGrowthInsights = ({
   const [selectedTab, setSelectedTab] = useState("latest");
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
   const isDevelopment = import.meta.env.DEV;
+  const [chartWidth, setChartWidth] = useState(0);
+  const [chartHeight, setChartHeight] = useState(0);
+  const [chartContainerRef, setChartContainerRef] = useState<HTMLDivElement | null>(null);
+  const [connectionError, setConnectionError] = useState(false);
 
-  const fetchHistoricalData = useCallback(() => {
+  // Set chart dimensions based on container size
+  useLayoutEffect(() => {
+    if (chartContainerRef) {
+      const updateSize = () => {
+        setChartWidth(chartContainerRef.clientWidth);
+        setChartHeight(Math.max(chartContainerRef.clientHeight, 300));
+      };
+      
+      updateSize();
+      const resizeObserver = new ResizeObserver(updateSize);
+      resizeObserver.observe(chartContainerRef);
+      
+      return () => resizeObserver.disconnect();
+    }
+  }, [chartContainerRef]);
+
+  const fetchHistoricalData = useCallback(async () => {
     if (selectedTab !== "latest") {
-      fetchHistoricalInsights(selectedPeriod);
+      try {
+        await fetchHistoricalInsights(selectedPeriod);
+        setConnectionError(false);
+      } catch (error) {
+        console.error("Error fetching historical data:", error);
+        setConnectionError(true);
+      }
     }
   }, [selectedTab, selectedPeriod, fetchHistoricalInsights]);
 
@@ -268,11 +295,20 @@ const EmotionalGrowthInsights = ({
       </CardHeader>
       
       <CardContent>
-        {isFallbackData && isDevelopment && (
+        {(isFallbackData && isDevelopment) && (
           <Alert variant="default" className="mb-4 bg-amber-50 border-amber-200 text-amber-800">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <AlertDescription>
               Using example data for development. Connect to the database to see actual insights.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {connectionError && (
+          <Alert variant="default" className="mb-4 bg-amber-50 border-amber-200 text-amber-800">
+            <DatabaseIcon className="h-4 w-4 text-amber-500" />
+            <AlertDescription>
+              Failed to fetch emotional growth insights. Using sample data for development.
             </AlertDescription>
           </Alert>
         )}
@@ -287,8 +323,11 @@ const EmotionalGrowthInsights = ({
           <TabsContent value="latest">
             {insight ? (
               <>
-                <div className="w-full h-64">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div 
+                  className="w-full h-64" 
+                  ref={setChartContainerRef}
+                >
+                  <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                     <RadarChart outerRadius="80%" data={radarChartData}>
                       <PolarGrid />
                       <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
@@ -347,8 +386,8 @@ const EmotionalGrowthInsights = ({
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
-              <div className="w-full h-64">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-full h-64" ref={node => !chartContainerRef && setChartContainerRef(node)}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <LineChart
                     data={lineChartData}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -456,8 +495,8 @@ const EmotionalGrowthInsights = ({
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
-              <div className="w-full h-64">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-full h-64" ref={node => !chartContainerRef && setChartContainerRef(node)}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <LineChart
                     data={lineChartData}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
