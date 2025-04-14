@@ -1,6 +1,5 @@
-
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Radar, 
@@ -87,11 +86,15 @@ const EmotionalGrowthInsights = ({
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
   const isDevelopment = import.meta.env.DEV;
 
-  useEffect(() => {
+  const fetchHistoricalData = useCallback(() => {
     if (selectedTab !== "latest") {
       fetchHistoricalInsights(selectedPeriod);
     }
   }, [selectedTab, selectedPeriod, fetchHistoricalInsights]);
+
+  useEffect(() => {
+    fetchHistoricalData();
+  }, [fetchHistoricalData]);
 
   const radarChartData = useMemo(() => {
     if (!insight) return [];
@@ -131,22 +134,26 @@ const EmotionalGrowthInsights = ({
   }, [insight]);
 
   const lineChartData = useMemo(() => {
-    // Make sure data is properly formatted and sorted chronologically
-    return historicalInsights.map(insight => ({
+    if (!historicalInsights || historicalInsights.length === 0) return [];
+    
+    const sortedInsights = [...historicalInsights].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    
+    return sortedInsights.map(insight => ({
       date: format(parseISO(insight.created_at), "MMM d"),
       self_awareness: Number((insight.self_awareness * 100).toFixed(1)),
       self_management: Number((insight.self_management * 100).toFixed(1)),
       social_awareness: Number((insight.social_awareness * 100).toFixed(1)),
       relationship_skills: Number((insight.relationship_skills * 100).toFixed(1)),
       responsible_decision_making: Number((insight.responsible_decision_making * 100).toFixed(1)),
-      raw_date: insight.created_at, // Keep raw date for sorting if needed
+      raw_date: insight.created_at,
     }));
   }, [historicalInsights]);
 
   const getGrowthFeedback = () => {
     if (!insight) return null;
     
-    // Find the highest and lowest skill areas
     const skills = [
       { name: 'self_awareness', value: insight.self_awareness },
       { name: 'self_management', value: insight.self_management },
@@ -261,7 +268,7 @@ const EmotionalGrowthInsights = ({
       
       <CardContent>
         {isFallbackData && isDevelopment && (
-          <Alert variant="default" className="mb-4">
+          <Alert variant="warning" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               Using example data for development. Connect to the database to see actual insights.
@@ -338,7 +345,7 @@ const EmotionalGrowthInsights = ({
             
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
-            ) : historicalInsights.length >= 2 ? (
+            ) : lineChartData.length >= 2 ? (
               <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
@@ -348,47 +355,66 @@ const EmotionalGrowthInsights = ({
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="date" 
-                      tick={{ fontSize: 10 }} 
+                      tick={{ fontSize: 10 }}
+                      height={30}
+                      padding={{ left: 10, right: 10 }}
                     />
                     <YAxis 
                       domain={[0, 100]} 
-                      tick={{ fontSize: 10 }} 
+                      tick={{ fontSize: 10 }}
+                      width={40}
                     />
                     <Tooltip 
                       formatter={(value) => [`${value}%`]}
                       labelFormatter={(label) => `Date: ${label}`}
+                      contentStyle={{ fontSize: '12px' }}
                     />
-                    <Legend />
+                    <Legend 
+                      height={36}
+                      iconSize={8} 
+                      iconType="circle"
+                      wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
+                    />
                     <Line 
                       type="monotone" 
                       dataKey="self_awareness" 
                       name="Self-Awareness" 
                       stroke={SEL_COLORS.self_awareness} 
                       activeDot={{ r: 8 }} 
+                      dot={{ r: 3 }}
+                      strokeWidth={2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="self_management" 
                       name="Self-Management" 
-                      stroke={SEL_COLORS.self_management} 
+                      stroke={SEL_COLORS.self_management}
+                      dot={{ r: 3 }}
+                      strokeWidth={2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="social_awareness" 
                       name="Social Awareness" 
                       stroke={SEL_COLORS.social_awareness}
+                      dot={{ r: 3 }}
+                      strokeWidth={2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="relationship_skills" 
                       name="Relationship Skills" 
                       stroke={SEL_COLORS.relationship_skills}
+                      dot={{ r: 3 }}
+                      strokeWidth={2}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="responsible_decision_making" 
                       name="Decision-Making" 
                       stroke={SEL_COLORS.responsible_decision_making}
+                      dot={{ r: 3 }}
+                      strokeWidth={2}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -428,7 +454,7 @@ const EmotionalGrowthInsights = ({
             
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
-            ) : historicalInsights.length >= 2 ? (
+            ) : lineChartData.length >= 2 ? (
               <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart

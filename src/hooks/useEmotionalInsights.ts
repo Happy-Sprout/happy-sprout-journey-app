@@ -111,8 +111,12 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       console.log("Fetched insights data:", data);
       
       if (data && data.length > 0) {
-        setInsights(data);
-        setLatestInsight(data[0]); // Most recent insight
+        // Sort data by date (newest first) for consistency
+        const sortedData = [...data].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setInsights(sortedData);
+        setLatestInsight(sortedData[0]); // Most recent insight
       } else {
         console.log("No insights found in database");
         setHasInsufficientData(true);
@@ -213,10 +217,12 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       
       if (data && data.length >= MIN_DATA_POINTS_FOR_CHART) {
         // We have enough real data to show a meaningful chart
-        // Sort the data by date to ensure chronological order
+        // Sort the data by date to ensure chronological order (oldest first)
         const sortedData = [...data].sort((a, b) => 
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
+        
+        console.log("Sorted historical data:", sortedData);
         
         setHistoricalInsights(sortedData);
         setIsFallbackData(false);
@@ -229,6 +235,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         if (IS_DEVELOPMENT) {
           console.log("Using sample historical data for development");
           const sampleHistorical = generateSampleHistoricalData(period, childId);
+          console.log("Generated sample historical data:", sampleHistorical);
           setHistoricalInsights(sampleHistorical);
           setIsFallbackData(true);
         } else {
