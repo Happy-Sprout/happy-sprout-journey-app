@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { warningToast } from "@/components/ui/toast-extensions";
@@ -65,23 +64,18 @@ export const useEmotionalInsights = (childId: string | undefined) => {
   const [hasInsufficientData, setHasInsufficientData] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (childId) {
-      fetchInsights();
-    } else {
-      // Reset data if no childId is provided
-      setInsights([]);
-      setLatestInsight(null);
-      setIsFallbackData(false);
-      setHasInsufficientData(false);
-      setConnectionError(false);
-    }
-  }, [childId]);
-
-  const fetchInsights = async () => {
-    if (!childId) return;
+  
+  // Prevent multiple simultaneous data fetches
+  const isFetchingRef = useRef(false);
+  
+  // Keep track of the current childId to prevent unnecessary re-fetches
+  const prevChildIdRef = useRef<string | undefined>(undefined);
+  
+  // Stable fetch function that doesn't re-create on every render
+  const fetchInsights = useCallback(async () => {
+    if (!childId || isFetchingRef.current || childId === prevChildIdRef.current) return;
     
+    isFetchingRef.current = true;
     setLoading(true);
     setIsFallbackData(false);
     setHasInsufficientData(false);
@@ -91,7 +85,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       console.log("Fetching insights for child ID:", childId);
       
       // Check if the database is available by making a simple query
-      const { error: pingError } = await supabase.from('sel_insights').select('count(*)').limit(1);
+      const { error: pingError } = await supabase.from('sel_insights').select('id').limit(1);
       
       if (pingError) {
         console.error("Database connection check failed:", pingError);
@@ -120,6 +114,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         );
         setInsights(sortedData);
         setLatestInsight(sortedData[0]); // Most recent insight
+        prevChildIdRef.current = childId;
       } else {
         console.log("No insights found in database");
         setHasInsufficientData(true);
@@ -164,10 +159,27 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       }
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  };
+  }, [childId, toast]);
 
-  const fetchHistoricalInsights = async (period: Period = 'weekly') => {
+  // Only fetch when childId changes
+  useEffect(() => {
+    if (childId && childId !== prevChildIdRef.current) {
+      fetchInsights();
+    } else if (!childId) {
+      // Reset data if no childId is provided
+      setInsights([]);
+      setLatestInsight(null);
+      setIsFallbackData(false);
+      setHasInsufficientData(false);
+      setConnectionError(false);
+      prevChildIdRef.current = undefined;
+    }
+  }, [childId, fetchInsights]);
+
+  // Create a stable fetchHistoricalInsights function
+  const fetchHistoricalInsights = useCallback(async (period: Period = 'weekly') => {
     if (!childId) return;
     
     setHistoricalLoading(true);
@@ -177,7 +189,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       console.log(`Fetching historical insights for period: ${period}, childId: ${childId}`);
       
       // Verify database connection first
-      const { error: pingError } = await supabase.from('sel_insights').select('count(*)').limit(1);
+      const { error: pingError } = await supabase.from('sel_insights').select('id').limit(1);
       
       if (pingError) {
         console.error("Database connection check failed:", pingError);
@@ -268,10 +280,10 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     } finally {
       setHistoricalLoading(false);
     }
-  };
+  }, [childId]);
   
   // Helper function to generate appropriate sample historical data
-  const generateSampleHistoricalData = (period: Period, childId: string): EmotionalInsight[] => {
+  const generateSampleHistoricalData = useCallback((period: Period, childId: string): EmotionalInsight[] => {
     const now = new Date();
     const sampleData: EmotionalInsight[] = [];
     
@@ -301,60 +313,14 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     return sampleData.sort((a, b) => 
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
-  };
+  }, []);
 
-  const analyzeEntry = async (journalText?: string, checkInText?: string) => {
-    if (!childId) return null;
-    
-    try {
-      console.log("Analyzing entry for childId:", childId);
-      console.log("Journal text sample:", journalText?.substring(0, 50));
-      console.log("Check-in text sample:", checkInText?.substring(0, 50));
-      
-      // Now let's create a sample insight for demonstration purposes
-      const newInsight = {
-        id: `generated-${Date.now()}`,
-        child_id: childId,
-        self_awareness: Math.random() * 0.3 + 0.6, // Random value between 0.6 and 0.9
-        self_management: Math.random() * 0.3 + 0.6,
-        social_awareness: Math.random() * 0.3 + 0.6,
-        relationship_skills: Math.random() * 0.3 + 0.6,
-        responsible_decision_making: Math.random() * 0.3 + 0.6,
-        created_at: new Date().toISOString(),
-        source_text: (journalText || '') + ' ' + (checkInText || '')
-      };
-
-      // Try to insert the sample insight into the database
-      const { data, error } = await supabase
-        .from('sel_insights')
-        .insert([newInsight])
-        .select()
-        .single();
-      
-      if (error) {
-        console.error("Error inserting generated insight:", error);
-        // For demo, still return the insight even if we couldn't save it
-        return newInsight;
-      }
-      
-      console.log("Successfully inserted new insight:", data);
-      
-      // Refresh insights after successful insertion
-      await fetchInsights();
-      return data;
-    } catch (error) {
-      console.error("Error in analyzeEntry:", error);
-      return null;
-    }
-  };
-
-  // Function to insert sample data for testing - ONLY available in development mode
-  const insertSampleData = async () => {
+  const insertSampleData = useCallback(async () => {
     if (!childId || !IS_DEVELOPMENT) return;
     
     try {
       // Verify database connection first
-      const { error: connectionError } = await supabase.from('sel_insights').select('count(*)').limit(1);
+      const { error: connectionError } = await supabase.from('sel_insights').select('id').limit(1);
       
       if (connectionError) {
         console.error("Database connection error:", connectionError);
@@ -421,57 +387,59 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         className: "bg-red-50 border-red-200 text-red-800",
       });
     }
-  };
+  }, [childId, toast, generateSampleHistoricalData, fetchInsights]);
+
+  const analyzeEntry = useCallback(async (journalText?: string, checkInText?: string) => {
+    if (!childId) return null;
+    
+    try {
+      console.log("Analyzing entry for childId:", childId);
+      console.log("Journal text sample:", journalText?.substring(0, 50));
+      console.log("Check-in text sample:", checkInText?.substring(0, 50));
+      
+      // Now let's create a sample insight for demonstration purposes
+      const newInsight = {
+        id: `generated-${Date.now()}`,
+        child_id: childId,
+        self_awareness: Math.random() * 0.3 + 0.6, // Random value between 0.6 and 0.9
+        self_management: Math.random() * 0.3 + 0.6,
+        social_awareness: Math.random() * 0.3 + 0.6,
+        relationship_skills: Math.random() * 0.3 + 0.6,
+        responsible_decision_making: Math.random() * 0.3 + 0.6,
+        created_at: new Date().toISOString(),
+        source_text: (journalText || '') + ' ' + (checkInText || '')
+      };
+
+      // Try to insert the sample insight into the database
+      const { data, error } = await supabase
+        .from('sel_insights')
+        .insert([newInsight])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Error inserting generated insight:", error);
+        // For demo, still return the insight even if we couldn't save it
+        return newInsight;
+      }
+      
+      console.log("Successfully inserted new insight:", data);
+      
+      // Refresh insights after successful insertion
+      await fetchInsights();
+      return data;
+    } catch (error) {
+      console.error("Error in analyzeEntry:", error);
+      return null;
+    }
+  }, [childId, fetchInsights]);
 
   return {
     insights,
     latestInsight,
     loading,
     fetchInsights,
-    analyzeEntry: async (journalText?: string, checkInText?: string) => {
-      if (!childId) return null;
-      
-      try {
-        console.log("Analyzing entry for childId:", childId);
-        console.log("Journal text sample:", journalText?.substring(0, 50));
-        console.log("Check-in text sample:", checkInText?.substring(0, 50));
-        
-        // Now let's create a sample insight for demonstration purposes
-        const newInsight = {
-          id: `generated-${Date.now()}`,
-          child_id: childId,
-          self_awareness: Math.random() * 0.3 + 0.6, // Random value between 0.6 and 0.9
-          self_management: Math.random() * 0.3 + 0.6,
-          social_awareness: Math.random() * 0.3 + 0.6,
-          relationship_skills: Math.random() * 0.3 + 0.6,
-          responsible_decision_making: Math.random() * 0.3 + 0.6,
-          created_at: new Date().toISOString(),
-          source_text: (journalText || '') + ' ' + (checkInText || '')
-        };
-
-        // Try to insert the sample insight into the database
-        const { data, error } = await supabase
-          .from('sel_insights')
-          .insert([newInsight])
-          .select()
-          .single();
-        
-        if (error) {
-          console.error("Error inserting generated insight:", error);
-          // For demo, still return the insight even if we couldn't save it
-          return newInsight;
-        }
-        
-        console.log("Successfully inserted new insight:", data);
-        
-        // Refresh insights after successful insertion
-        await fetchInsights();
-        return data;
-      } catch (error) {
-        console.error("Error in analyzeEntry:", error);
-        return null;
-      }
-    },
+    analyzeEntry,
     fetchHistoricalInsights,
     historicalInsights,
     historicalLoading,

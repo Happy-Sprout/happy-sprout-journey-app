@@ -1,6 +1,6 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Radar, 
@@ -29,7 +29,7 @@ import { Tooltip as UITooltip, TooltipTrigger, TooltipContent, TooltipProvider }
 import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import { ChildProfile } from "@/hooks/useChildren";
 import { Badge } from "@/components/ui/badge";
-import { useEffect as useEffectLayoutEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 
 const SEL_DESCRIPTIONS = {
   self_awareness: "Understanding one's emotions, personal goals, and values.",
@@ -89,30 +89,34 @@ const EmotionalGrowthInsights = ({
   const isDevelopment = import.meta.env.DEV;
   const [chartWidth, setChartWidth] = useState(0);
   const [chartHeight, setChartHeight] = useState(0);
-  const [chartContainerRef, setChartContainerRef] = useState<HTMLDivElement | null>(null);
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [connectionError, setConnectionError] = useState(false);
+  const previousDataFetchedRef = useRef<boolean>(false);
 
   // Set chart dimensions based on container size
   useLayoutEffect(() => {
-    if (chartContainerRef) {
+    if (chartContainerRef.current) {
       const updateSize = () => {
-        setChartWidth(chartContainerRef.clientWidth);
-        setChartHeight(Math.max(chartContainerRef.clientHeight, 300));
+        if (chartContainerRef.current) {
+          setChartWidth(chartContainerRef.current.clientWidth);
+          setChartHeight(Math.max(chartContainerRef.current.clientHeight, 300));
+        }
       };
       
       updateSize();
       const resizeObserver = new ResizeObserver(updateSize);
-      resizeObserver.observe(chartContainerRef);
+      resizeObserver.observe(chartContainerRef.current);
       
       return () => resizeObserver.disconnect();
     }
-  }, [chartContainerRef]);
+  }, []);
 
   const fetchHistoricalData = useCallback(async () => {
-    if (selectedTab !== "latest") {
+    if (selectedTab !== "latest" && !previousDataFetchedRef.current) {
       try {
         await fetchHistoricalInsights(selectedPeriod);
         setConnectionError(false);
+        previousDataFetchedRef.current = true;
       } catch (error) {
         console.error("Error fetching historical data:", error);
         setConnectionError(true);
@@ -120,9 +124,13 @@ const EmotionalGrowthInsights = ({
     }
   }, [selectedTab, selectedPeriod, fetchHistoricalInsights]);
 
+  // Only fetch data when tab or period changes, not on every render
   useEffect(() => {
-    fetchHistoricalData();
-  }, [fetchHistoricalData]);
+    if (selectedTab !== "latest") {
+      previousDataFetchedRef.current = false;
+      fetchHistoricalData();
+    }
+  }, [selectedTab, selectedPeriod, fetchHistoricalData]);
 
   const radarChartData = useMemo(() => {
     if (!insight) return [];
@@ -164,6 +172,7 @@ const EmotionalGrowthInsights = ({
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) return [];
     
+    // Sort chronologically once, not in the render cycle
     const sortedInsights = [...historicalInsights].sort((a, b) => 
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
@@ -179,7 +188,7 @@ const EmotionalGrowthInsights = ({
     }));
   }, [historicalInsights]);
 
-  const getGrowthFeedback = () => {
+  const getGrowthFeedback = useMemo(() => {
     if (!insight) return null;
     
     const skills = [
@@ -210,9 +219,9 @@ const EmotionalGrowthInsights = ({
         </p>
       </div>
     );
-  };
+  }, [insight]);
 
-  const renderNoDataMessage = (type: string) => {
+  const renderNoDataMessage = useCallback((type: string) => {
     const messages = {
       latest: `${currentChild.nickname}'s emotional insights will appear here after completing journal entries or daily check-ins.`,
       trends: `Keep tracking ${currentChild.nickname}'s feelings! Growth trends will appear here after a few entries.`,
@@ -230,7 +239,7 @@ const EmotionalGrowthInsights = ({
         </p>
       </div>
     );
-  };
+  }, [currentChild.nickname]);
 
   if (loading) {
     return (
@@ -325,7 +334,7 @@ const EmotionalGrowthInsights = ({
               <>
                 <div 
                   className="w-full h-64" 
-                  ref={setChartContainerRef}
+                  ref={chartContainerRef}
                 >
                   <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                     <RadarChart outerRadius="80%" data={radarChartData}>
@@ -348,7 +357,7 @@ const EmotionalGrowthInsights = ({
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
-                {getGrowthFeedback()}
+                {getGrowthFeedback}
               </>
             ) : (
               renderNoDataMessage("latest")
@@ -386,7 +395,7 @@ const EmotionalGrowthInsights = ({
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
-              <div className="w-full h-64" ref={node => !chartContainerRef && setChartContainerRef(node)}>
+              <div className="w-full h-64" ref={chartContainerRef}>
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <LineChart
                     data={lineChartData}
@@ -495,7 +504,7 @@ const EmotionalGrowthInsights = ({
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
-              <div className="w-full h-64" ref={node => !chartContainerRef && setChartContainerRef(node)}>
+              <div className="w-full h-64" ref={chartContainerRef}>
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                   <LineChart
                     data={lineChartData}

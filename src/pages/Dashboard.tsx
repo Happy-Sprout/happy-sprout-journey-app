@@ -1,6 +1,6 @@
 
 import { useUser } from "@/contexts/UserContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
 import NoActiveChildPrompt from "@/components/dashboard/NoActiveChildPrompt";
 import ChildProfileSelector from "@/components/dashboard/ChildProfileSelector";
@@ -21,6 +21,14 @@ const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
   const currentChild = getCurrentChild();
   const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const isDevelopment = import.meta.env.DEV;
+  const { toast } = useToast();
+  
+  // Memoize child ID to prevent unnecessary re-renders of useEmotionalInsights
+  const stableChildId = useCallback(() => currentChildId, [currentChildId]);
+
+  // Use the stable child ID reference for the emotional insights hook
   const { 
     latestInsight, 
     loading: insightLoading,
@@ -31,34 +39,40 @@ const Dashboard = () => {
     hasInsufficientData,
     insertSampleData,
     connectionError
-  } = useEmotionalInsights(currentChildId);
-  const [isLoading, setIsLoading] = useState(true);
-  const isDevelopment = import.meta.env.DEV;
-  const { toast } = useToast();
+  } = useEmotionalInsights(stableChildId());
   
-  // Check database connection
+  // Check database connection only once on mount or when in development mode
   useEffect(() => {
+    let isMounted = true;
     const checkDbConnection = async () => {
       try {
-        const { error } = await supabase.from('sel_insights').select('count(*)').limit(1);
-        setIsDbConnected(!error);
-        
-        if (error && isDevelopment) {
-          console.error("Database connection error:", error);
-          toast({
-            title: "Database connection error",
-            description: "Using sample data for development purposes.",
-            variant: "default",
-            className: "bg-amber-50 border-amber-200 text-amber-800",
-          });
+        const { error } = await supabase.from('sel_insights').select('id').limit(1);
+        if (isMounted) {
+          setIsDbConnected(!error);
+          
+          if (error && isDevelopment) {
+            console.error("Database connection error:", error);
+            toast({
+              title: "Database connection error",
+              description: "Using sample data for development purposes.",
+              variant: "default",
+              className: "bg-amber-50 border-amber-200 text-amber-800",
+            });
+          }
         }
       } catch (err) {
         console.error("Error checking database connection:", err);
-        setIsDbConnected(false);
+        if (isMounted) {
+          setIsDbConnected(false);
+        }
       }
     };
     
     checkDbConnection();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [isDevelopment, toast]);
   
   // Add a timeout to ensure loading state doesn't get stuck
