@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +74,7 @@ const SEL_AREA_PROMPTS: Record<SELAreaKey, {
         'Draw a picture of how you feel right now and explain why you feel that way.',
         'Name three things that make you feel happy and three things that make you feel sad.',
         'When you get upset, what happens in your body? Where do you feel it?',
-        'What's one thing you're really good at and one thing that's hard for you?',
+        "What's one thing you're really good at and one thing that's hard for you?",
       ],
       older: [
         'Take a few minutes to reflect on a recent strong emotional reaction you had. What triggered it and how did you respond?',
@@ -90,7 +91,7 @@ const SEL_AREA_PROMPTS: Record<SELAreaKey, {
       younger: [
         'What do you do to calm down when you feel angry or upset?',
         'Make a list of things you can do when you feel like giving up on something hard.',
-        'What's something you really want but have to wait for? How do you handle waiting?',
+        "What's something you really want but have to wait for? How do you handle waiting?",
         'Think of a time you made a mistake. What did you learn from it?',
       ],
       older: [
@@ -103,18 +104,18 @@ const SEL_AREA_PROMPTS: Record<SELAreaKey, {
   },
   'social_awareness': {
     title: 'Social Awareness',
-    description: 'Understanding others' perspectives and empathizing with them',
+    description: "Understanding others' perspectives and empathizing with them",
     prompts: {
       younger: [
         'Think about a friend who was sad recently. How could you tell they were sad? What did you do to help?',
         'When someone feels different from you about something, how do you try to understand their feelings?',
         'Think of someone who might be lonely at school. What could you do to include them?',
-        'Name three ways people show they're feeling happy, sad, or angry without using words.',
+        "Name three ways people show they're feeling happy, sad, or angry without using words.",
       ],
       older: [
         'Think about a recent disagreement you had with someone. Try to describe the situation from their perspective.',
-        'Consider someone in your life who is very different from you. What might be some challenges they face that you don't?',
-        'How might your actions or words affect others, even when you don't intend them to?',
+        'Consider someone in your life who is very different from you. What might be some challenges they face that you don\'t?',
+        'How might your actions or words affect others, even when you don\'t intend them to?',
         'Think about a time when you noticed someone needed help. How did you know, and what did you do?',
       ]
     }
@@ -127,7 +128,7 @@ const SEL_AREA_PROMPTS: Record<SELAreaKey, {
         'What makes someone a good friend? How are you a good friend to others?',
         'When you have a problem with a friend, what do you do to fix it?',
         'How do you show people that you care about them?',
-        'What's something nice someone did for you recently? How did it make you feel?',
+        "What's something nice someone did for you recently? How did it make you feel?",
       ],
       older: [
         'Think about a conflict you recently had with someone. How did you handle it? What could you have done differently?',
@@ -144,7 +145,7 @@ const SEL_AREA_PROMPTS: Record<SELAreaKey, {
       younger: [
         'Think about a choice you made today. Was it a good choice? How do you know?',
         'When you need to make a decision, who helps you? How do they help?',
-        'What's a rule at home or school that helps keep you safe? Why is it important?',
+        "What's a rule at home or school that helps keep you safe? Why is it important?",
         'Think about a time you helped someone else. Why did you decide to help?',
       ],
       older: [
