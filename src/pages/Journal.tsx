@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -10,9 +9,10 @@ import { successToast } from "@/components/ui/toast-extensions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
+import { checkForBadgeUnlocks } from "@/utils/childUtils";
 
 const Journal = () => {
-  const { getCurrentChild, currentChildId } = useUser();
+  const { getCurrentChild, currentChildId, childProfiles, setChildProfiles } = useUser();
   const currentChild = getCurrentChild();
   
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -26,7 +26,7 @@ const Journal = () => {
     getTodayEntry
   } = useJournalEntries(currentChildId);
   
-  const { analyzeEntry } = useEmotionalInsights(currentChildId);
+  const { analyzeEntry, latestInsight } = useEmotionalInsights(currentChildId);
 
   useEffect(() => {
     if (!currentChildId) return;
@@ -88,7 +88,52 @@ const Journal = () => {
           `;
           
           // We'll call this in the background, we don't need to wait for it
-          analyzeEntry(journalText);
+          const newInsight = await analyzeEntry(journalText);
+          
+          // Check for SEL badge unlocks if we have an insight
+          if (newInsight && currentChild) {
+            const selScores = {
+              selfAwareness: newInsight.self_awareness,
+              selfManagement: newInsight.self_management, 
+              socialAwareness: newInsight.social_awareness,
+              relationshipSkills: newInsight.relationship_skills,
+              responsibleDecisionMaking: newInsight.responsible_decision_making
+            };
+            
+            const newBadges = checkForBadgeUnlocks(currentChild, {
+              journalEntry: true,
+              selScores
+            });
+            
+            if (newBadges.length > 0) {
+              // Update child badges in the database
+              const combinedBadges = [...(currentChild.badges || []), ...newBadges];
+              
+              await supabase
+                .from('child_progress')
+                .update({ badges: combinedBadges })
+                .eq('child_id', currentChildId);
+                
+              // Update in the local state as well
+              if (childProfiles) {
+                const updatedProfiles = childProfiles.map(profile => 
+                  profile.id === currentChildId 
+                    ? { ...profile, badges: combinedBadges } 
+                    : profile
+                );
+                setChildProfiles(updatedProfiles);
+              }
+              
+              // Show notification for new badges
+              newBadges.forEach(badge => {
+                const badgeInfo = getBadgeInfo(badge);
+                successToast({
+                  title: `New Badge Earned: ${badgeInfo.icon} ${badgeInfo.title}`,
+                  description: badgeInfo.description
+                });
+              });
+            }
+          }
           
           // Check if user completed both check-in and journal today for bonus XP
           const { data: todayCheckIn } = await supabase

@@ -1,4 +1,3 @@
-
 import { ChildProfile } from "@/types/childProfile";
 import * as childrenDb from "@/utils/childrenDb";
 import { isSameDay, isYesterday, differenceInDays } from "date-fns";
@@ -20,12 +19,10 @@ export const calculateAgeFromDOB = (dob: string): number => {
   return age;
 };
 
-// Check if a check-in streak should be continued or reset
 export const calculateStreak = (lastCheckInDate: string | undefined): { 
   newStreak: number, 
   shouldIncrement: boolean 
 } => {
-  // If there's no previous check-in date, this is the first check-in
   if (!lastCheckInDate) {
     return { newStreak: 1, shouldIncrement: false };
   }
@@ -33,17 +30,14 @@ export const calculateStreak = (lastCheckInDate: string | undefined): {
   const lastDate = new Date(lastCheckInDate);
   const today = new Date();
   
-  // Check if the last check-in was yesterday (consecutive day)
   if (isYesterday(lastDate)) {
-    return { newStreak: 0, shouldIncrement: true }; // Will be incremented in the caller
+    return { newStreak: 0, shouldIncrement: true };
   }
   
-  // Check if the last check-in was today already (no streak change)
   if (isSameDay(lastDate, today)) {
-    return { newStreak: 0, shouldIncrement: false }; // No change, already checked in today
+    return { newStreak: 0, shouldIncrement: false };
   }
   
-  // If more than 1 day has passed, reset streak
   return { newStreak: 1, shouldIncrement: false };
 };
 
@@ -61,15 +55,12 @@ export const markDailyCheckInComplete = (
       return;
     }
     
-    // Calculate streak based on last check-in date
     const { newStreak, shouldIncrement } = calculateStreak(currentChild.lastCheckInDate);
     
-    // Calculate the new streak count
     const updatedStreakCount = shouldIncrement 
       ? currentChild.streakCount + 1 
       : newStreak > 0 ? newStreak : currentChild.streakCount;
       
-    // Only award XP if this is the first check-in today
     const shouldAwardXP = !isSameDay(
       currentChild.lastCheckInDate ? new Date(currentChild.lastCheckInDate) : new Date(0), 
       new Date()
@@ -77,7 +68,6 @@ export const markDailyCheckInComplete = (
     
     const xpIncrement = shouldAwardXP ? 10 : 0;
     
-    // Determine if user should get streak XP bonuses
     let streakBonus = 0;
     if (shouldIncrement) {
       if (updatedStreakCount === 3) streakBonus = 10;
@@ -98,7 +88,6 @@ export const markDailyCheckInComplete = (
       totalXpIncrement
     });
     
-    // Check for badge unlocks
     const newBadges = checkForBadgeUnlocks(currentChild, {
       dailyCheckIn: true,
       streakCount: updatedStreakCount,
@@ -118,7 +107,6 @@ export const markDailyCheckInComplete = (
       .then(() => {
         console.log("Daily check-in marked as complete successfully");
         
-        // Update the local state as well
         const updatedProfiles = childProfiles.map(profile => 
           profile.id === childId 
             ? { 
@@ -142,7 +130,6 @@ export const markDailyCheckInComplete = (
   }
 };
 
-// Define available badges
 export const BADGES = {
   FIRST_LOGIN: "first_login",
   PROFILE_CREATOR: "profile_creator",
@@ -154,10 +141,15 @@ export const BADGES = {
   HALF_MONTH_STREAK: "half_month_streak",
   XP_COLLECTOR_50: "xp_collector_50",
   LEVEL_UP: "level_up",
-  CONSISTENCY_CHAMP: "consistency_champ"
+  CONSISTENCY_CHAMP: "consistency_champ",
+  SELF_AWARENESS_MILESTONE: "self_awareness_milestone",
+  SELF_MANAGEMENT_MILESTONE: "self_management_milestone",
+  SOCIAL_AWARENESS_MILESTONE: "social_awareness_milestone",
+  RELATIONSHIP_SKILLS_MILESTONE: "relationship_skills_milestone",
+  DECISION_MAKING_MILESTONE: "decision_making_milestone",
+  SEL_GROWTH_CHAMPION: "sel_growth_champion"
 };
 
-// Check if a child should earn new badges
 export function checkForBadgeUnlocks(
   profile: ChildProfile, 
   metrics: {
@@ -166,12 +158,18 @@ export function checkForBadgeUnlocks(
     allActivities?: boolean;
     streakCount?: number;
     xpPoints?: number;
+    selScores?: {
+      selfAwareness?: number;
+      selfManagement?: number;
+      socialAwareness?: number;
+      relationshipSkills?: number;
+      responsibleDecisionMaking?: number;
+    };
   }
 ): string[] {
   const currentBadges = profile.badges || [];
   const newBadges: string[] = [];
   
-  // Helper to add badge if not already earned
   const addBadgeIfNew = (badge: string) => {
     if (!currentBadges.includes(badge)) {
       newBadges.push(badge);
@@ -179,49 +177,39 @@ export function checkForBadgeUnlocks(
     }
   };
   
-  // First login - this could be set elsewhere during initial auth
   if (!currentBadges.includes(BADGES.FIRST_LOGIN)) {
     addBadgeIfNew(BADGES.FIRST_LOGIN);
   }
   
-  // Profile creator - awarded when profile is complete
   if (profile.creationStatus === "completed" && !currentBadges.includes(BADGES.PROFILE_CREATOR)) {
     addBadgeIfNew(BADGES.PROFILE_CREATOR);
   }
   
-  // Daily hero - for completing a daily check-in
   if (metrics.dailyCheckIn && !currentBadges.includes(BADGES.DAILY_HERO)) {
     addBadgeIfNew(BADGES.DAILY_HERO);
   }
   
-  // Journal starter - for completing a journal entry
   if (metrics.journalEntry && !currentBadges.includes(BADGES.JOURNAL_STARTER)) {
     addBadgeIfNew(BADGES.JOURNAL_STARTER);
   }
   
-  // Trio champ - for completing all activities in one day
   if (metrics.allActivities && !currentBadges.includes(BADGES.TRIO_CHAMP)) {
     addBadgeIfNew(BADGES.TRIO_CHAMP);
   }
   
-  // Streak badges
   if (metrics.streakCount) {
-    // 3-day streak
     if (metrics.streakCount >= 3 && !currentBadges.includes(BADGES.THREE_DAY_STREAK)) {
       addBadgeIfNew(BADGES.THREE_DAY_STREAK);
     }
     
-    // Week streak
     if (metrics.streakCount >= 7 && !currentBadges.includes(BADGES.WEEK_STREAK)) {
       addBadgeIfNew(BADGES.WEEK_STREAK);
     }
     
-    // Half-month streak
     if (metrics.streakCount >= 15 && !currentBadges.includes(BADGES.HALF_MONTH_STREAK)) {
       addBadgeIfNew(BADGES.HALF_MONTH_STREAK);
     }
     
-    // Consistency champ - earn all three streak badges
     const hasThreeDayBadge = currentBadges.includes(BADGES.THREE_DAY_STREAK) || newBadges.includes(BADGES.THREE_DAY_STREAK);
     const hasWeekBadge = currentBadges.includes(BADGES.WEEK_STREAK) || newBadges.includes(BADGES.WEEK_STREAK);
     const hasHalfMonthBadge = currentBadges.includes(BADGES.HALF_MONTH_STREAK) || newBadges.includes(BADGES.HALF_MONTH_STREAK);
@@ -231,23 +219,63 @@ export function checkForBadgeUnlocks(
     }
   }
   
-  // XP badges
   if (metrics.xpPoints) {
-    // XP Collector badge - 50 XP
     if (metrics.xpPoints >= 50 && !currentBadges.includes(BADGES.XP_COLLECTOR_50)) {
       addBadgeIfNew(BADGES.XP_COLLECTOR_50);
     }
     
-    // Level up badge - for reaching level 2 (100 XP)
     if (metrics.xpPoints >= 100 && !currentBadges.includes(BADGES.LEVEL_UP)) {
       addBadgeIfNew(BADGES.LEVEL_UP);
+    }
+  }
+  
+  if (metrics.selScores) {
+    if (metrics.selScores.selfAwareness && 
+        metrics.selScores.selfAwareness >= 0.7 && 
+        !currentBadges.includes(BADGES.SELF_AWARENESS_MILESTONE)) {
+      addBadgeIfNew(BADGES.SELF_AWARENESS_MILESTONE);
+    }
+    
+    if (metrics.selScores.selfManagement && 
+        metrics.selScores.selfManagement >= 0.7 && 
+        !currentBadges.includes(BADGES.SELF_MANAGEMENT_MILESTONE)) {
+      addBadgeIfNew(BADGES.SELF_MANAGEMENT_MILESTONE);
+    }
+    
+    if (metrics.selScores.socialAwareness && 
+        metrics.selScores.socialAwareness >= 0.7 && 
+        !currentBadges.includes(BADGES.SOCIAL_AWARENESS_MILESTONE)) {
+      addBadgeIfNew(BADGES.SOCIAL_AWARENESS_MILESTONE);
+    }
+    
+    if (metrics.selScores.relationshipSkills && 
+        metrics.selScores.relationshipSkills >= 0.7 && 
+        !currentBadges.includes(BADGES.RELATIONSHIP_SKILLS_MILESTONE)) {
+      addBadgeIfNew(BADGES.RELATIONSHIP_SKILLS_MILESTONE);
+    }
+    
+    if (metrics.selScores.responsibleDecisionMaking && 
+        metrics.selScores.responsibleDecisionMaking >= 0.7 && 
+        !currentBadges.includes(BADGES.DECISION_MAKING_MILESTONE)) {
+      addBadgeIfNew(BADGES.DECISION_MAKING_MILESTONE);
+    }
+    
+    const hasSelfAwarenessBadge = currentBadges.includes(BADGES.SELF_AWARENESS_MILESTONE) || newBadges.includes(BADGES.SELF_AWARENESS_MILESTONE);
+    const hasSelfManagementBadge = currentBadges.includes(BADGES.SELF_MANAGEMENT_MILESTONE) || newBadges.includes(BADGES.SELF_MANAGEMENT_MILESTONE);
+    const hasSocialAwarenessBadge = currentBadges.includes(BADGES.SOCIAL_AWARENESS_MILESTONE) || newBadges.includes(BADGES.SOCIAL_AWARENESS_MILESTONE);
+    const hasRelationshipSkillsBadge = currentBadges.includes(BADGES.RELATIONSHIP_SKILLS_MILESTONE) || newBadges.includes(BADGES.RELATIONSHIP_SKILLS_MILESTONE);
+    const hasDecisionMakingBadge = currentBadges.includes(BADGES.DECISION_MAKING_MILESTONE) || newBadges.includes(BADGES.DECISION_MAKING_MILESTONE);
+    
+    if (hasSelfAwarenessBadge && hasSelfManagementBadge && hasSocialAwarenessBadge && 
+        hasRelationshipSkillsBadge && hasDecisionMakingBadge && 
+        !currentBadges.includes(BADGES.SEL_GROWTH_CHAMPION)) {
+      addBadgeIfNew(BADGES.SEL_GROWTH_CHAMPION);
     }
   }
   
   return newBadges;
 }
 
-// Helper function to get badge display info based on badge ID
 export function getBadgeInfo(badgeId: string) {
   const badges = {
     [BADGES.FIRST_LOGIN]: {
@@ -304,6 +332,36 @@ export function getBadgeInfo(badgeId: string) {
       title: "Consistency Champ",
       description: "Earned all three streak badges",
       icon: "🎁"
+    },
+    [BADGES.SELF_AWARENESS_MILESTONE]: {
+      title: "Self-Awareness Master",
+      description: "Achieved a high level of self-awareness",
+      icon: "🧠"
+    },
+    [BADGES.SELF_MANAGEMENT_MILESTONE]: {
+      title: "Emotion Manager",
+      description: "Demonstrated excellent self-management skills",
+      icon: "🧘"
+    },
+    [BADGES.SOCIAL_AWARENESS_MILESTONE]: {
+      title: "Empathy Expert",
+      description: "Developed strong social awareness capabilities",
+      icon: "👥"
+    },
+    [BADGES.RELATIONSHIP_SKILLS_MILESTONE]: {
+      title: "Friendship Builder",
+      description: "Excelled at building quality relationships",
+      icon: "🤝"
+    },
+    [BADGES.DECISION_MAKING_MILESTONE]: {
+      title: "Wise Decider",
+      description: "Made consistently responsible decisions",
+      icon: "🧩"
+    },
+    [BADGES.SEL_GROWTH_CHAMPION]: {
+      title: "SEL Growth Champion",
+      description: "Mastered all five areas of social-emotional learning",
+      icon: "🏆"
     }
   };
   
