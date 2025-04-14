@@ -8,12 +8,24 @@ import EmotionalTrendsChart from "@/components/dashboard/EmotionalTrendsChart";
 import { useChildren } from "@/hooks/useChildren";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
+import { 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis, 
+  Radar, 
+  ResponsiveContainer,
+  Tooltip
+} from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SELAssessment = () => {
   const { childProfiles, currentChildId } = useChildren();
   const [activeTab, setActiveTab] = useState("check-in");
   const [emotionalData, setEmotionalData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
   
   // Get current child name
   const currentChild = childProfiles.find(child => child.id === currentChildId);
@@ -116,6 +128,23 @@ const SELAssessment = () => {
     { date: "2025-03-07", mood: 9, anxiety: 1, focus: 9, energy: 8, emotion: "energized" },
   ];
   
+  // Create radar chart data from the latest emotional data point
+  const getSkillsRadarData = () => {
+    if (!emotionalData || emotionalData.length === 0) return [];
+    
+    // Use the latest data point
+    const latestData = emotionalData[emotionalData.length - 1];
+    
+    // Transform to radar format
+    return [
+      { skill: isMobile ? "Awareness" : "Self-Awareness", value: latestData.mood },
+      { skill: isMobile ? "Management" : "Self-Management", value: 10 - latestData.anxiety },
+      { skill: isMobile ? "Social" : "Social Awareness", value: latestData.focus },
+      { skill: isMobile ? "Relations" : "Relationship Skills", value: latestData.energy },
+      { skill: isMobile ? "Decisions" : "Decision-Making", value: (latestData.mood + latestData.focus) / 2 }
+    ];
+  };
+  
   return (
     <Layout requireAuth>
       <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
@@ -163,14 +192,64 @@ const SELAssessment = () => {
                     showEnergy={false}
                   />
                   
-                  <EmotionalTrendsChart 
-                    data={emotionalData} 
-                    title="Focus & Energy" 
-                    description="Tracking focus and energy levels"
-                    height={250}
-                    showMood={false}
-                    showAnxiety={false}
-                  />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Compare Skills Areas</CardTitle>
+                      <CardDescription>Current skills snapshot for {childName}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {emotionalData.length > 0 ? (
+                        <div className="w-full h-[250px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart 
+                              cx="50%" 
+                              cy="50%" 
+                              outerRadius={isMobile ? "65%" : "80%"} 
+                              data={getSkillsRadarData()}
+                            >
+                              <PolarGrid />
+                              <PolarAngleAxis 
+                                dataKey="skill"
+                                tick={{ 
+                                  fontSize: isMobile ? 9 : 12,
+                                  fill: "#666" 
+                                }}
+                              />
+                              <PolarRadiusAxis
+                                angle={90}
+                                domain={[0, 10]}
+                                tickCount={5}
+                                tick={{ fontSize: isMobile ? 9 : 10 }}
+                              />
+                              <Radar
+                                name="Skill Level"
+                                dataKey="value"
+                                stroke="#8884d8"
+                                fill="#8884d8"
+                                fillOpacity={0.6}
+                              />
+                              <Tooltip
+                                formatter={(value) => [`${value}/10`, "Skill Level"]}
+                                contentStyle={{
+                                  backgroundColor: 'white',
+                                  fontSize: isMobile ? '10px' : '12px',
+                                  padding: '8px',
+                                  border: '1px solid #ccc',
+                                  borderRadius: '4px'
+                                }}
+                              />
+                            </RadarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      ) : (
+                        <div className="flex justify-center items-center h-[250px] bg-slate-50 rounded-md">
+                          <p className="text-gray-500 text-center">
+                            No data available for skills comparison
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </>
             )}
