@@ -1,3 +1,4 @@
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -268,8 +269,8 @@ const EmotionalGrowthInsights = ({
       
       <CardContent>
         {isFallbackData && isDevelopment && (
-          <Alert variant="warning" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
+          <Alert variant="default" className="mb-4 bg-amber-50 border-amber-200 text-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
             <AlertDescription>
               Using example data for development. Connect to the database to see actual insights.
             </AlertDescription>
