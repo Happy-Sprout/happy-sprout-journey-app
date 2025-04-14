@@ -15,10 +15,14 @@ export type EmotionalInsight = {
   created_at: string;
 };
 
+export type Period = 'weekly' | 'monthly' | 'all';
+
 export const useEmotionalInsights = (childId: string | undefined) => {
   const [insights, setInsights] = useState<EmotionalInsight[]>([]);
   const [latestInsight, setLatestInsight] = useState<EmotionalInsight | null>(null);
   const [loading, setLoading] = useState(false);
+  const [historicalInsights, setHistoricalInsights] = useState<EmotionalInsight[]>([]);
+  const [historicalLoading, setHistoricalLoading] = useState(false);
 
   useEffect(() => {
     if (childId) {
@@ -63,6 +67,67 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchHistoricalInsights = async (period: Period = 'weekly') => {
+    if (!childId) return;
+    
+    setHistoricalLoading(true);
+    try {
+      // Define date range based on period
+      let startDate: string | null = null;
+      const now = new Date();
+      
+      if (period === 'weekly') {
+        // Last 4 weeks
+        const fourWeeksAgo = new Date();
+        fourWeeksAgo.setDate(now.getDate() - 28);
+        startDate = fourWeeksAgo.toISOString();
+      } else if (period === 'monthly') {
+        // Last 6 months
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(now.getMonth() - 6);
+        startDate = sixMonthsAgo.toISOString();
+      }
+      
+      // Build query
+      let query = supabase
+        .from('sel_insights')
+        .select('*')
+        .eq('child_id', childId)
+        .order('created_at', { ascending: true });
+      
+      // Add date filter if needed
+      if (startDate && period !== 'all') {
+        query = query.gte('created_at', startDate);
+      }
+      
+      // Execute query
+      const { data, error } = await query;
+        
+      if (error) {
+        console.error("Error fetching historical insights:", error);
+        warningToast({
+          title: "Error",
+          description: "Could not fetch historical emotional insights. Please try again."
+        });
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setHistoricalInsights(data);
+      } else {
+        setHistoricalInsights([]);
+      }
+    } catch (error) {
+      console.error("Error in fetchHistoricalInsights:", error);
+      warningToast({
+        title: "Error",
+        description: "Failed to fetch historical emotional insights. Please try again."
+      });
+    } finally {
+      setHistoricalLoading(false);
     }
   };
 
@@ -112,6 +177,9 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     latestInsight,
     loading,
     fetchInsights,
-    analyzeEntry
+    analyzeEntry,
+    fetchHistoricalInsights,
+    historicalInsights,
+    historicalLoading
   };
 };

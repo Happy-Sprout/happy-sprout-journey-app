@@ -16,7 +16,13 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
   const currentChild = getCurrentChild();
-  const { latestInsight, loading: insightLoading } = useEmotionalInsights(currentChildId);
+  const { 
+    latestInsight, 
+    loading: insightLoading,
+    fetchHistoricalInsights,
+    historicalInsights,
+    historicalLoading
+  } = useEmotionalInsights(currentChildId);
   const [isLoading, setIsLoading] = useState(true);
   
   // Add a timeout to ensure loading state doesn't get stuck
@@ -77,6 +83,9 @@ const Dashboard = () => {
                         currentChild={currentChild} 
                         insight={latestInsight}
                         loading={insightLoading}
+                        fetchHistoricalInsights={fetchHistoricalInsights}
+                        historicalInsights={historicalInsights}
+                        historicalLoading={historicalLoading}
                       />
                     )}
                   </>

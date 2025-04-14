@@ -1,5 +1,5 @@
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Radar, 
@@ -8,9 +8,16 @@ import {
   PolarAngleAxis, 
   PolarRadiusAxis, 
   ResponsiveContainer, 
-  Tooltip 
+  Tooltip,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Legend
 } from "recharts";
-import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format, parseISO } from "date-fns";
 import { Brain, Heart, Users, MessageCircle, Lightbulb } from "lucide-react";
 import { 
   HoverCard,
@@ -18,8 +25,9 @@ import {
   HoverCardContent
 } from "@/components/ui/hover-card";
 import { Tooltip as UITooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { EmotionalInsight } from "@/hooks/useEmotionalInsights";
+import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import { ChildProfile } from "@/hooks/useChildren";
+import { Badge } from "@/components/ui/badge";
 
 const SEL_DESCRIPTIONS = {
   self_awareness: "Understanding one's emotions, personal goals, and values.",
@@ -45,18 +53,41 @@ const SEL_LABELS = {
   responsible_decision_making: "Decision-Making 🧠"
 };
 
+const SEL_COLORS = {
+  self_awareness: "#8884d8",
+  self_management: "#82ca9d",
+  social_awareness: "#ffc658",
+  relationship_skills: "#ff8042",
+  responsible_decision_making: "#0088fe"
+};
+
 interface EmotionalGrowthInsightsProps {
   currentChild: ChildProfile;
   insight: EmotionalInsight | null;
   loading?: boolean;
+  fetchHistoricalInsights: (period: Period) => Promise<void>;
+  historicalInsights: EmotionalInsight[];
+  historicalLoading: boolean;
 }
 
 const EmotionalGrowthInsights = ({ 
   currentChild, 
   insight, 
-  loading = false 
+  loading = false,
+  fetchHistoricalInsights,
+  historicalInsights,
+  historicalLoading = false
 }: EmotionalGrowthInsightsProps) => {
-  const chartData = useMemo(() => {
+  const [selectedTab, setSelectedTab] = useState("latest");
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
+
+  useEffect(() => {
+    if (selectedTab !== "latest") {
+      fetchHistoricalInsights(selectedPeriod);
+    }
+  }, [selectedTab, selectedPeriod, fetchHistoricalInsights]);
+
+  const radarChartData = useMemo(() => {
     if (!insight) return [];
     
     return [
@@ -92,6 +123,17 @@ const EmotionalGrowthInsights = ({
       }
     ];
   }, [insight]);
+
+  const lineChartData = useMemo(() => {
+    return historicalInsights.map(insight => ({
+      date: format(parseISO(insight.created_at), "MMM d"),
+      self_awareness: Number((insight.self_awareness * 100).toFixed(1)),
+      self_management: Number((insight.self_management * 100).toFixed(1)),
+      social_awareness: Number((insight.social_awareness * 100).toFixed(1)),
+      relationship_skills: Number((insight.relationship_skills * 100).toFixed(1)),
+      responsible_decision_making: Number((insight.responsible_decision_making * 100).toFixed(1)),
+    }));
+  }, [historicalInsights]);
 
   const getGrowthFeedback = () => {
     if (!insight) return null;
@@ -190,42 +232,242 @@ const EmotionalGrowthInsights = ({
       </CardHeader>
       
       <CardContent>
-        {insight ? (
-          <>
-            <div className="w-full h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart outerRadius="80%" data={chartData}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
-                  <PolarRadiusAxis 
-                    angle={90} 
-                    domain={[0, 100]} 
-                    tickCount={5}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Radar 
-                    name="Skill Level" 
-                    dataKey="A" 
-                    stroke="#8884d8" 
-                    fill="#8884d8" 
-                    fillOpacity={0.6} 
-                  />
-                  <Tooltip formatter={(value) => [`${value}%`, "Skill Level"]} />
-                </RadarChart>
-              </ResponsiveContainer>
+        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+          <TabsList className="mb-4 w-full grid grid-cols-3">
+            <TabsTrigger value="latest">Latest Snapshot</TabsTrigger>
+            <TabsTrigger value="trends">Growth Trends</TabsTrigger>
+            <TabsTrigger value="compare">Compare Areas</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="latest">
+            {insight ? (
+              <>
+                <div className="w-full h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart outerRadius="80%" data={radarChartData}>
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
+                      <PolarRadiusAxis 
+                        angle={90} 
+                        domain={[0, 100]} 
+                        tickCount={5}
+                        tick={{ fontSize: 10 }}
+                      />
+                      <Radar 
+                        name="Skill Level" 
+                        dataKey="A" 
+                        stroke="#8884d8" 
+                        fill="#8884d8" 
+                        fillOpacity={0.6} 
+                      />
+                      <Tooltip formatter={(value) => [`${value}%`, "Skill Level"]} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+                {getGrowthFeedback()}
+              </>
+            ) : (
+              <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg">
+                <p className="text-slate-500 text-center mb-2">
+                  No emotional growth data available yet
+                </p>
+                <p className="text-sm text-slate-400 text-center max-w-sm">
+                  Complete journal entries and daily check-ins to see insights about emotional growth
+                </p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="trends">
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-sm font-medium text-slate-700">View period:</div>
+              <div className="flex space-x-2">
+                <Badge 
+                  variant={selectedPeriod === "weekly" ? "default" : "outline"} 
+                  className="cursor-pointer"
+                  onClick={() => setSelectedPeriod("weekly")}
+                >
+                  Weekly
+                </Badge>
+                <Badge 
+                  variant={selectedPeriod === "monthly" ? "default" : "outline"} 
+                  className="cursor-pointer"
+                  onClick={() => setSelectedPeriod("monthly")}
+                >
+                  Monthly
+                </Badge>
+                <Badge 
+                  variant={selectedPeriod === "all" ? "default" : "outline"} 
+                  className="cursor-pointer"
+                  onClick={() => setSelectedPeriod("all")}
+                >
+                  All Time
+                </Badge>
+              </div>
             </div>
-            {getGrowthFeedback()}
-          </>
-        ) : (
-          <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg">
-            <p className="text-slate-500 text-center mb-2">
-              No emotional growth data available yet
-            </p>
-            <p className="text-sm text-slate-400 text-center max-w-sm">
-              Complete journal entries and daily check-ins to see insights about emotional growth
-            </p>
-          </div>
-        )}
+            
+            {historicalLoading ? (
+              <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
+            ) : lineChartData.length > 0 ? (
+              <div className="w-full h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={lineChartData}
+                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip 
+                      formatter={(value) => [`${value}%`]}
+                      labelFormatter={(label) => `Date: ${label}`}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="self_awareness" 
+                      name="Self-Awareness" 
+                      stroke={SEL_COLORS.self_awareness} 
+                      activeDot={{ r: 8 }} 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="self_management" 
+                      name="Self-Management" 
+                      stroke={SEL_COLORS.self_management} 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="social_awareness" 
+                      name="Social Awareness" 
+                      stroke={SEL_COLORS.social_awareness}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="relationship_skills" 
+                      name="Relationship Skills" 
+                      stroke={SEL_COLORS.relationship_skills}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="responsible_decision_making" 
+                      name="Decision-Making" 
+                      stroke={SEL_COLORS.responsible_decision_making}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg">
+                <p className="text-slate-500 text-center mb-2">
+                  No trend data available yet
+                </p>
+                <p className="text-sm text-slate-400 text-center max-w-sm">
+                  Complete more journal entries and daily check-ins to see emotional growth trends
+                </p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="compare">
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-sm font-medium text-slate-700">View period:</div>
+              <div className="flex space-x-2">
+                <Badge 
+                  variant={selectedPeriod === "weekly" ? "default" : "outline"} 
+                  className="cursor-pointer"
+                  onClick={() => setSelectedPeriod("weekly")}
+                >
+                  Weekly
+                </Badge>
+                <Badge 
+                  variant={selectedPeriod === "monthly" ? "default" : "outline"} 
+                  className="cursor-pointer"
+                  onClick={() => setSelectedPeriod("monthly")}
+                >
+                  Monthly
+                </Badge>
+                <Badge 
+                  variant={selectedPeriod === "all" ? "default" : "outline"} 
+                  className="cursor-pointer"
+                  onClick={() => setSelectedPeriod("all")}
+                >
+                  All Time
+                </Badge>
+              </div>
+            </div>
+            
+            {historicalLoading ? (
+              <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
+            ) : lineChartData.length > 0 ? (
+              <div className="w-full h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={lineChartData}
+                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        let displayName = name;
+                        if (name === "self_awareness") displayName = "Self-Awareness";
+                        if (name === "self_management") displayName = "Self-Management";
+                        if (name === "social_awareness") displayName = "Social Awareness";
+                        if (name === "relationship_skills") displayName = "Relationship Skills";
+                        if (name === "responsible_decision_making") displayName = "Decision-Making";
+                        return [`${value}%`, displayName];
+                      }}
+                      labelFormatter={(label) => `Date: ${label}`}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="self_awareness" 
+                      name="Self-Awareness" 
+                      stroke={SEL_COLORS.self_awareness} 
+                      activeDot={{ r: 8 }} 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="self_management" 
+                      name="Self-Management" 
+                      stroke={SEL_COLORS.self_management} 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="social_awareness" 
+                      name="Social Awareness" 
+                      stroke={SEL_COLORS.social_awareness}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="relationship_skills" 
+                      name="Relationship Skills" 
+                      stroke={SEL_COLORS.relationship_skills}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="responsible_decision_making" 
+                      name="Decision-Making" 
+                      stroke={SEL_COLORS.responsible_decision_making}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg">
+                <p className="text-slate-500 text-center mb-2">
+                  No comparison data available yet
+                </p>
+                <p className="text-sm text-slate-400 text-center max-w-sm">
+                  Complete more journal entries and daily check-ins to compare emotional growth areas
+                </p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
