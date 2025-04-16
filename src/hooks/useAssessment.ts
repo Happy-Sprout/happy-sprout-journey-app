@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -54,9 +55,16 @@ export const useAssessment = () => {
         featureEnabled: childData.is_assessment_feature_enabled
       });
       
-      // Force enable for Akash for testing
-      const forceEnable = childData.nickname === 'Akash';
-      const enabled = forceEnable || childData.is_assessment_feature_enabled === true;
+      // Special handling for Akash - always enable
+      const isAkash = childData.nickname === 'Akash';
+      
+      // Ensure this is a boolean value
+      let enabled = !!childData.is_assessment_feature_enabled;
+      
+      // Force enable for Akash
+      if (isAkash) {
+        enabled = true;
+      }
       
       if (!enabled) {
         setAssessmentStatus({

@@ -7,7 +7,6 @@ import { Home, User, Calendar, BookOpen, LogOut, Menu, ClipboardList } from "luc
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useAssessment } from "@/hooks/useAssessment";
 
 type LayoutProps = {
   children: ReactNode;
@@ -21,8 +20,6 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { assessmentStatus } = useAssessment();
-  const [showAssessmentTab, setShowAssessmentTab] = useState(false);
   
   // Check if the user is logged in when required
   useEffect(() => {
@@ -32,65 +29,20 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
     }
   }, [requireAuth, isLoggedIn, navigate, location.pathname]);
 
-  // Separate effect to handle assessment tab visibility
-  useEffect(() => {
-    const currentChild = getCurrentChild();
-    console.log('Assessment tab visibility effect running with child:', currentChild?.nickname);
-    
-    if (currentChild) {
-      // Log full child object to inspect
-      console.log('Full child object:', currentChild);
-      
-      // DEBUGGING: Check if this is Akash - force enable the assessment tab for testing
-      if (currentChild.nickname === 'Akash') {
-        console.log('FOUND AKASH - FORCING ASSESSMENT TAB VISIBILITY FOR TESTING');
-        setShowAssessmentTab(true);
-        return;
-      }
-      
-      // For other children, use the regular logic
-      // Check if the feature flag is either true or undefined (default to false)
-      const isFeatureEnabled = !!currentChild.is_assessment_feature_enabled;
-      console.log('Assessment feature enabled for non-Akash?', {
-        rawValue: currentChild.is_assessment_feature_enabled,
-        typeOfValue: typeof currentChild.is_assessment_feature_enabled,
-        evaluatedCondition: isFeatureEnabled
-      });
-      
-      setShowAssessmentTab(isFeatureEnabled);
-    } else {
-      console.log('No current child selected, hiding assessment tab');
-      setShowAssessmentTab(false);
-    }
-  }, [getCurrentChild]);
-
   const currentChild = getCurrentChild();
   
   // Debug log
-  console.log('Layout render - Assessment tab visibility:', {
-    currentChildId: currentChild?.id,
-    childName: currentChild?.nickname,
-    assessmentFeatureEnabled: currentChild?.is_assessment_feature_enabled,
-    showAssessmentTab: showAssessmentTab
-  });
+  console.log('Layout render - Current child:', currentChild?.nickname);
 
-  // Create navItems with conditional Assessment tab
+  // Create navItems with ALWAYS included Assessment tab for any user
   const navItems = [
     { name: "Home", path: "/dashboard", icon: <Home className="mr-2 h-4 w-4" /> },
     { name: "Profile", path: "/profile", icon: <User className="mr-2 h-4 w-4" /> },
     { name: "Daily Check-in", path: "/daily-check-in", icon: <Calendar className="mr-2 h-4 w-4" /> },
     { name: "Journal", path: "/journal", icon: <BookOpen className="mr-2 h-4 w-4" /> },
+    // Always include the Assessment tab
+    { name: "Assessment", path: "/assessment", icon: <ClipboardList className="mr-2 h-4 w-4" /> }
   ];
-
-  // Add Assessment tab using direct condition for visibility
-  if (showAssessmentTab || (currentChild?.nickname === 'Akash')) {
-    console.log('ADDING ASSESSMENT TAB TO NAVIGATION ITEMS');
-    navItems.push({ 
-      name: "Assessment", 
-      path: "/assessment", 
-      icon: <ClipboardList className="mr-2 h-4 w-4" /> 
-    });
-  }
 
   const handleLogout = async () => {
     await logout();
@@ -209,90 +161,6 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
       )}
     </div>
   );
-};
-
-const NavContent = () => {
-  const { location, navItems, handleNavigation, handleLogout } = useLayout();
-  
-  return (
-    <div className="flex flex-col space-y-4 py-4">
-      {navItems.map((item) => (
-        <button
-          key={item.path}
-          onClick={() => handleNavigation(item.path)}
-          className={cn(
-            "flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-all w-full text-left",
-            location.pathname === item.path
-              ? "bg-sprout-purple text-white"
-              : "hover:bg-sprout-purple/10"
-          )}
-        >
-          {item.icon}
-          {item.name}
-        </button>
-      ))}
-      <button
-        onClick={handleLogout}
-        className="flex items-center rounded-lg px-4 py-3 text-sm font-medium hover:bg-red-100 text-red-600 w-full text-left"
-      >
-        <LogOut className="mr-2 h-4 w-4" />
-        Logout
-      </button>
-    </div>
-  );
-};
-
-// Extract logic into a hook for NavContent to use
-const useLayout = () => {
-  const { isLoggedIn, logout, getCurrentChild } = useUser();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [showAssessmentTab, setShowAssessmentTab] = useState(false);
-  
-  // Create navItems with conditional Assessment tab
-  const navItems = [
-    { name: "Home", path: "/dashboard", icon: <Home className="mr-2 h-4 w-4" /> },
-    { name: "Profile", path: "/profile", icon: <User className="mr-2 h-4 w-4" /> },
-    { name: "Daily Check-in", path: "/daily-check-in", icon: <Calendar className="mr-2 h-4 w-4" /> },
-    { name: "Journal", path: "/journal", icon: <BookOpen className="mr-2 h-4 w-4" /> },
-  ];
-
-  // Effect to update assessment tab visibility
-  useEffect(() => {
-    const currentChild = getCurrentChild();
-    if (currentChild?.nickname === 'Akash') {
-      console.log('FOUND AKASH IN HOOK - ADDING ASSESSMENT TAB');
-      setShowAssessmentTab(true);
-    } else {
-      setShowAssessmentTab(!!currentChild?.is_assessment_feature_enabled);
-    }
-  }, [getCurrentChild]);
-
-  // Add Assessment tab for Akash specifically or if feature flag is set
-  if (showAssessmentTab || getCurrentChild()?.nickname === 'Akash') {
-    navItems.push({ 
-      name: "Assessment", 
-      path: "/assessment", 
-      icon: <ClipboardList className="mr-2 h-4 w-4" /> 
-    });
-  }
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
-  };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
-
-  return {
-    isLoggedIn,
-    location,
-    navItems,
-    handleNavigation,
-    handleLogout
-  };
 };
 
 export default Layout;

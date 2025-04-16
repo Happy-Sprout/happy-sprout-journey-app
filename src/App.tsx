@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,11 +12,11 @@ import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import StreakCorrection from "./pages/admin/StreakCorrection";
 import SELAssessment from "@/pages/SELAssessment";
+import Assessment from "@/pages/Assessment"; // Import directly instead of lazy loading
 
 const Register = lazy(() => import("@/pages/Register"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const DailyCheckIn = lazy(() => import("@/pages/DailyCheckIn"));
-const Assessment = lazy(() => import("@/pages/Assessment"));
 const CreateProfile = lazy(() => import("@/pages/CreateProfile"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
