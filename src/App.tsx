@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -73,13 +74,7 @@ function App() {
                 <Route path="notifications" element={<NotificationsManagement />} />
                 <Route path="settings" element={<SettingsManagement />} />
                 <Route path="emotional-insights-processing" element={<EmotionalInsightsProcessing />} />
-                <Route path="/admin/streak-correction" element={
-                  <AdminProtectedRoute>
-                    <AdminLayout>
-                      <StreakCorrection />
-                    </AdminLayout>
-                  </AdminProtectedRoute>
-                } />
+                <Route path="streak-correction" element={<StreakCorrection />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

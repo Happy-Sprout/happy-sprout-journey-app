@@ -59,7 +59,7 @@ const StreakCorrection = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert variant="warning">
+          <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Caution</AlertTitle>
             <AlertDescription>
