@@ -9,11 +9,11 @@ import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 import Journal from "@/pages/Journal";
 import Dashboard from "@/pages/Dashboard";
+import Profile from "@/pages/Profile"; // Import directly instead of lazy loading
 import StreakCorrection from "./pages/admin/StreakCorrection";
 
 const Register = lazy(() => import("@/pages/Register"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
-const Profile = lazy(() => import("@/pages/Profile"));
 const DailyCheckIn = lazy(() => import("@/pages/DailyCheckIn"));
 const SELAssessment = lazy(() => import("@/pages/SELAssessment"));
 const CreateProfile = lazy(() => import("@/pages/CreateProfile"));

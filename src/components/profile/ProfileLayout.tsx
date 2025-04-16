@@ -1,5 +1,5 @@
 
-import React, { useCallback, useState, useMemo } from "react";
+import React, { useCallback, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Layout from "@/components/Layout";
 import ChildProfilesTab from "./ChildProfilesTab";
@@ -14,18 +14,6 @@ const ProfileLayout = () => {
   const handleTabChange = useCallback((value: string) => {
     setActiveTab(value);
   }, []);
-  
-  // Use memo to prevent unnecessary re-renders
-  const tabContent = useMemo(() => {
-    switch (activeTab) {
-      case "children":
-        return <ChildProfilesTab key="children-tab" />;
-      case "parent":
-        return <ParentInfoTab key="parent-tab" />;
-      default:
-        return null;
-    }
-  }, [activeTab]);
   
   return (
     <Layout requireAuth>
@@ -60,7 +48,8 @@ const ProfileLayout = () => {
           </TabsList>
 
           <div className="space-y-6 focus-visible:outline-none focus-visible:ring-0">
-            {tabContent}
+            {activeTab === "children" && <ChildProfilesTab key="children-tab" />}
+            {activeTab === "parent" && <ParentInfoTab key="parent-tab" />}
           </div>
         </Tabs>
       </div>
@@ -68,4 +57,4 @@ const ProfileLayout = () => {
   );
 };
 
-export default React.memo(ProfileLayout);
+export default ProfileLayout;
