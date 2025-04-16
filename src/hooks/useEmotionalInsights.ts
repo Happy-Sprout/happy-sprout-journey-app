@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { warningToast } from "@/components/ui/toast-extensions";
+import { format, parseISO, startOfWeek, startOfMonth, isValid } from "date-fns";
 
 export type EmotionalInsight = {
   id: string;
@@ -313,6 +313,64 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     });
   }, [latestInsight]);
 
+  const aggregateInsightsByPeriod = (data: EmotionalInsight[], period: Period) => {
+    if (!data || data.length === 0) return [];
+    
+    const groupedData: Record<string, EmotionalInsight[]> = {};
+    
+    data.forEach(insight => {
+      const date = new Date(insight.created_at);
+      
+      if (!isValid(date)) return;
+      
+      let groupKey: string;
+      
+      if (period === 'weekly') {
+        const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+        groupKey = format(weekStart, 'yyyy-MM-dd');
+      } else if (period === 'monthly') {
+        const monthStart = startOfMonth(date);
+        groupKey = format(monthStart, 'yyyy-MM');
+      } else {
+        groupKey = format(date, 'yyyy-MM-dd');
+      }
+      
+      if (!groupedData[groupKey]) {
+        groupedData[groupKey] = [];
+      }
+      
+      groupedData[groupKey].push(insight);
+    });
+    
+    return Object.entries(groupedData).map(([dateKey, insights]) => {
+      const avgSelfAwareness = insights.reduce((sum, insight) => sum + insight.self_awareness, 0) / insights.length;
+      const avgSelfManagement = insights.reduce((sum, insight) => sum + insight.self_management, 0) / insights.length;
+      const avgSocialAwareness = insights.reduce((sum, insight) => sum + insight.social_awareness, 0) / insights.length;
+      const avgRelationshipSkills = insights.reduce((sum, insight) => sum + insight.relationship_skills, 0) / insights.length;
+      const avgResponsibleDecisionMaking = insights.reduce((sum, insight) => sum + insight.responsible_decision_making, 0) / insights.length;
+      
+      const sortedByDate = [...insights].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      
+      const mostRecentInsight = sortedByDate[0];
+      
+      return {
+        id: `aggregated-${dateKey}`,
+        child_id: childId || '',
+        self_awareness: avgSelfAwareness,
+        self_management: avgSelfManagement,
+        social_awareness: avgSocialAwareness,
+        relationship_skills: avgRelationshipSkills,
+        responsible_decision_making: avgResponsibleDecisionMaking,
+        created_at: mostRecentInsight.created_at,
+        display_date: dateKey
+      };
+    }).sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  };
+
   const fetchHistoricalInsights = useCallback(async (period: Period = 'weekly') => {
     if (!childId) return;
     
@@ -366,9 +424,11 @@ export const useEmotionalInsights = (childId: string | undefined) => {
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
         
-        console.log("Sorted historical data:", sortedData);
+        const aggregatedData = aggregateInsightsByPeriod(sortedData, period);
         
-        setHistoricalInsights(sortedData);
+        console.log("Aggregated historical data:", aggregatedData);
+        
+        setHistoricalInsights(aggregatedData);
         setIsFallbackData(false);
         setHasInsufficientData(false);
         setConnectionError(false);

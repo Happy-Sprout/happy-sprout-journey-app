@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 type EmotionData = {
   date: string;
+  rawDate?: string; // Added for unique identification in tooltips
   mood: number;
   anxiety?: number;
   focus?: number;
@@ -32,15 +33,15 @@ const EmotionalTrendsChart = ({
   showFocus = true,
   showEnergy = true,
 }: EmotionalTrendsChartProps) => {
-  // Format dates for better display
+  // We don't need to format dates here anymore as they should come pre-formatted
+  // Just ensure the data is sorted by date
   const formattedData = useMemo(() => 
-    data.map(entry => ({
-      ...entry,
-      date: new Date(entry.date).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-      })
-    })), 
+    data.slice().sort((a, b) => {
+      // Use rawDate for sorting if available, otherwise use the formatted date
+      const dateA = a.rawDate ? new Date(a.rawDate) : new Date(a.date);
+      const dateB = b.rawDate ? new Date(b.rawDate) : new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    }), 
     [data]
   );
 
@@ -62,9 +63,26 @@ const EmotionalTrendsChart = ({
             }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis domain={[0, 10]} />
-            <Tooltip />
+            <XAxis 
+              dataKey="date" 
+              // Ensure we don't show duplicate dates by using appropriate intervals
+              interval="preserveEnd"
+              padding={{ left: 10, right: 10 }}
+            />
+            <YAxis 
+              domain={[0, 10]} 
+              // Ensure Y-axis shows numeric values only
+              tickFormatter={(value) => `${value}`}
+            />
+            <Tooltip 
+              // Use rawDate in tooltip label if available for more precise information
+              labelFormatter={(label, payload) => {
+                if (payload && payload.length > 0 && payload[0].payload && payload[0].payload.rawDate) {
+                  return `Date: ${payload[0].payload.rawDate}`;
+                }
+                return `Date: ${label}`;
+              }}
+            />
             <Legend />
             {showMood && (
               <Line 

@@ -17,7 +17,7 @@ import {
   Legend
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon } from "lucide-react";
 import { 
   HoverCard,
@@ -55,7 +55,6 @@ const SEL_LABELS = {
   responsible_decision_making: "Decision-Making 🧠"
 };
 
-// For mobile view, use shorter labels
 const SEL_LABELS_MOBILE = {
   self_awareness: "Awareness 🌱",
   self_management: "Management 💪",
@@ -180,25 +179,53 @@ const EmotionalGrowthInsights = ({
     ];
   }, [insight, isMobile]);
 
+  const formatDateForPeriod = (dateStr: string, period: Period) => {
+    if (!dateStr || !isValid(new Date(dateStr))) return '';
+    
+    try {
+      let date;
+      
+      if (typeof dateStr === 'string') {
+        date = parseISO(dateStr);
+      } else {
+        date = new Date(dateStr);
+      }
+      
+      if (!isValid(date)) return 'Invalid Date';
+      
+      switch (period) {
+        case 'weekly':
+          return format(date, 'MMM d');
+        case 'monthly':
+          return format(date, 'MMM yyyy');
+        default:
+          return format(date, 'MMM d');
+      }
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return 'Invalid Date';
+    }
+  };
+
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) return [];
     
-    const sortedInsights = [...historicalInsights].sort((a, b) => 
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    
-    const dateFormat = isMobile ? "MMM d" : "MMM d";
-    
-    return sortedInsights.map(insight => ({
-      date: format(parseISO(insight.created_at), dateFormat),
-      self_awareness: Number((insight.self_awareness * 100).toFixed(1)),
-      self_management: Number((insight.self_management * 100).toFixed(1)),
-      social_awareness: Number((insight.social_awareness * 100).toFixed(1)),
-      relationship_skills: Number((insight.relationship_skills * 100).toFixed(1)),
-      responsible_decision_making: Number((insight.responsible_decision_making * 100).toFixed(1)),
-      raw_date: insight.created_at,
-    }));
-  }, [historicalInsights, isMobile]);
+    return historicalInsights.map(insight => {
+      const date = insight.display_date || insight.created_at;
+      const formattedDate = formatDateForPeriod(date, selectedPeriod);
+      
+      return {
+        date: formattedDate,
+        self_awareness: Number((insight.self_awareness * 100).toFixed(1)),
+        self_management: Number((insight.self_management * 100).toFixed(1)),
+        social_awareness: Number((insight.social_awareness * 100).toFixed(1)),
+        relationship_skills: Number((insight.relationship_skills * 100).toFixed(1)),
+        responsible_decision_making: Number((insight.responsible_decision_making * 100).toFixed(1)),
+        raw_date: insight.created_at,
+        dateKey: date
+      };
+    });
+  }, [historicalInsights, selectedPeriod]);
 
   const getGrowthFeedback = useMemo(() => {
     if (!insight) return null;
@@ -428,7 +455,7 @@ const EmotionalGrowthInsights = ({
                   <LineChart
                     data={lineChartData}
                     margin={isMobile ? 
-                      { top: 5, right: 5, left: 0, bottom: 95 } : // Much more bottom space on mobile for legend
+                      { top: 5, right: 5, left: 0, bottom: 95 } : 
                       { top: 5, right: 20, left: 0, bottom: 40 }
                     }
                   >
@@ -438,7 +465,6 @@ const EmotionalGrowthInsights = ({
                       tick={{ fontSize: isMobile ? 9 : 10 }}
                       height={isMobile ? 45 : 30}
                       padding={{ left: 10, right: 10 }}
-                      // Angle the labels on mobile for better fit
                       tickMargin={isMobile ? 12 : 5}
                       interval={isMobile ? 'preserveEnd' : 0}
                       angle={isMobile ? -45 : 0}
@@ -449,10 +475,24 @@ const EmotionalGrowthInsights = ({
                       tick={{ fontSize: isMobile ? 9 : 10 }}
                       width={isMobile ? 30 : 40}
                       tickMargin={isMobile ? 3 : 5}
+                      tickFormatter={(value) => `${value}`}
                     />
                     <Tooltip 
-                      formatter={(value) => [`${value}%`]}
-                      labelFormatter={(label) => `Date: ${label}`}
+                      formatter={(value, name) => {
+                        const readableName = name === 'self_awareness' ? 'Self-Awareness' :
+                                            name === 'self_management' ? 'Self-Management' :
+                                            name === 'social_awareness' ? 'Social Awareness' :
+                                            name === 'relationship_skills' ? 'Relationship Skills' :
+                                            name === 'responsible_decision_making' ? 'Decision-Making' : name;
+                        return [`${value}%`, readableName];
+                      }}
+                      labelFormatter={(label, payload) => {
+                        if (payload && payload.length > 0 && payload[0].payload) {
+                          const rawDate = payload[0].payload.raw_date;
+                          return rawDate ? format(new Date(rawDate), 'MMM d, yyyy') : label;
+                        }
+                        return label;
+                      }}
                       contentStyle={{ 
                         fontSize: '12px',
                         zIndex: 1000,
@@ -463,7 +503,7 @@ const EmotionalGrowthInsights = ({
                       }}
                       position={isMobile ? { x: 5, y: 75 } : undefined}
                       wrapperStyle={{ zIndex: 100 }}
-                      coordinate={{ x: 100, y: 100 }} // Control positioning
+                      coordinate={{ x: 100, y: 100 }}
                     />
                     <Legend 
                       height={isMobile ? 80 : 36}
