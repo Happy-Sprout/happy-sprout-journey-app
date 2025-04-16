@@ -7,11 +7,8 @@ import { useChildren } from '@/hooks/useChildren';
 import AssessmentForm from '@/components/assessment/AssessmentForm';
 import AssessmentComparison from '@/components/assessment/AssessmentComparison';
 import NoActiveChildPrompt from '@/components/dashboard/NoActiveChildPrompt';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Info, ToggleLeft, ToggleRight } from 'lucide-react';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { AlertCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,7 +18,6 @@ const Assessment = () => {
   const { assessmentStatus, statusLoading, checkAssessmentStatus } = useAssessment();
   const [activeTab, setActiveTab] = useState<string>('take-assessment');
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
-  const [isToggleLoading, setIsToggleLoading] = useState(false);
   
   // Load feature status when component mounts or child changes
   useEffect(() => {
@@ -64,57 +60,12 @@ const Assessment = () => {
     }
   };
   
-  // Toggle feature flag in database
-  const handleToggleFeature = async (newValue: boolean) => {
-    if (!currentChildId) return;
-    
-    setIsToggleLoading(true);
-    
-    try {
-      const { data, error } = await supabase
-        .from('children')
-        .update({ is_assessment_feature_enabled: newValue })
-        .eq('id', currentChildId)
-        .select();
-      
-      if (error) {
-        console.error('Error updating feature status:', error);
-        toast({
-          title: 'Update Failed',
-          description: 'Could not update assessment feature status',
-          variant: 'destructive'
-        });
-        return;
-      }
-      
-      setIsFeatureEnabled(newValue);
-      toast({
-        title: 'Feature Updated',
-        description: `Assessment feature ${newValue ? 'enabled' : 'disabled'} successfully`,
-      });
-      
-      // Refresh assessment status
-      checkAssessmentStatus();
-      
-    } catch (error) {
-      console.error('Error toggling feature:', error);
-      toast({
-        title: 'Update Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsToggleLoading(false);
-    }
-  };
-  
   const handleAssessmentComplete = () => {
     checkAssessmentStatus();
     setActiveTab('progress');
   };
   
   const currentChild = getCurrentChild();
-  const isAkash = currentChild?.nickname === 'Akash';
   
   if (!currentChildId) {
     return (
@@ -149,39 +100,19 @@ const Assessment = () => {
   return (
     <Layout requireAuth>
       <div className="container max-w-5xl mx-auto px-4 py-6">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">SEL Assessment</h1>
-            <p className="text-gray-600">
-              Measure and track social-emotional learning progress
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="assessment-toggle" className="sr-only">
-              Assessment Feature
-            </Label>
-            <span className="text-sm text-gray-500 hidden sm:inline">
-              {isFeatureEnabled ? 'Enabled' : 'Disabled'}
-            </span>
-            <Switch
-              id="assessment-toggle"
-              checked={isFeatureEnabled}
-              onCheckedChange={handleToggleFeature}
-              disabled={isToggleLoading || isAkash}
-            />
-            <span className="text-xs text-gray-500 sm:hidden">
-              {isFeatureEnabled ? 'On' : 'Off'}
-            </span>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">SEL Assessment</h1>
+          <p className="text-gray-600">
+            Measure and track social-emotional learning progress
+          </p>
         </div>
         
-        {!isFeatureEnabled && !isAkash ? (
+        {!isFeatureEnabled ? (
           <Alert className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Feature Not Enabled</AlertTitle>
             <AlertDescription>
-              The SEL Assessment feature is currently disabled. Enable it using the toggle above.
+              The SEL Assessment feature is not currently enabled for your account. Please contact support if you believe this is an error.
             </AlertDescription>
           </Alert>
         ) : (

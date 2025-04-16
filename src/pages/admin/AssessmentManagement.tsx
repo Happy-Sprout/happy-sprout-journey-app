@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,7 +48,6 @@ const AssessmentManagement = () => {
     try {
       setLoading(true);
       
-      // Get children with their parent names and assessment feature status
       const { data, error } = await supabase
         .from('children')
         .select(`
@@ -100,7 +98,6 @@ const AssessmentManagement = () => {
         throw error;
       }
       
-      // Update local state
       setChildProfiles(prevState => 
         prevState.map(child => 
           child.id === childId 
@@ -130,14 +127,14 @@ const AssessmentManagement = () => {
       <div>
         <h1 className="text-3xl font-bold">Assessment Management</h1>
         <p className="text-muted-foreground">
-          Manage assessment questions and settings for children
+          Manage assessment settings and control feature access for children
         </p>
       </div>
       
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            Per-Child Assessment Feature Settings
+            Assessment Feature Access Control
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -146,7 +143,7 @@ const AssessmentManagement = () => {
                 <TooltipContent>
                   <p className="max-w-xs">
                     Enable or disable the Pre/Post SEL Assessment feature for individual children. 
-                    This determines whether a child can take assessments to track their progress.
+                    This controls whether a child can access assessment content.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -201,7 +198,7 @@ const AssessmentManagement = () => {
                       <Switch 
                         checked={child.is_assessment_feature_enabled}
                         onCheckedChange={(checked) => toggleAssessmentFeature(child.id, checked)}
-                        disabled={loading}
+                        disabled={loading || child.nickname === 'Akash'}
                       />
                     </TableCell>
                   </TableRow>

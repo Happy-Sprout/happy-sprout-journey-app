@@ -34,7 +34,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   // Debug log
   console.log('Layout render - Current child:', currentChild?.nickname);
 
-  // Create navItems with ALWAYS included Assessment tab for any user
+  // Always include the Assessment tab in navigation items
   const navItems = [
     { name: "Home", path: "/dashboard", icon: <Home className="mr-2 h-4 w-4" /> },
     { name: "Profile", path: "/profile", icon: <User className="mr-2 h-4 w-4" /> },
