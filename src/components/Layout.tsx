@@ -41,7 +41,8 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
       // Log full child object to inspect
       console.log('Full child object:', currentChild);
       
-      // Explicitly log the feature flag
+      // Explicitly check if the flag is true, handling undefined values
+      // Convert to boolean with !! if it's undefined
       const isFeatureEnabled = currentChild.is_assessment_feature_enabled === true;
       console.log('Assessment feature enabled?', {
         rawValue: currentChild.is_assessment_feature_enabled,
