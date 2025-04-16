@@ -23,7 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const SELAssessment = () => {
   const { childProfiles, currentChildId } = useChildren();
   const [activeTab, setActiveTab] = useState("check-in");
-  const [emotionalData, setEmotionalData] = useState([]);
+  const [emotionalData, setEmotionalData] = useState<any[]>([]); // Explicitly type the array
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
   
@@ -59,9 +59,9 @@ const SELAssessment = () => {
       }
       
       // If we have real data, format and use it
-      if (trendsData && trendsData.length > 0) {
+      if (trendsData && Array.isArray(trendsData) && trendsData.length > 0) {
         // Group data by date to avoid duplicates
-        const groupedData = {};
+        const groupedData: Record<string, any[]> = {};
         
         trendsData.forEach(item => {
           const dateStr = format(new Date(item.recorded_at), "yyyy-MM-dd");

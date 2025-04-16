@@ -13,17 +13,16 @@ export type EmotionalInsight = {
   relationship_skills: number;
   responsible_decision_making: number;
   created_at: string;
+  display_date?: string;
 };
 
 export type SELAreaKey = 'self_awareness' | 'self_management' | 'social_awareness' | 'relationship_skills' | 'responsible_decision_making';
 
 export type Period = 'weekly' | 'monthly' | 'all';
 
-// Constants and configuration
-const MIN_DATA_POINTS_FOR_CHART = 2; // Minimum number of data points needed for a meaningful chart
-const IS_DEVELOPMENT = import.meta.env.DEV; // Check if we're in development mode
+const MIN_DATA_POINTS_FOR_CHART = 2;
+const IS_DEVELOPMENT = import.meta.env.DEV;
 
-// Sample data as fallback for when fetching fails (only for development)
 const sampleInsightsData: EmotionalInsight[] = [
   {
     id: 'sample-1',
@@ -33,7 +32,7 @@ const sampleInsightsData: EmotionalInsight[] = [
     social_awareness: 0.60,
     relationship_skills: 0.55,
     responsible_decision_making: 0.68,
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days ago
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: 'sample-2',
@@ -43,7 +42,7 @@ const sampleInsightsData: EmotionalInsight[] = [
     social_awareness: 0.62,
     relationship_skills: 0.58,
     responsible_decision_making: 0.70,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: 'sample-3',
@@ -53,17 +52,16 @@ const sampleInsightsData: EmotionalInsight[] = [
     social_awareness: 0.65,
     relationship_skills: 0.60,
     responsible_decision_making: 0.73,
-    created_at: new Date().toISOString() // today
+    created_at: new Date().toISOString()
   }
 ];
 
-// SEL area prompts mapping for different age groups
 const SEL_AREA_PROMPTS: Record<SELAreaKey, {
   title: string;
   description: string;
   prompts: {
-    younger: string[];  // For children under 10
-    older: string[];    // For children 10+
+    younger: string[];
+    older: string[];
   };
 }> = {
   'self_awareness': {
