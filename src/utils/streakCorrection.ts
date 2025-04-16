@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { differenceInDays, isSameDay, isYesterday } from "date-fns";
+import { differenceInDays, isSameDay, isYesterday, parseISO, startOfDay } from "date-fns";
 
 /**
  * One-time utility to correct streak counts for users who missed days
@@ -28,17 +28,31 @@ export async function correctExistingStreakCounts() {
     // Track children needing updates
     const childrenToUpdate = [];
     const today = new Date();
+    const todayStartOfDay = startOfDay(today);
     
     // Identify children whose streaks should be reset
     for (const child of childProgress || []) {
-      if (!child.last_check_in) continue;
+      if (!child.last_check_in) {
+        console.log(`Child ${child.child_id} has no last_check_in date but has streak_count ${child.streak_count}`);
+        childrenToUpdate.push(child.child_id);
+        continue;
+      }
       
-      const lastCheckInDate = new Date(child.last_check_in);
+      const lastCheckInDate = parseISO(child.last_check_in);
+      const daysElapsed = differenceInDays(todayStartOfDay, lastCheckInDate);
+      
+      // Detailed logging for debugging
+      console.log(`Child ${child.child_id}:
+        - Last check-in: ${lastCheckInDate.toISOString()}
+        - Current streak: ${child.streak_count}
+        - Days since last check-in: ${daysElapsed}
+        - Is yesterday?: ${isYesterday(lastCheckInDate)}
+        - Is today?: ${isSameDay(lastCheckInDate, today)}`);
       
       // If last check-in was not yesterday and not today, reset streak
-      if (!isYesterday(lastCheckInDate) && !isSameDay(lastCheckInDate, today)) {
-        const daysMissed = differenceInDays(today, lastCheckInDate);
-        console.log(`Child ${child.child_id} missed ${daysMissed} days. Last checked in on ${lastCheckInDate.toISOString()}`);
+      // This is the critical logic - we reset if it's been more than 1 day
+      if (daysElapsed > 1) {
+        console.log(`Child ${child.child_id} missed ${daysElapsed} days. Last checked in on ${lastCheckInDate.toISOString()}`);
         childrenToUpdate.push(child.child_id);
       }
     }
