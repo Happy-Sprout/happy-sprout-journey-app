@@ -16,6 +16,7 @@ const Register = lazy(() => import("@/pages/Register"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const DailyCheckIn = lazy(() => import("@/pages/DailyCheckIn"));
 const SELAssessment = lazy(() => import("@/pages/SELAssessment"));
+const Assessment = lazy(() => import("@/pages/Assessment"));
 const CreateProfile = lazy(() => import("@/pages/CreateProfile"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
@@ -56,6 +57,7 @@ function App() {
               <Route path="/daily-check-in" element={<DailyCheckIn />} />
               <Route path="/journal" element={<Journal />} />
               <Route path="/sel-assessment" element={<SELAssessment />} />
+              <Route path="/assessment" element={<Assessment />} />
               <Route path="/create-profile" element={<CreateProfile />} />
               <Route path="/edit-profile/:id" element={<EditProfile />} />
               
