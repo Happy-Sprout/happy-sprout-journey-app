@@ -1,10 +1,10 @@
-import { ReactNode, useEffect } from "react";
+
+import { ReactNode, useEffect, useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Home, User, Calendar, BookOpen, LogOut, Menu, ClipboardList } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAssessment } from "@/hooks/useAssessment";
@@ -22,6 +22,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const { assessmentStatus } = useAssessment();
+  const [showAssessmentTab, setShowAssessmentTab] = useState(false);
   
   // Check if the user is logged in when required
   useEffect(() => {
@@ -31,15 +32,38 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
     }
   }, [requireAuth, isLoggedIn, navigate, location.pathname]);
 
+  // Separate effect to handle assessment tab visibility
+  useEffect(() => {
+    const currentChild = getCurrentChild();
+    console.log('Assessment tab visibility effect running with child:', currentChild?.nickname);
+    
+    if (currentChild) {
+      // Log full child object to inspect
+      console.log('Full child object:', currentChild);
+      
+      // Explicitly log the feature flag
+      const isFeatureEnabled = currentChild.is_assessment_feature_enabled === true;
+      console.log('Assessment feature enabled?', {
+        rawValue: currentChild.is_assessment_feature_enabled,
+        typeOfValue: typeof currentChild.is_assessment_feature_enabled,
+        evaluatedCondition: isFeatureEnabled
+      });
+      
+      setShowAssessmentTab(isFeatureEnabled);
+    } else {
+      console.log('No current child selected, hiding assessment tab');
+      setShowAssessmentTab(false);
+    }
+  }, [getCurrentChild]);
+
   const currentChild = getCurrentChild();
-  const showAssessmentTab = currentChild?.is_assessment_feature_enabled === true;
   
   // Debug log
-  console.log('Assessment tab visibility check:', {
+  console.log('Layout render - Assessment tab visibility:', {
     currentChildId: currentChild?.id,
     childName: currentChild?.nickname,
     assessmentFeatureEnabled: currentChild?.is_assessment_feature_enabled,
-    showAssessmentTab
+    showAssessmentTab: showAssessmentTab
   });
 
   const navItems = [
@@ -49,7 +73,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
     { name: "Journal", path: "/journal", icon: <BookOpen className="mr-2 h-4 w-4" /> },
   ];
 
-  // Add Assessment tab conditionally
+  // Add Assessment tab conditionally using state instead of direct check
   if (showAssessmentTab) {
     navItems.push({ 
       name: "Assessment", 
