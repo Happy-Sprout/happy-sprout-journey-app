@@ -1,13 +1,13 @@
-
 import { ReactNode, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, User, Calendar, BookOpen, LogOut, Menu } from "lucide-react";
+import { Home, User, Calendar, BookOpen, LogOut, Menu, ClipboardList } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAssessment } from "@/hooks/useAssessment";
 
 type LayoutProps = {
   children: ReactNode;
@@ -21,6 +21,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { assessmentStatus } = useAssessment();
   
   // Check if the user is logged in when required
   useEffect(() => {
@@ -30,12 +31,32 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
     }
   }, [requireAuth, isLoggedIn, navigate, location.pathname]);
 
+  const currentChild = getCurrentChild();
+  const showAssessmentTab = currentChild?.is_assessment_feature_enabled === true;
+  
+  // Debug log
+  console.log('Assessment tab visibility check:', {
+    currentChildId: currentChild?.id,
+    childName: currentChild?.nickname,
+    assessmentFeatureEnabled: currentChild?.is_assessment_feature_enabled,
+    showAssessmentTab
+  });
+
   const navItems = [
     { name: "Home", path: "/dashboard", icon: <Home className="mr-2 h-4 w-4" /> },
     { name: "Profile", path: "/profile", icon: <User className="mr-2 h-4 w-4" /> },
     { name: "Daily Check-in", path: "/daily-check-in", icon: <Calendar className="mr-2 h-4 w-4" /> },
     { name: "Journal", path: "/journal", icon: <BookOpen className="mr-2 h-4 w-4" /> },
   ];
+
+  // Add Assessment tab conditionally
+  if (showAssessmentTab) {
+    navItems.push({ 
+      name: "Assessment", 
+      path: "/assessment", 
+      icon: <ClipboardList className="mr-2 h-4 w-4" /> 
+    });
+  }
 
   const handleLogout = async () => {
     await logout();

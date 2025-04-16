@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,13 +8,13 @@ import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 import Journal from "@/pages/Journal";
 import Dashboard from "@/pages/Dashboard";
-import Profile from "@/pages/Profile"; // Import directly instead of lazy loading
+import Profile from "@/pages/Profile";
 import StreakCorrection from "./pages/admin/StreakCorrection";
+import SELAssessment from "@/pages/SELAssessment";
 
 const Register = lazy(() => import("@/pages/Register"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const DailyCheckIn = lazy(() => import("@/pages/DailyCheckIn"));
-const SELAssessment = lazy(() => import("@/pages/SELAssessment"));
 const Assessment = lazy(() => import("@/pages/Assessment"));
 const CreateProfile = lazy(() => import("@/pages/CreateProfile"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
@@ -40,7 +39,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-function App() {
+const App = () => {
   return (
     <Router>
       <UserProvider>
@@ -87,6 +86,6 @@ function App() {
       </UserProvider>
     </Router>
   );
-}
+};
 
 export default App;

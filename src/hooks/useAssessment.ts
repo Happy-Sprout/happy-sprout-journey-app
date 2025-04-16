@@ -15,7 +15,7 @@ import {
 
 export const useAssessment = () => {
   const { toast } = useToast();
-  const { currentChildId } = useChildren();
+  const { currentChildId, getCurrentChild } = useChildren();
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
