@@ -1,4 +1,3 @@
-
 import { avatarOptions } from "@/constants/profileOptions";
 import { Cat, Bird, Dog, Rabbit, Sprout, User } from "lucide-react";
 import { ReactNode } from "react";
@@ -45,23 +44,23 @@ export const getAvatarColor = (avatarId?: string): string => {
  * Get the fallback icon for an avatar by its ID
  */
 export const getFallbackIcon = (avatarId?: string): ReactNode => {
-  if (!avatarId) return <Sprout stroke="currentColor" size={24} className="text-sprout-green" />;
+  if (!avatarId) return <Sprout strokeWidth={2} size={24} className="text-sprout-green" />;
   
   const avatar = avatarOptions.find(a => a.id === avatarId);
   const iconName = avatar?.icon;
   
   switch (iconName) {
     case 'sprout':
-      return <Sprout stroke="currentColor" size={24} className="text-sprout-green" />;
+      return <Sprout strokeWidth={2} size={24} className="text-sprout-green" />;
     case 'cat':
-      return <Cat stroke="currentColor" size={24} className="text-amber-700" />;
+      return <Cat strokeWidth={2} size={24} className="text-amber-700" />;
     case 'rabbit':
-      return <Rabbit stroke="currentColor" size={24} className="text-orange-500" />;
+      return <Rabbit strokeWidth={2} size={24} className="text-orange-500" />;
     case 'bird':
-      return <Bird stroke="currentColor" size={24} className="text-blue-500" />;
+      return <Bird strokeWidth={2} size={24} className="text-blue-500" />;
     case 'dog':
-      return <Dog stroke="currentColor" size={24} className="text-amber-500" />;
+      return <Dog strokeWidth={2} size={24} className="text-amber-500" />;
     default:
-      return <User stroke="currentColor" size={24} className="text-gray-500" />;
+      return <User strokeWidth={2} size={24} className="text-gray-500" />;
   }
 };
