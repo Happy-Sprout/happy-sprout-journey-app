@@ -6,13 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, CheckCircle, Award, BookOpen, Zap, Mic, MicOff, Loader2 } from "lucide-react";
+import { Clock, CheckCircle, Award, BookOpen, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { successToast, warningToast } from "@/components/ui/toast-extensions";
 import EmotionTrackingSlider from "@/components/EmotionTrackingSlider";
 import MultipleCheckboxGroup from "@/components/MultipleCheckboxGroup";
 import { XP_VALUES } from "@/types/journal";
+import SpeechInput from "@/components/SpeechInput";
 
 const emotionRegulationTechniques = [
   { value: "deep-breathing", label: "Deep Breathing", description: "Taking slow, deep breaths to calm down" },
@@ -35,11 +36,6 @@ const MindfulCheckIn = () => {
   const [techniques, setTechniques] = useState<string[]>([]);
   const [reflection, setReflection] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Speech to text state
-  const [isListening, setIsListening] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const handleTechniqueToggle = (value: string) => {
     setTechniques(prev => 
@@ -49,85 +45,8 @@ const MindfulCheckIn = () => {
     );
   };
   
-  const startSpeechRecognition = () => {
-    if (isListening) {
-      stopSpeechRecognition();
-      return;
-    }
-    
-    setIsInitializing(true);
-    
-    try {
-      // Browser support check
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        warningToast({
-          title: "Speech Recognition Not Available",
-          description: "Your browser doesn't support speech recognition."
-        });
-        setIsInitializing(false);
-        return;
-      }
-      
-      // Initialize speech recognition
-      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognitionAPI();
-      recognitionRef.current = recognition;
-      
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-      
-      recognition.onstart = () => {
-        setIsListening(true);
-        setIsInitializing(false);
-        console.log("Speech recognition started");
-      };
-      
-      recognition.onend = () => {
-        setIsListening(false);
-        console.log("Speech recognition ended");
-      };
-      
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error("Speech recognition error", event.error);
-        warningToast({
-          title: "Speech Recognition Error",
-          description: event.error === 'not-allowed' 
-            ? "Microphone access was denied. Please allow microphone access."
-            : `Error: ${event.error}`
-        });
-        setIsListening(false);
-        setIsInitializing(false);
-      };
-      
-      recognition.onresult = (event) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-        }
-        
-        console.log("Speech recognition result", transcript);
-        setReflection(transcript);
-      };
-      
-      // Start listening
-      recognition.start();
-    } catch (error) {
-      console.error("Error starting speech recognition:", error);
-      warningToast({
-        title: "Speech Recognition Error",
-        description: "Could not start speech recognition."
-      });
-      setIsListening(false);
-      setIsInitializing(false);
-    }
-  };
-  
-  const stopSpeechRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsListening(false);
+  const handleSpeechTranscript = (text: string) => {
+    setReflection(text);
   };
 
   const handleSubmit = async () => {
@@ -364,29 +283,21 @@ const MindfulCheckIn = () => {
             
             <div className="space-y-2">
               <Label htmlFor="reflection" className="text-base font-medium">Reflection</Label>
-              <div className="flex space-x-2">
+              <div className="relative">
                 <Textarea
                   id="reflection"
                   placeholder="How did this mindfulness activity make you feel? What did you notice?"
                   value={reflection}
                   onChange={(e) => setReflection(e.target.value)}
-                  className="min-h-[100px] w-full"
+                  className="min-h-[100px] w-full pr-12"
                   maxLength={2000}
                 />
-                <Button
-                  type="button"
-                  variant={isListening ? "default" : "outline"}
-                  className={`${isListening ? "bg-red-500 hover:bg-red-600" : ""}`}
-                  onClick={startSpeechRecognition}
-                >
-                  {isInitializing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isListening ? (
-                    <MicOff className="h-4 w-4" />
-                  ) : (
-                    <Mic className="h-4 w-4" />
-                  )}
-                </Button>
+                <div className="absolute top-1 right-1">
+                  <SpeechInput 
+                    onTranscript={handleSpeechTranscript} 
+                    isAppending={true}
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -395,7 +306,7 @@ const MindfulCheckIn = () => {
       
       <CardFooter className="flex justify-between">
         <Button variant="outline">Cancel</Button>
-        <Button onClick={handleSubmit} disabled={isSubmitting || isListening}>
+        <Button onClick={handleSubmit} disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : "Save Check-In"}
         </Button>
       </CardFooter>
