@@ -45,23 +45,24 @@ export const getAvatarColor = (avatarId?: string): string => {
  * Get the fallback icon for an avatar by its ID
  */
 export const getFallbackIcon = (avatarId?: string): ReactNode => {
-  if (!avatarId) return <Sprout className="h-6 w-6 text-sprout-green" />;
+  if (!avatarId) return <Sprout size={24} className="text-sprout-green" />;
   
   const avatar = avatarOptions.find(a => a.id === avatarId);
   const iconName = avatar?.icon;
   
   switch (iconName) {
     case 'sprout':
-      return <Sprout className="h-6 w-6 text-sprout-green" />;
+      return <Sprout size={24} className="text-sprout-green" />;
     case 'cat':
-      return <Cat className="h-6 w-6 text-amber-700" />;
+      return <Cat size={24} className="text-amber-700" />;
     case 'rabbit':
-      return <Rabbit className="h-6 w-6 text-orange-500" />;
+      return <Rabbit size={24} className="text-orange-500" />;
     case 'bird':
-      return <Bird className="h-6 w-6 text-blue-500" />;
+      return <Bird size={24} className="text-blue-500" />;
     case 'dog':
-      return <Dog className="h-6 w-6 text-amber-500" />;
+      return <Dog size={24} className="text-amber-500" />;
     default:
-      return <User className="h-6 w-6 text-gray-500" />;
+      return <User size={24} className="text-gray-500" />;
   }
 };
+
