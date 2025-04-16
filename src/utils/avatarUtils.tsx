@@ -1,5 +1,8 @@
 import { avatarOptions } from "@/constants/profileOptions";
-import { Cat, Bird, Dog, Rabbit, Sprout, User, Lion, Bear, Fox, Owl } from "lucide-react";
+import { 
+  Cat, Bird, Dog, Rabbit, Sprout, User, 
+  Package, Glasses, Feather, Eye 
+} from "lucide-react";
 import { ReactNode } from "react";
 
 /**
@@ -66,13 +69,13 @@ export const getFallbackIcon = (avatarId?: string): ReactNode => {
     case 'dog':
       return <Dog strokeWidth={2} size={24} className="text-amber-500" />;
     case 'bear':
-      return <Bear strokeWidth={2} size={24} className="text-brown-500" />;
+      return <Glasses strokeWidth={2} size={24} className="text-brown-500" />;
     case 'fox':
-      return <Fox strokeWidth={2} size={24} className="text-red-500" />;
+      return <Feather strokeWidth={2} size={24} className="text-red-500" />;
     case 'lion':
-      return <Lion strokeWidth={2} size={24} className="text-yellow-700" />;
+      return <Package strokeWidth={2} size={24} className="text-yellow-700" />;
     case 'owl':
-      return <Owl strokeWidth={2} size={24} className="text-gray-700" />;
+      return <Eye strokeWidth={2} size={24} className="text-gray-700" />;
     default:
       return <User strokeWidth={2} size={24} className="text-gray-500" />;
   }
