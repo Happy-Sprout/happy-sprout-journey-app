@@ -24,6 +24,7 @@ export const calculateStreak = (lastCheckInDate: string | undefined): {
   shouldIncrement: boolean 
 } => {
   if (!lastCheckInDate) {
+    // First time checking in, start streak at 1
     return { newStreak: 1, shouldIncrement: false };
   }
   
@@ -31,13 +32,16 @@ export const calculateStreak = (lastCheckInDate: string | undefined): {
   const today = new Date();
   
   if (isYesterday(lastDate)) {
+    // User checked in yesterday, streak should increment
     return { newStreak: 0, shouldIncrement: true };
   }
   
   if (isSameDay(lastDate, today)) {
+    // User already checked in today, maintain current streak
     return { newStreak: 0, shouldIncrement: false };
   }
   
+  // User missed a day (or more), streak should reset to 1 for today's check-in
   return { newStreak: 1, shouldIncrement: false };
 };
 
@@ -57,6 +61,7 @@ export const markDailyCheckInComplete = (
     
     const { newStreak, shouldIncrement } = calculateStreak(currentChild.lastCheckInDate);
     
+    // Calculate the updated streak count
     const updatedStreakCount = shouldIncrement 
       ? currentChild.streakCount + 1 
       : newStreak > 0 ? newStreak : currentChild.streakCount;
