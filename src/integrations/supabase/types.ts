@@ -339,6 +339,7 @@ export type Database = {
           gender: string | null
           grade: string
           id: string
+          is_assessment_feature_enabled: boolean
           nickname: string
           parent_id: string
           relationship_to_parent: string | null
@@ -352,6 +353,7 @@ export type Database = {
           gender?: string | null
           grade: string
           id: string
+          is_assessment_feature_enabled?: boolean
           nickname: string
           parent_id: string
           relationship_to_parent?: string | null
@@ -365,6 +367,7 @@ export type Database = {
           gender?: string | null
           grade?: string
           id?: string
+          is_assessment_feature_enabled?: boolean
           nickname?: string
           parent_id?: string
           relationship_to_parent?: string | null

@@ -44,6 +44,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Search, UserPlus, Trash2, Edit, Eye } from "lucide-react";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
 
 type Parent = {
   id: string;
@@ -65,6 +66,7 @@ type Child = {
   parent_id: string;
   parent_name?: string;
   created_at: string;
+  is_assessment_feature_enabled: boolean;
 };
 
 const UserManagement = () => {
@@ -228,7 +230,8 @@ const UserManagement = () => {
           nickname: editChildForm.nickname,
           age: editChildForm.age,
           gender: editChildForm.gender,
-          grade: editChildForm.grade
+          grade: editChildForm.grade,
+          is_assessment_feature_enabled: editChildForm.is_assessment_feature_enabled
         })
         .eq('id', selectedChild.id);
         
@@ -749,6 +752,19 @@ const UserManagement = () => {
                     id="childGrade" 
                     value={editChildForm.grade || ''} 
                     onChange={(e) => setEditChildForm(prev => ({ ...prev, grade: e.target.value }))}
+                  />
+                </div>
+                <div className="col-span-2 flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="assessmentFeature">Enable Pre/Post Assessments</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Allow this child to take SEL assessments
+                    </p>
+                  </div>
+                  <Switch 
+                    id="assessmentFeature"
+                    checked={editChildForm.is_assessment_feature_enabled || false}
+                    onCheckedChange={(checked) => setEditChildForm(prev => ({ ...prev, is_assessment_feature_enabled: checked }))}
                   />
                 </div>
               </div>

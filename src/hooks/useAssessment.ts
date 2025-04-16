@@ -30,19 +30,19 @@ export const useAssessment = () => {
     try {
       setStatusLoading(true);
       
-      // First check if feature is enabled
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('admin_settings')
-        .select('setting_value')
-        .eq('setting_key', 'is_pre_post_assessment_enabled')
+      // First check if feature is enabled for this specific child
+      const { data: childData, error: childError } = await supabase
+        .from('children')
+        .select('is_assessment_feature_enabled')
+        .eq('id', currentChildId)
         .single();
       
-      if (settingsError) {
-        console.error('Error fetching feature flag:', settingsError);
+      if (childError) {
+        console.error('Error fetching child feature flag:', childError);
         return;
       }
       
-      const enabled = settingsData?.setting_value === true;
+      const enabled = childData?.is_assessment_feature_enabled === true;
       
       if (!enabled) {
         setAssessmentStatus({
@@ -251,20 +251,20 @@ export const useAssessment = () => {
     try {
       setComparisonLoading(true);
       
-      // Check if feature is enabled
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('admin_settings')
-        .select('setting_value')
-        .eq('setting_key', 'is_pre_post_assessment_enabled')
+      // Check if feature is enabled for this specific child
+      const { data: childData, error: childError } = await supabase
+        .from('children')
+        .select('is_assessment_feature_enabled')
+        .eq('id', currentChildId)
         .single();
       
-      if (settingsError) {
-        console.error('Error fetching feature flag:', settingsError);
+      if (childError) {
+        console.error('Error fetching child feature flag:', childError);
         setComparisonData({ status: 'DISABLED' });
         return;
       }
       
-      const enabled = settingsData?.setting_value === true;
+      const enabled = childData?.is_assessment_feature_enabled === true;
       
       if (!enabled) {
         setComparisonData({ status: 'DISABLED' });

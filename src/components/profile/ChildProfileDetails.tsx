@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import { ChildProfile } from "@/contexts/UserContext";
@@ -122,6 +121,14 @@ const ChildProfileDetails = ({ profile, onEditRelationship }: ChildProfileDetail
         </div>
         <p className="text-left text-gray-700">{profile.relationshipToParent || "Not specified"}</p>
       </div>
+
+      {profile.is_assessment_feature_enabled && (
+        <div className="mt-1">
+          <span className="text-sprout-green text-sm">
+            ✓ Pre/Post SEL Assessment enabled
+          </span>
+        </div>
+      )}
     </div>
   );
 };
