@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,7 +7,8 @@ import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 import Journal from "@/pages/Journal";
-import Dashboard from "@/pages/Dashboard"; // Change to direct import instead of lazy
+import Dashboard from "@/pages/Dashboard";
+import StreakCorrection from "./pages/admin/StreakCorrection";
 
 const Register = lazy(() => import("@/pages/Register"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -73,6 +73,13 @@ function App() {
                 <Route path="notifications" element={<NotificationsManagement />} />
                 <Route path="settings" element={<SettingsManagement />} />
                 <Route path="emotional-insights-processing" element={<EmotionalInsightsProcessing />} />
+                <Route path="/admin/streak-correction" element={
+                  <AdminProtectedRoute>
+                    <AdminLayout>
+                      <StreakCorrection />
+                    </AdminLayout>
+                  </AdminProtectedRoute>
+                } />
               </Route>
               
               <Route path="*" element={<NotFound />} />

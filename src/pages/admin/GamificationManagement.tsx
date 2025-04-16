@@ -1,6 +1,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const GamificationManagement = () => {
   return (
@@ -10,6 +13,15 @@ const GamificationManagement = () => {
         <p className="text-muted-foreground">
           Configure streak rules, XP allocation, and badges
         </p>
+      </div>
+      
+      <div className="flex items-center justify-end">
+        <Link to="/admin/streak-correction">
+          <Button variant="outline" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Streak Correction Utility
+          </Button>
+        </Link>
       </div>
       
       <Tabs defaultValue="streak-rules">
