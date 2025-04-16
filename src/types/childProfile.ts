@@ -1,3 +1,4 @@
+
 export type ChildProfile = {
   id: string;
   nickname: string;
@@ -21,6 +22,7 @@ export type ChildProfile = {
   storyPreferences?: string[];
   selChallenges?: string[];
   relationshipToParent?: string;
+  is_assessment_feature_enabled?: boolean;
 };
 
 export interface ChildrenContextType {
