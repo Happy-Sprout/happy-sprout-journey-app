@@ -1,3 +1,4 @@
+
 import { avatarOptions } from "@/constants/profileOptions";
 import { Cat, Bird, Dog, Rabbit, Sprout, User } from "lucide-react";
 import { ReactNode } from "react";
@@ -10,10 +11,15 @@ export const getAvatarImage = (avatarId?: string): string | null => {
   
   // For image-based avatars from the predefined options
   const avatar = avatarOptions.find(a => a.id === avatarId);
-  if (avatar && avatar.src) {
+  
+  // Debug logging to help trace issues
+  console.log(`getAvatarImage called for ${avatarId}, found:`, avatar?.src || "no source");
+  
+  if (avatar && avatar.src && avatar.src !== '/placeholder.svg') {
     return avatar.src;
   }
   
+  // Return null for placeholder or missing images
   return null;
 };
 
@@ -63,4 +69,15 @@ export const getFallbackIcon = (avatarId?: string): ReactNode => {
     default:
       return <User strokeWidth={2} size={24} className="text-gray-500" />;
   }
+};
+
+/**
+ * Determine if an avatar ID represents an image-based avatar with a valid source
+ */
+export const hasValidImageSource = (avatarId?: string): boolean => {
+  if (!avatarId) return false;
+  if (isInitialAvatar(avatarId)) return false;
+  
+  const source = getAvatarImage(avatarId);
+  return source !== null;
 };

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { avatarOptions } from "@/constants/profileOptions";
 import { Check } from "lucide-react";
 import ReactAvatar from "react-avatar";
-import { getFallbackIcon, getAvatarColor } from "@/utils/avatarUtils";
+import { getFallbackIcon, getAvatarColor, getAvatarImage } from "@/utils/avatarUtils";
 
 interface AvatarSelectorProps {
   selectedAvatar: string;
@@ -23,6 +23,7 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
 
   // Function to handle avatar selection
   const handleAvatarSelect = (avatarId: string) => {
+    console.log("Avatar selected:", avatarId);
     setCurrentAvatar(avatarId);
     onChange(avatarId);
   };
@@ -45,6 +46,7 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
   // Debug logging to track avatar state
   console.log("AvatarSelector - Selected avatar:", selectedAvatar);
   console.log("AvatarSelector - Current avatar:", currentAvatar);
+  console.log("AvatarSelector - Available options:", avatarOptions.map(a => ({ id: a.id, src: a.src })));
 
   return (
     <div className="space-y-4">
@@ -52,34 +54,42 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {/* Animal avatars */}
-        {avatarOptions.map((avatar) => (
-          <div
-            key={avatar.id}
-            onClick={() => handleAvatarSelect(avatar.id)}
-            className={`cursor-pointer flex flex-col items-center p-3 rounded-lg transition-all hover:bg-gray-50 relative ${
-              currentAvatar === avatar.id
-                ? "bg-sprout-purple/20 border-2 border-sprout-purple shadow-sm"
-                : "bg-white border border-gray-200"
-            }`}
-          >
-            {currentAvatar === avatar.id && (
-              <div className="absolute top-1 right-1 bg-sprout-purple text-white rounded-full p-0.5">
-                <Check className="h-3 w-3" />
-              </div>
-            )}
-            <Avatar className="h-16 w-16 mb-2">
-              <AvatarImage 
-                src={avatar.src} 
-                alt={avatar.name} 
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-gray-100">
-                {getFallbackIcon(avatar.id)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-xs text-center line-clamp-1">{avatar.name}</span>
-          </div>
-        ))}
+        {avatarOptions.map((avatar) => {
+          const imageSrc = getAvatarImage(avatar.id);
+          console.log(`Avatar option ${avatar.id}:`, avatar, "Image source:", imageSrc);
+          
+          return (
+            <div
+              key={avatar.id}
+              onClick={() => handleAvatarSelect(avatar.id)}
+              className={`cursor-pointer flex flex-col items-center p-3 rounded-lg transition-all hover:bg-gray-50 relative ${
+                currentAvatar === avatar.id
+                  ? "bg-sprout-purple/20 border-2 border-sprout-purple shadow-sm"
+                  : "bg-white border border-gray-200"
+              }`}
+            >
+              {currentAvatar === avatar.id && (
+                <div className="absolute top-1 right-1 bg-sprout-purple text-white rounded-full p-0.5">
+                  <Check className="h-3 w-3" />
+                </div>
+              )}
+              <Avatar className="h-16 w-16 mb-2">
+                {imageSrc ? (
+                  <AvatarImage 
+                    src={imageSrc} 
+                    alt={avatar.name} 
+                    className="object-cover"
+                  />
+                ) : (
+                  <AvatarFallback className="bg-gray-100">
+                    {getFallbackIcon(avatar.id)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <span className="text-xs text-center line-clamp-1">{avatar.name}</span>
+            </div>
+          );
+        })}
       </div>
 
       <Label className="text-base font-medium block mt-6 mb-2">Initial-Based Avatars</Label>

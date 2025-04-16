@@ -9,7 +9,7 @@ import { Edit, Trash2, UserCheck } from "lucide-react";
 import ChildProfileDetails from "./ChildProfileDetails";
 import { motion } from "framer-motion";
 import ReactAvatar from "react-avatar";
-import { getAvatarImage, isInitialAvatar, getAvatarColor, getFallbackIcon } from "@/utils/avatarUtils";
+import { getAvatarImage, isInitialAvatar, getAvatarColor, getFallbackIcon, hasValidImageSource } from "@/utils/avatarUtils";
 
 interface ChildProfilesListProps {
   onDeleteProfile: (id: string) => void;
@@ -25,8 +25,9 @@ const ChildProfilesList = ({ onDeleteProfile, onEditRelationship }: ChildProfile
       {childProfiles.map((profile) => {
         const avatarSrc = getAvatarImage(profile.avatar);
         const isInitial = isInitialAvatar(profile.avatar);
+        const hasImage = hasValidImageSource(profile.avatar);
         
-        console.log(`Profile ${profile.id} avatar:`, profile.avatar, "Image source:", avatarSrc);
+        console.log(`Profile ${profile.id} avatar:`, profile.avatar, "Image source:", avatarSrc, "Is initial:", isInitial, "Has valid image:", hasImage);
         
         return (
           <Card key={profile.id} className={

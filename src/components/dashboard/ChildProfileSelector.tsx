@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import ReactAvatar from "react-avatar";
-import { getAvatarImage, isInitialAvatar, getAvatarColor, getFallbackIcon } from "@/utils/avatarUtils";
+import { getAvatarImage, isInitialAvatar, getAvatarColor, getFallbackIcon, hasValidImageSource } from "@/utils/avatarUtils";
 
 const ChildProfileSelector = () => {
   const { childProfiles, setCurrentChildId } = useUser();
@@ -16,8 +16,12 @@ const ChildProfileSelector = () => {
         {childProfiles.map(profile => {
           const avatarSrc = getAvatarImage(profile.avatar);
           const isInitial = isInitialAvatar(profile.avatar);
+          const hasImage = hasValidImageSource(profile.avatar);
           
-          console.log(`ChildProfileSelector - Profile ${profile.id} avatar:`, profile.avatar, "Image source:", avatarSrc);
+          console.log(`ChildProfileSelector - Profile ${profile.id} avatar:`, profile.avatar, 
+            "Image source:", avatarSrc, 
+            "Is initial:", isInitial, 
+            "Has valid image:", hasImage);
           
           return (
             <motion.div 
