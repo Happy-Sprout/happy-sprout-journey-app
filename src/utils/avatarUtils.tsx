@@ -8,7 +8,7 @@ import { GiOwl } from "react-icons/gi";
 import { GiSittingDog } from "react-icons/gi";
 import { GiCat } from "react-icons/gi";
 import { GiRabbit } from "react-icons/gi";
-import { GiFalcon } from "react-icons/gi";
+import { GiEagle } from "react-icons/gi"; // Replaced GiFalcon with GiEagle
 import { GiPlantSeed } from "react-icons/gi";
 import { ReactNode } from "react";
 
@@ -72,7 +72,7 @@ export const getFallbackIcon = (avatarId?: string): ReactNode => {
     case 'rabbit':
       return <GiRabbit size={24} className="text-orange-500" />;
     case 'bird':
-      return <GiFalcon size={24} className="text-blue-500" />;
+      return <GiEagle size={24} className="text-blue-500" />; // Use GiEagle instead of GiFalcon
     case 'dog':
       return <GiSittingDog size={24} className="text-amber-500" />;
     case 'bear':
