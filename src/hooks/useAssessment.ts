@@ -9,7 +9,8 @@ import {
   AssessmentStatusResponse, 
   AssessmentType,
   AssessmentComparisonResponse,
-  SELDimension
+  SELDimension,
+  AssessmentStatus
 } from '@/types/assessment';
 
 export const useAssessment = () => {
@@ -76,8 +77,9 @@ export const useAssessment = () => {
         console.error('Error fetching POST assessment:', postError);
       }
       
-      const preStatus = preData?.status || 'Not Started';
-      const postStatus = postData?.status || 'Not Started';
+      // Convert status strings to AssessmentStatus type
+      const preStatus = (preData?.status || 'Not Started') as AssessmentStatus;
+      const postStatus = (postData?.status || 'Not Started') as AssessmentStatus;
       
       // Determine the next assessment to take
       let nextAssessment: AssessmentType | null = null;
@@ -150,12 +152,11 @@ export const useAssessment = () => {
         .upsert({
           child_id: currentChildId,
           assessment_type: assessmentType,
-          status: 'Completed',
+          status: 'Completed' as AssessmentStatus,
           completion_date: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }, {
-          onConflict: 'child_id,assessment_type',
-          returning: 'representation'
+          onConflict: 'child_id,assessment_type'
         })
         .select()
         .single();
@@ -306,7 +307,7 @@ export const useAssessment = () => {
           status: 'POST_PENDING',
           preAssessment: {
             completionDate: preData.completion_date,
-            scores: preData.scores_by_dimension
+            scores: preData.scores_by_dimension as Record<SELDimension, number>
           }
         });
         return;
@@ -333,11 +334,11 @@ export const useAssessment = () => {
         status: 'AVAILABLE',
         preAssessment: {
           completionDate: preData.completion_date,
-          scores: preData.scores_by_dimension
+          scores: preData.scores_by_dimension as Record<SELDimension, number>
         },
         postAssessment: {
           completionDate: postData.completion_date,
-          scores: postData.scores_by_dimension
+          scores: postData.scores_by_dimension as Record<SELDimension, number>
         },
         comparison
       });
