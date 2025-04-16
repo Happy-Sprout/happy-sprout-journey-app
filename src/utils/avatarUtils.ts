@@ -1,4 +1,3 @@
-
 import { avatarOptions } from "@/constants/profileOptions";
 import { Cat, Bird, Dog, Rabbit, Sprout, User } from "lucide-react";
 import { ReactNode } from "react";
@@ -65,4 +64,3 @@ export const getFallbackIcon = (avatarId?: string): ReactNode => {
       return <User size={24} className="text-gray-500" />;
   }
 };
-
