@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { avatarOptions } from "@/constants/profileOptions";
@@ -12,6 +12,20 @@ interface AvatarSelectorProps {
 }
 
 const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
+  // Track the current selected avatar to ensure it persists in UI
+  const [currentAvatar, setCurrentAvatar] = useState(selectedAvatar);
+
+  // Update internal state when prop changes
+  useEffect(() => {
+    setCurrentAvatar(selectedAvatar);
+  }, [selectedAvatar]);
+
+  // Function to handle avatar selection
+  const handleAvatarSelect = (avatarId: string) => {
+    setCurrentAvatar(avatarId);
+    onChange(avatarId);
+  };
+  
   // Function to render the appropriate icon based on avatar type
   const getAvatarFallbackIcon = (iconName?: string) => {
     switch (iconName) {
@@ -57,6 +71,10 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
     { id: 'initial5', name: 'Initial Avatar 5', color: "#10B981" },
   ];
 
+  // Debug logging to track avatar state
+  console.log("AvatarSelector - Selected avatar:", selectedAvatar);
+  console.log("AvatarSelector - Current avatar:", currentAvatar);
+
   return (
     <div className="space-y-4">
       <Label className="text-base font-medium block">Choose Your Avatar</Label>
@@ -66,14 +84,14 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
         {avatarOptions.map((avatar) => (
           <div
             key={avatar.id}
-            onClick={() => onChange(avatar.id)}
+            onClick={() => handleAvatarSelect(avatar.id)}
             className={`cursor-pointer flex flex-col items-center p-3 rounded-lg transition-all hover:bg-gray-50 relative ${
-              selectedAvatar === avatar.id
+              currentAvatar === avatar.id
                 ? "bg-sprout-purple/20 border-2 border-sprout-purple shadow-sm"
                 : "bg-white border border-gray-200"
             }`}
           >
-            {selectedAvatar === avatar.id && (
+            {currentAvatar === avatar.id && (
               <div className="absolute top-1 right-1 bg-sprout-purple text-white rounded-full p-0.5">
                 <Check className="h-3 w-3" />
               </div>
@@ -99,21 +117,21 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
         {initialAvatars.map((avatar) => (
           <div
             key={avatar.id}
-            onClick={() => onChange(avatar.id)}
+            onClick={() => handleAvatarSelect(avatar.id)}
             className={`cursor-pointer flex flex-col items-center p-3 rounded-lg transition-all hover:bg-gray-50 relative ${
-              selectedAvatar === avatar.id
+              currentAvatar === avatar.id
                 ? "bg-sprout-purple/20 border-2 border-sprout-purple shadow-sm"
                 : "bg-white border border-gray-200"
             }`}
           >
-            {selectedAvatar === avatar.id && (
+            {currentAvatar === avatar.id && (
               <div className="absolute top-1 right-1 bg-sprout-purple text-white rounded-full p-0.5">
                 <Check className="h-3 w-3" />
               </div>
             )}
             <div className="h-16 w-16 mb-2 rounded-full overflow-hidden flex items-center justify-center">
               <ReactAvatar
-                name={getAvatarName(selectedAvatar)}
+                name={getAvatarName(currentAvatar)}
                 size="64"
                 round={true}
                 color={avatar.color}
