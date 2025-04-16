@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { avatarOptions } from "@/constants/profileOptions";
-import { Cat, Bird, Dog, Rabbit, Sprout, User, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import ReactAvatar from "react-avatar";
+import { getFallbackIcon, getAvatarColor } from "@/utils/avatarUtils";
 
 interface AvatarSelectorProps {
   selectedAvatar: string;
@@ -26,40 +27,10 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
     onChange(avatarId);
   };
   
-  // Function to render the appropriate icon based on avatar type
-  const getAvatarFallbackIcon = (iconName?: string) => {
-    switch (iconName) {
-      case 'sprout':
-        return <Sprout className="h-8 w-8 text-sprout-green" />;
-      case 'cat':
-        return <Cat className="h-8 w-8 text-amber-700" />; 
-      case 'rabbit':
-        return <Rabbit className="h-8 w-8 text-orange-500" />; 
-      case 'bird':
-        return <Bird className="h-8 w-8 text-blue-500" />;
-      case 'dog':
-        return <Dog className="h-8 w-8 text-amber-500" />;
-      default:
-        return <User className="h-8 w-8 text-gray-500" />;
-    }
-  };
-
   // Convert avatar ID to name for initial-based avatars
   const getAvatarName = (avatarId: string) => {
     const avatar = avatarOptions.find(a => a.id === avatarId);
     return avatar?.name || "Happy Sprout";
-  };
-  
-  // Get color for initial-based avatars
-  const getAvatarColor = (avatarId: string) => {
-    switch (avatarId) {
-      case 'initial1': return "#6366F1"; // Indigo
-      case 'initial2': return "#8B5CF6"; // Violet
-      case 'initial3': return "#EC4899"; // Pink
-      case 'initial4': return "#F59E0B"; // Amber
-      case 'initial5': return "#10B981"; // Emerald
-      default: return "#6366F1";
-    }
   };
 
   // Different avatar types for better variety
@@ -103,7 +74,7 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
                 className="object-cover"
               />
               <AvatarFallback className="bg-gray-100">
-                {getAvatarFallbackIcon(avatar.icon)}
+                {getFallbackIcon(avatar.id)}
               </AvatarFallback>
             </Avatar>
             <span className="text-xs text-center line-clamp-1">{avatar.name}</span>

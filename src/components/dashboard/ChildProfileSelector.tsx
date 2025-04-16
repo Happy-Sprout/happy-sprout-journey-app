@@ -3,57 +3,11 @@ import { useUser } from "@/contexts/UserContext";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { avatarOptions } from "@/constants/profileOptions";
-import { Cat, Bird, Dog, Rabbit, Sprout, User } from "lucide-react";
 import ReactAvatar from "react-avatar";
+import { getAvatarImage, isInitialAvatar, getAvatarColor, getFallbackIcon } from "@/utils/avatarUtils";
 
 const ChildProfileSelector = () => {
   const { childProfiles, setCurrentChildId } = useUser();
-
-  const getAvatarImage = (avatarId?: string) => {
-    if (!avatarId) return null;
-    const avatar = avatarOptions.find(a => a.id === avatarId);
-    return avatar ? avatar.src : null;
-  };
-
-  const isInitialAvatar = (avatarId?: string) => {
-    return avatarId?.startsWith('initial') || false;
-  };
-
-  const getAvatarColor = (avatarId?: string) => {
-    if (!avatarId || !avatarId.startsWith('initial')) return "#6366F1";
-    
-    switch (avatarId) {
-      case 'initial1': return "#6366F1"; // Indigo
-      case 'initial2': return "#8B5CF6"; // Violet
-      case 'initial3': return "#EC4899"; // Pink
-      case 'initial4': return "#F59E0B"; // Amber
-      case 'initial5': return "#10B981"; // Emerald
-      default: return "#6366F1";
-    }
-  };
-
-  const getFallbackIcon = (avatarId?: string) => {
-    if (!avatarId) return <Sprout className="h-6 w-6 text-sprout-green" />;
-    
-    const avatar = avatarOptions.find(a => a.id === avatarId);
-    const iconName = avatar?.icon;
-    
-    switch (iconName) {
-      case 'sprout':
-        return <Sprout className="h-6 w-6 text-sprout-green" />;
-      case 'cat':
-        return <Cat className="h-6 w-6 text-amber-700" />;
-      case 'rabbit':
-        return <Rabbit className="h-6 w-6 text-orange-500" />;
-      case 'bird':
-        return <Bird className="h-6 w-6 text-blue-500" />;
-      case 'dog':
-        return <Dog className="h-6 w-6 text-amber-500" />;
-      default:
-        return <User className="h-6 w-6 text-gray-500" />;
-    }
-  };
 
   return (
     <div className="mb-8 sprout-card">
