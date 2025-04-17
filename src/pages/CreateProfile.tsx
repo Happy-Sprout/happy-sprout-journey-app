@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,9 @@ const CreateProfile = () => {
   const [step2Attempted, setStep2Attempted] = useState(false);
   const [step3Attempted, setStep3Attempted] = useState(false);
   
+  // Added a flag to track whether we've attempted to submit the form
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  
   const interestOptions: Option[] = [
     { value: "art", label: "Art", icon: "🎨" },
     { value: "music", label: "Music", icon: "🎵" },
@@ -94,6 +98,11 @@ const CreateProfile = () => {
       setAge(calculatedAge);
     }
   }, [dateOfBirth, calculateAgeFromDOB]);
+  
+  // Reset the form submitted state when changing steps
+  useEffect(() => {
+    setFormSubmitted(false);
+  }, [currentStep]);
   
   const toggleInterest = useCallback((value: string) => {
     if (value === "other") {
@@ -182,6 +191,7 @@ const CreateProfile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStep3Attempted(true);
+    setFormSubmitted(true);
     
     if (selectedInterests.length === 0 || selectedStoryPreferences.length === 0) {
       toast({
@@ -325,9 +335,10 @@ const CreateProfile = () => {
     </div>
   );
   
+  // Only show validation errors if we've attempted to submit the form or move to the next step
   const showStep1Errors = step1Attempted && (!nickname || !dateOfBirth || !grade);
   const showStep2Errors = step2Attempted && (selectedLearningStyles.length === 0 || selectedSELStrengths.length === 0);
-  const showStep3Errors = step3Attempted && (selectedInterests.length === 0 || selectedStoryPreferences.length === 0);
+  const showStep3Errors = (step3Attempted || formSubmitted) && (selectedInterests.length === 0 || selectedStoryPreferences.length === 0);
   
   return (
     <Layout requireAuth>
