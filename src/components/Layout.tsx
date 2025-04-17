@@ -29,7 +29,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
     }
   }, [requireAuth, isLoggedIn, navigate, location.pathname]);
 
-  const currentChild = getCurrentChild();
+  const currentChild = getCurrentChild?.();
   
   // Debug log
   console.log('Layout render - Current child:', currentChild?.nickname);
@@ -132,11 +132,11 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
               <div className="mt-auto">
                 <div className="p-4 bg-sprout-cream rounded-xl border border-sprout-orange/20 shadow-sm">
                   <div className="text-sm font-medium text-center">
-                    {getCurrentChild() ? (
+                    {currentChild ? (
                       <>
-                        <div className="font-bold text-sprout-purple">{getCurrentChild()?.nickname}</div>
-                        <div className="text-xs text-gray-500 mt-1">XP: {getCurrentChild()?.xpPoints || 0}</div>
-                        <div className="text-xs text-gray-500">Streak: {getCurrentChild()?.streakCount || 0} days</div>
+                        <div className="font-bold text-sprout-purple">{currentChild.nickname}</div>
+                        <div className="text-xs text-gray-500 mt-1">XP: {currentChild.xpPoints || 0}</div>
+                        <div className="text-xs text-gray-500">Streak: {currentChild.streakCount || 0} days</div>
                       </>
                     ) : (
                       <div className="text-gray-500">No active profile</div>
