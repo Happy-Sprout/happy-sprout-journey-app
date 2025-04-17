@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,6 +61,7 @@ const Assessment = () => {
   };
 
   const handleTakeAssessment = () => {
+    setActiveTab('take-assessment');
     setShowAssessmentForm(true);
   };
 
@@ -177,7 +179,7 @@ const Assessment = () => {
             </TabsContent>
             
             <TabsContent value="progress">
-              <AssessmentComparison />
+              <AssessmentComparison onStartAssessment={handleTakeAssessment} />
             </TabsContent>
           </Tabs>
         )}
