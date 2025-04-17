@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -56,7 +55,6 @@ const CreateProfile = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
   
-  // Add validation state trackers
   const [step1Attempted, setStep1Attempted] = useState(false);
   const [step2Attempted, setStep2Attempted] = useState(false);
   const [step3Attempted, setStep3Attempted] = useState(false);
@@ -97,7 +95,6 @@ const CreateProfile = () => {
     }
   }, [dateOfBirth, calculateAgeFromDOB]);
   
-  // Use useCallback to prevent recreating these functions on every render
   const toggleInterest = useCallback((value: string) => {
     if (value === "other") {
       setShowOtherInterests(prev => {
@@ -245,7 +242,6 @@ const CreateProfile = () => {
     }
   };
   
-  // Use a memoized render for interest items to prevent unnecessary re-renders
   const renderInterestItems = () => (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
       {interestOptions.map(option => (
@@ -262,7 +258,6 @@ const CreateProfile = () => {
             <Checkbox 
               id={`interest-${option.value}`}
               checked={selectedInterests.includes(option.value)}
-              // Make this a simple event handler that doesn't directly update state
               onCheckedChange={() => {}}
             />
           </div>
@@ -275,7 +270,6 @@ const CreateProfile = () => {
     </div>
   );
   
-  // Similarly, create memoized renders for other checkbox groups
   const renderStoryItems = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {storyOptions.map(option => (
@@ -292,7 +286,6 @@ const CreateProfile = () => {
             <Checkbox 
               id={`story-${option.value}`}
               checked={selectedStoryPreferences.includes(option.value)}
-              // Make this a simple event handler that doesn't directly update state
               onCheckedChange={() => {}}
             />
           </div>
@@ -321,7 +314,6 @@ const CreateProfile = () => {
             <Checkbox 
               id={`challenge-${option.value}`}
               checked={selectedChallenges.includes(option.value)}
-              // Make this a simple event handler that doesn't directly update state
               onCheckedChange={() => {}}
             />
           </div>
@@ -333,7 +325,6 @@ const CreateProfile = () => {
     </div>
   );
   
-  // Check if we should show validation errors based on attempt state
   const showStep1Errors = step1Attempted && (!nickname || !dateOfBirth || !grade);
   const showStep2Errors = step2Attempted && (selectedLearningStyles.length === 0 || selectedSELStrengths.length === 0);
   const showStep3Errors = step3Attempted && (selectedInterests.length === 0 || selectedStoryPreferences.length === 0);
