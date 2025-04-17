@@ -19,6 +19,7 @@ interface DatePickerFieldProps {
   required?: boolean;
   id?: string;
   maxDate?: Date;
+  error?: string;  // Add the error prop to the interface
 }
 
 const DatePickerField = ({
@@ -28,6 +29,7 @@ const DatePickerField = ({
   required = false,
   id = "dob",
   maxDate = new Date(),
+  error,  // Add error to destructured props
 }: DatePickerFieldProps) => {
   // Convert string date to Date object for the calendar
   const [date, setDate] = useState<Date | undefined>(
@@ -73,7 +75,8 @@ const DatePickerField = ({
             variant="outline"
             className={cn(
               "w-full justify-start text-left font-normal",
-              !date && "text-muted-foreground"
+              !date && "text-muted-foreground",
+              error && "border-red-500" // Add red border when there's an error
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -100,6 +103,9 @@ const DatePickerField = ({
           Selected: {format(date, "MMMM d, yyyy")}
         </p>
       )}
+      
+      {/* Display error message if provided */}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>
   );
 };
