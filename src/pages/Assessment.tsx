@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 const Assessment = () => {
   const { currentChildId, getCurrentChild } = useChildren();
@@ -18,16 +18,16 @@ const Assessment = () => {
   const { assessmentStatus, statusLoading, checkAssessmentStatus } = useAssessment();
   const [activeTab, setActiveTab] = useState<string>('take-assessment');
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(false);
-  
-  // Load feature status when component mounts or child changes
+  const [showAssessmentForm, setShowAssessmentForm] = useState(false);
+
   useEffect(() => {
     if (currentChildId) {
       checkAssessmentStatus();
       loadFeatureStatus();
+      setShowAssessmentForm(false);
     }
   }, [currentChildId, checkAssessmentStatus]);
-  
-  // Get feature status from database
+
   const loadFeatureStatus = async () => {
     if (!currentChildId) return;
     
@@ -48,7 +48,6 @@ const Assessment = () => {
         featureEnabled: data.is_assessment_feature_enabled
       });
       
-      // For Akash, always default to true for testing
       if (data.nickname === 'Akash') {
         setIsFeatureEnabled(true);
         return;
@@ -59,14 +58,19 @@ const Assessment = () => {
       console.error('Error loading feature status:', error);
     }
   };
-  
+
+  const handleTakeAssessment = () => {
+    setShowAssessmentForm(true);
+  };
+
   const handleAssessmentComplete = () => {
     checkAssessmentStatus();
     setActiveTab('progress');
+    setShowAssessmentForm(false);
   };
-  
+
   const currentChild = getCurrentChild();
-  
+
   if (!currentChildId) {
     return (
       <Layout requireAuth>
@@ -80,7 +84,7 @@ const Assessment = () => {
       </Layout>
     );
   }
-  
+
   if (statusLoading) {
     return (
       <Layout requireAuth>
@@ -96,7 +100,7 @@ const Assessment = () => {
       </Layout>
     );
   }
-  
+
   return (
     <Layout requireAuth>
       <div className="container max-w-5xl mx-auto px-4 py-6">
@@ -132,7 +136,7 @@ const Assessment = () => {
                     View your progress in the Progress Report tab.
                   </AlertDescription>
                 </Alert>
-              ) : (
+              ) : showAssessmentForm ? (
                 <>
                   <div className="bg-sprout-green/5 border border-sprout-green/20 rounded-lg p-4 mb-6">
                     <h2 className="text-xl font-semibold text-sprout-green mb-2">
@@ -150,6 +154,25 @@ const Assessment = () => {
                     onComplete={handleAssessmentComplete}
                   />
                 </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
+                  <Alert variant="default" className="max-w-lg">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription className="text-base">
+                      {assessmentStatus.nextAssessment === 'PRE' 
+                        ? 'You need to complete the Pre-Assessment before you can see comparison data.'
+                        : 'You need to complete the Post-Assessment to measure your growth.'}
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <Button 
+                    onClick={handleTakeAssessment} 
+                    size="lg"
+                    className="mt-4"
+                  >
+                    Take {assessmentStatus.nextAssessment === 'PRE' ? 'Pre' : 'Post'}-Assessment
+                  </Button>
+                </div>
               )}
             </TabsContent>
             
