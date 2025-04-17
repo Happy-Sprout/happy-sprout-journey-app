@@ -15,6 +15,7 @@ interface MultipleCheckboxGroupProps {
   onChange: (value: string) => void;
   label: string;
   required?: boolean;
+  error?: string;
 }
 
 const MultipleCheckboxGroup = ({
@@ -23,6 +24,7 @@ const MultipleCheckboxGroup = ({
   onChange,
   label,
   required = false,
+  error,
 }: MultipleCheckboxGroupProps) => {
   // Use useCallback to prevent recreating the function on each render
   const toggleOption = useCallback((value: string) => {
@@ -41,7 +43,7 @@ const MultipleCheckboxGroup = ({
             className={`flex items-start space-x-3 p-3 rounded-lg border cursor-pointer transition ${
               selectedValues.includes(option.value)
                 ? "bg-sprout-purple/10 border-sprout-purple"
-                : "bg-white hover:bg-gray-50"
+                : error ? "border-red-200 hover:bg-gray-50" : "bg-white hover:bg-gray-50"
             }`}
             onClick={() => toggleOption(option.value)}
             role="button"
@@ -73,6 +75,7 @@ const MultipleCheckboxGroup = ({
           </div>
         ))}
       </div>
+      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
 };

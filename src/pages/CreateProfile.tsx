@@ -56,6 +56,11 @@ const CreateProfile = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
   
+  // Add validation state trackers
+  const [step1Attempted, setStep1Attempted] = useState(false);
+  const [step2Attempted, setStep2Attempted] = useState(false);
+  const [step3Attempted, setStep3Attempted] = useState(false);
+  
   const interestOptions: Option[] = [
     { value: "art", label: "Art", icon: "🎨" },
     { value: "music", label: "Music", icon: "🎵" },
@@ -149,6 +154,7 @@ const CreateProfile = () => {
   
   const nextStep = () => {
     if (currentStep === 1) {
+      setStep1Attempted(true);
       if (!nickname || !dateOfBirth || !grade) {
         toast({
           title: "Missing information",
@@ -158,6 +164,7 @@ const CreateProfile = () => {
         return;
       }
     } else if (currentStep === 2) {
+      setStep2Attempted(true);
       if (selectedLearningStyles.length === 0 || selectedSELStrengths.length === 0) {
         toast({
           title: "Missing information",
@@ -177,6 +184,7 @@ const CreateProfile = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setStep3Attempted(true);
     
     if (selectedInterests.length === 0 || selectedStoryPreferences.length === 0) {
       toast({
@@ -325,6 +333,11 @@ const CreateProfile = () => {
     </div>
   );
   
+  // Check if we should show validation errors based on attempt state
+  const showStep1Errors = step1Attempted && (!nickname || !dateOfBirth || !grade);
+  const showStep2Errors = step2Attempted && (selectedLearningStyles.length === 0 || selectedSELStrengths.length === 0);
+  const showStep3Errors = step3Attempted && (selectedInterests.length === 0 || selectedStoryPreferences.length === 0);
+  
   return (
     <Layout requireAuth>
       <div className="max-w-3xl mx-auto py-6 px-4">
@@ -376,9 +389,12 @@ const CreateProfile = () => {
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     required
-                    className="sprout-input"
+                    className={`sprout-input ${showStep1Errors && !nickname ? "border-red-500" : ""}`}
                     placeholder="Your name in the app"
                   />
+                  {showStep1Errors && !nickname && (
+                    <p className="text-red-500 text-sm">Please enter a nickname</p>
+                  )}
                 </div>
 
                 <AvatarSelector 
@@ -392,6 +408,7 @@ const CreateProfile = () => {
                   onChange={setDateOfBirth}
                   required={true}
                   maxDate={new Date()}
+                  error={showStep1Errors && !dateOfBirth ? "Please select a date of birth" : ""}
                 />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -415,8 +432,15 @@ const CreateProfile = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="grade">Grade Level <span className="text-red-500">*</span></Label>
-                    <Select value={grade} onValueChange={setGrade} required>
-                      <SelectTrigger id="grade" className="sprout-input">
+                    <Select 
+                      value={grade} 
+                      onValueChange={setGrade} 
+                      required
+                    >
+                      <SelectTrigger 
+                        id="grade" 
+                        className={`sprout-input ${showStep1Errors && !grade ? "border-red-500" : ""}`}
+                      >
                         <SelectValue placeholder="Select grade level" />
                       </SelectTrigger>
                       <SelectContent>
@@ -427,6 +451,9 @@ const CreateProfile = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {showStep1Errors && !grade && (
+                      <p className="text-red-500 text-sm">Please select a grade level</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -443,6 +470,7 @@ const CreateProfile = () => {
                     selectedValues={selectedLearningStyles}
                     onChange={toggleLearningStyle}
                     required={true}
+                    error={showStep2Errors && selectedLearningStyles.length === 0 ? "Please select at least one learning style" : ""}
                   />
                   
                   <MultipleCheckboxGroup
@@ -451,6 +479,7 @@ const CreateProfile = () => {
                     selectedValues={selectedSELStrengths}
                     onChange={toggleSELStrength}
                     required={true}
+                    error={showStep2Errors && selectedSELStrengths.length === 0 ? "Please select at least one SEL strength" : ""}
                   />
                 </div>
               </div>
@@ -466,6 +495,10 @@ const CreateProfile = () => {
                       What are your interests and hobbies? <span className="text-red-500">*</span>
                     </Label>
                     {renderInterestItems()}
+                    
+                    {showStep3Errors && selectedInterests.length === 0 && (
+                      <p className="text-red-500 text-sm mt-2">Please select at least one interest</p>
+                    )}
                     
                     {showOtherInterests && (
                       <div className="mt-3">
@@ -488,6 +521,10 @@ const CreateProfile = () => {
                       What kind of stories or characters do you enjoy? <span className="text-red-500">*</span>
                     </Label>
                     {renderStoryItems()}
+                    
+                    {showStep3Errors && selectedStoryPreferences.length === 0 && (
+                      <p className="text-red-500 text-sm mt-2">Please select at least one story preference</p>
+                    )}
                   </div>
                   
                   <div>
