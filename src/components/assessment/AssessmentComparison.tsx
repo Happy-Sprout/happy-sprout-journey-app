@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useAssessment } from '@/hooks/useAssessment';
 import { Button } from "@/components/ui/button";
@@ -138,7 +137,18 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
       post: item.post,
     }));
 
-    // Calculate averages
+    // Calculate overall change
+    const preScores = Object.values(comparisonData.preAssessment!.scores);
+    const postScores = Object.values(comparisonData.postAssessment!.scores);
+    
+    const preAverage = preScores.reduce((sum, score) => sum + score, 0) / preScores.length;
+    const postAverage = postScores.reduce((sum, score) => sum + score, 0) / postScores.length;
+    
+    const overallChange = preAverage === 0 
+      ? (postAverage > 0 ? 100 : 0)
+      : Math.round(((postAverage - preAverage) / preAverage) * 100);
+
+    // Calculate other metrics (keep existing calculations)
     const averagePre = Math.round(chartData.reduce((acc, item) => acc + item.pre, 0) / chartData.length);
     const averagePost = Math.round(chartData.reduce((acc, item) => acc + item.post, 0) / chartData.length);
     const averageChange = averagePost - averagePre;
@@ -164,38 +174,60 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
 
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-purple-700">SEL Assessment Progress</CardTitle>
-            <p className="text-sm text-gray-600">
-              Comparing Pre-Assessment ({format(new Date(comparisonData.preAssessment!.completionDate), 'MMMM d, yyyy')}) with 
-              Post-Assessment ({format(new Date(comparisonData.postAssessment!.completionDate), 'MMMM d, yyyy')})
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="dimension"
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Bar dataKey="pre" name="Pre-Assessment" fill="#8884d8" />
-                  <Bar dataKey="post" name="Post-Assessment" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Overall Change Card */}
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-purple-700">Overall Growth</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center p-6">
+                <div className="w-32 h-32 rounded-full border-4 border-purple-200 flex items-center justify-center bg-white">
+                  <div className="text-center">
+                    <p className={`text-3xl font-bold ${overallChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {overallChange > 0 ? '+' : ''}{overallChange}%
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">Change</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Main Chart Card */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-purple-700">SEL Assessment Progress</CardTitle>
+              <p className="text-sm text-gray-600">
+                Comparing Pre-Assessment ({format(new Date(comparisonData.preAssessment!.completionDate), 'MMMM d, yyyy')}) with 
+                Post-Assessment ({format(new Date(comparisonData.postAssessment!.completionDate), 'MMMM d, yyyy')})
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="dimension"
+                      angle={-45}
+                      textAnchor="end"
+                      height={100}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Bar dataKey="pre" name="Pre-Assessment" fill="#8884d8" />
+                    <Bar dataKey="post" name="Post-Assessment" fill="#82ca9d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>
