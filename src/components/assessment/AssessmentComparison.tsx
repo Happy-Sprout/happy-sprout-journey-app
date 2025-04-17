@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAssessment } from '@/hooks/useAssessment';
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from 'date-fns';
@@ -26,8 +26,14 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
   const {
     comparisonData,
     comparisonLoading,
-    assessmentStatus
+    assessmentStatus,
+    fetchComparisonData
   } = useAssessment();
+
+  // Call fetchComparisonData when the component mounts
+  useEffect(() => {
+    fetchComparisonData();
+  }, [fetchComparisonData]);
 
   if (comparisonLoading) {
     return (
@@ -268,11 +274,15 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
     );
   }
 
+  // Handle disabled status or any other cases
   return (
     <Alert>
       <Info className="h-4 w-4" />
+      <AlertTitle>Assessment Status</AlertTitle>
       <AlertDescription>
-        This feature is not currently available or is disabled.
+        {comparisonData.status === 'DISABLED' 
+          ? "This feature is not currently available or is disabled."
+          : "Unable to display assessment data. Please try again later."}
       </AlertDescription>
     </Alert>
   );
