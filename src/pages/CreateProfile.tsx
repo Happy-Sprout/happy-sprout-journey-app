@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import { Check } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
 import { 
   Select,
   SelectContent,
@@ -93,47 +92,53 @@ const CreateProfile = () => {
     }
   }, [dateOfBirth, calculateAgeFromDOB]);
   
-  const toggleInterest = (value: string) => {
+  // Use useCallback to prevent recreating these functions on every render
+  const toggleInterest = useCallback((value: string) => {
     if (value === "other") {
-      setShowOtherInterests(!showOtherInterests);
-      if (selectedInterests.includes("other")) {
-        setSelectedInterests(prev => 
-          prev.filter(i => i !== "other")
-        );
-        setOtherInterests("");
-      } else {
-        setSelectedInterests(prev => [...prev, "other"]);
-      }
+      setShowOtherInterests(prev => {
+        const newShowState = !prev;
+        if (!newShowState) {
+          setSelectedInterests(prevInterests => 
+            prevInterests.filter(i => i !== "other")
+          );
+          setOtherInterests("");
+        } else {
+          setSelectedInterests(prevInterests => 
+            prevInterests.includes("other") ? prevInterests : [...prevInterests, "other"]
+          );
+        }
+        return newShowState;
+      });
     } else {
       setSelectedInterests(prev => 
         prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
       );
     }
-  };
+  }, []);
   
-  const toggleStoryPreference = (value: string) => {
+  const toggleStoryPreference = useCallback((value: string) => {
     setSelectedStoryPreferences(prev => 
       prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
     );
-  };
+  }, []);
   
-  const toggleChallenge = (value: string) => {
+  const toggleChallenge = useCallback((value: string) => {
     setSelectedChallenges(prev => 
       prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
     );
-  };
+  }, []);
 
-  const toggleLearningStyle = (value: string) => {
+  const toggleLearningStyle = useCallback((value: string) => {
     setSelectedLearningStyles(prev => 
       prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
     );
-  };
+  }, []);
 
-  const toggleSELStrength = (value: string) => {
+  const toggleSELStrength = useCallback((value: string) => {
     setSelectedSELStrengths(prev => 
       prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]
     );
-  };
+  }, []);
   
   const parseOtherInterests = () => {
     if (!otherInterests) return [];
@@ -231,6 +236,94 @@ const CreateProfile = () => {
       });
     }
   };
+  
+  // Use a memoized render for interest items to prevent unnecessary re-renders
+  const renderInterestItems = () => (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {interestOptions.map(option => (
+        <div
+          key={option.value}
+          className={`flex items-center p-3 rounded-lg border cursor-pointer transition ${
+            selectedInterests.includes(option.value) 
+              ? "bg-sprout-purple/10 border-sprout-purple" 
+              : "bg-white hover:bg-gray-50"
+          }`}
+          onClick={() => toggleInterest(option.value)}
+        >
+          <div className="mr-2">
+            <Checkbox 
+              id={`interest-${option.value}`}
+              checked={selectedInterests.includes(option.value)}
+              // Make this a simple event handler that doesn't directly update state
+              onCheckedChange={() => {}}
+            />
+          </div>
+          <label htmlFor={`interest-${option.value}`} className="cursor-pointer flex-1">
+            {option.icon && <span className="mr-2">{option.icon}</span>}
+            {option.label}
+          </label>
+        </div>
+      ))}
+    </div>
+  );
+  
+  // Similarly, create memoized renders for other checkbox groups
+  const renderStoryItems = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {storyOptions.map(option => (
+        <div
+          key={option.value}
+          className={`flex items-center p-3 rounded-lg border cursor-pointer transition ${
+            selectedStoryPreferences.includes(option.value) 
+              ? "bg-sprout-purple/10 border-sprout-purple" 
+              : "bg-white hover:bg-gray-50"
+          }`}
+          onClick={() => toggleStoryPreference(option.value)}
+        >
+          <div className="mr-2">
+            <Checkbox 
+              id={`story-${option.value}`}
+              checked={selectedStoryPreferences.includes(option.value)}
+              // Make this a simple event handler that doesn't directly update state
+              onCheckedChange={() => {}}
+            />
+          </div>
+          <label htmlFor={`story-${option.value}`} className="cursor-pointer flex-1">
+            {option.icon && <span className="mr-2">{option.icon}</span>}
+            {option.label}
+          </label>
+        </div>
+      ))}
+    </div>
+  );
+  
+  const renderChallengeItems = () => (
+    <div className="space-y-3">
+      {challengeOptions.map(option => (
+        <div
+          key={option.value}
+          className={`flex items-center p-3 rounded-lg border cursor-pointer transition ${
+            selectedChallenges.includes(option.value) 
+              ? "bg-sprout-purple/10 border-sprout-purple" 
+              : "bg-white hover:bg-gray-50"
+          }`}
+          onClick={() => toggleChallenge(option.value)}
+        >
+          <div className="mr-2">
+            <Checkbox 
+              id={`challenge-${option.value}`}
+              checked={selectedChallenges.includes(option.value)}
+              // Make this a simple event handler that doesn't directly update state
+              onCheckedChange={() => {}}
+            />
+          </div>
+          <label htmlFor={`challenge-${option.value}`} className="cursor-pointer flex-1">
+            {option.label}
+          </label>
+        </div>
+      ))}
+    </div>
+  );
   
   return (
     <Layout requireAuth>
@@ -372,30 +465,7 @@ const CreateProfile = () => {
                     <Label className="text-base font-medium block mb-3">
                       What are your interests and hobbies? <span className="text-red-500">*</span>
                     </Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {interestOptions.map(option => (
-                        <div
-                          key={option.value}
-                          className={`flex items-center p-3 rounded-lg border cursor-pointer transition ${
-                            selectedInterests.includes(option.value) 
-                              ? "bg-sprout-purple/10 border-sprout-purple" 
-                              : "bg-white hover:bg-gray-50"
-                          }`}
-                          onClick={() => toggleInterest(option.value)}
-                        >
-                          <Checkbox 
-                            id={`interest-${option.value}`}
-                            checked={selectedInterests.includes(option.value)}
-                            onCheckedChange={() => toggleInterest(option.value)}
-                            className="mr-2"
-                          />
-                          <label htmlFor={`interest-${option.value}`} className="cursor-pointer flex-1">
-                            {option.icon && <span className="mr-2">{option.icon}</span>}
-                            {option.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
+                    {renderInterestItems()}
                     
                     {showOtherInterests && (
                       <div className="mt-3">
@@ -417,59 +487,14 @@ const CreateProfile = () => {
                     <Label className="text-base font-medium block mb-3">
                       What kind of stories or characters do you enjoy? <span className="text-red-500">*</span>
                     </Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {storyOptions.map(option => (
-                        <div
-                          key={option.value}
-                          className={`flex items-center p-3 rounded-lg border cursor-pointer transition ${
-                            selectedStoryPreferences.includes(option.value) 
-                              ? "bg-sprout-purple/10 border-sprout-purple" 
-                              : "bg-white hover:bg-gray-50"
-                          }`}
-                          onClick={() => toggleStoryPreference(option.value)}
-                        >
-                          <Checkbox 
-                            id={`story-${option.value}`}
-                            checked={selectedStoryPreferences.includes(option.value)}
-                            onCheckedChange={() => toggleStoryPreference(option.value)}
-                            className="mr-2"
-                          />
-                          <label htmlFor={`story-${option.value}`} className="cursor-pointer flex-1">
-                            {option.icon && <span className="mr-2">{option.icon}</span>}
-                            {option.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
+                    {renderStoryItems()}
                   </div>
                   
                   <div>
                     <Label className="text-base font-medium block mb-3">
                       What SEL challenges do you currently experience? (Optional)
                     </Label>
-                    <div className="space-y-3">
-                      {challengeOptions.map(option => (
-                        <div
-                          key={option.value}
-                          className={`flex items-center p-3 rounded-lg border cursor-pointer transition ${
-                            selectedChallenges.includes(option.value) 
-                              ? "bg-sprout-purple/10 border-sprout-purple" 
-                              : "bg-white hover:bg-gray-50"
-                          }`}
-                          onClick={() => toggleChallenge(option.value)}
-                        >
-                          <Checkbox 
-                            id={`challenge-${option.value}`}
-                            checked={selectedChallenges.includes(option.value)}
-                            onCheckedChange={() => toggleChallenge(option.value)}
-                            className="mr-2"
-                          />
-                          <label htmlFor={`challenge-${option.value}`} className="cursor-pointer flex-1">
-                            {option.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
+                    {renderChallengeItems()}
                   </div>
                 </div>
               </div>

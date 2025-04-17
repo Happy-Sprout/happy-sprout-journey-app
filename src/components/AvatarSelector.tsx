@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { avatarOptions } from "@/constants/profileOptions";
@@ -13,20 +13,24 @@ interface AvatarSelectorProps {
 }
 
 const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
-  // Track the current selected avatar to ensure it persists in UI
+  // Use local state to maintain UI consistency
   const [currentAvatar, setCurrentAvatar] = useState(selectedAvatar);
 
-  // Update internal state when prop changes
+  // Update internal state when prop changes, but in a controlled way
   useEffect(() => {
-    setCurrentAvatar(selectedAvatar);
-  }, [selectedAvatar]);
+    if (selectedAvatar !== currentAvatar) {
+      setCurrentAvatar(selectedAvatar);
+    }
+  }, [selectedAvatar, currentAvatar]);
 
-  // Function to handle avatar selection
-  const handleAvatarSelect = (avatarId: string) => {
-    console.log("Avatar selected:", avatarId);
-    setCurrentAvatar(avatarId);
-    onChange(avatarId);
-  };
+  // Memoize handler to prevent recreating on every render
+  const handleAvatarSelect = useCallback((avatarId: string) => {
+    if (avatarId !== currentAvatar) {
+      console.log("Avatar selected:", avatarId);
+      setCurrentAvatar(avatarId);
+      onChange(avatarId);
+    }
+  }, [currentAvatar, onChange]);
   
   // Convert avatar ID to name for initial-based avatars
   const getAvatarName = (avatarId: string) => {
@@ -43,11 +47,6 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
     { id: 'initial5', name: 'Initial Avatar 5', color: "#10B981" },
   ];
 
-  // Debug logging to track avatar state
-  console.log("AvatarSelector - Selected avatar:", selectedAvatar);
-  console.log("AvatarSelector - Current avatar:", currentAvatar);
-  console.log("AvatarSelector - Available options:", avatarOptions.map(a => ({ id: a.id, src: a.src })));
-
   return (
     <div className="space-y-4">
       <Label className="text-base font-medium block">Choose Your Avatar</Label>
@@ -56,7 +55,6 @@ const AvatarSelector = ({ selectedAvatar, onChange }: AvatarSelectorProps) => {
         {/* Animal avatars */}
         {avatarOptions.map((avatar) => {
           const imageSrc = getAvatarImage(avatar.id);
-          console.log(`Avatar option ${avatar.id}:`, avatar, "Image source:", imageSrc);
           
           return (
             <div

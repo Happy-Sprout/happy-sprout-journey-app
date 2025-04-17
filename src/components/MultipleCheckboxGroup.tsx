@@ -1,6 +1,7 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { useCallback } from "react";
 
 type Option = {
   value: string;
@@ -23,9 +24,10 @@ const MultipleCheckboxGroup = ({
   label,
   required = false,
 }: MultipleCheckboxGroupProps) => {
-  const toggleOption = (value: string) => {
+  // Use useCallback to prevent recreating the function on each render
+  const toggleOption = useCallback((value: string) => {
     onChange(value);
-  };
+  }, [onChange]);
 
   return (
     <div className="space-y-3">
@@ -52,12 +54,14 @@ const MultipleCheckboxGroup = ({
             }}
             aria-checked={selectedValues.includes(option.value)}
           >
-            <Checkbox
-              id={`option-${option.value}`}
-              checked={selectedValues.includes(option.value)}
-              onCheckedChange={() => toggleOption(option.value)}
-              className="mt-1"
-            />
+            <div className="mt-1">
+              <Checkbox
+                id={`option-${option.value}`}
+                checked={selectedValues.includes(option.value)}
+                // Use an inline function that doesn't call setState directly
+                onCheckedChange={() => toggleOption(option.value)}
+              />
+            </div>
             <div className="text-left">
               <Label htmlFor={`option-${option.value}`} className="font-medium cursor-pointer text-left">
                 {option.label}
