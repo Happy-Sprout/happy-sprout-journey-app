@@ -1,9 +1,8 @@
-
 import { ReactNode, useEffect, useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, User, Calendar, BookOpen, LogOut, Menu, ClipboardList } from "lucide-react";
+import { Home, User, Calendar, LogOut, Menu, ClipboardList, LayoutGrid } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -21,7 +20,6 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   
-  // Check if the user is logged in when required
   useEffect(() => {
     if (requireAuth && !isLoggedIn) {
       navigate("/login", { state: { from: location.pathname } });
@@ -31,16 +29,12 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
 
   const currentChild = getCurrentChild?.();
   
-  // Debug log
   console.log('Layout render - Current child:', currentChild?.nickname);
 
-  // Always include the Assessment tab in navigation items
   const navItems = [
     { name: "Home", path: "/dashboard", icon: <Home className="mr-2 h-4 w-4" /> },
     { name: "Profile", path: "/profile", icon: <User className="mr-2 h-4 w-4" /> },
-    { name: "Daily Check-in", path: "/daily-check-in", icon: <Calendar className="mr-2 h-4 w-4" /> },
-    { name: "Journal", path: "/journal", icon: <BookOpen className="mr-2 h-4 w-4" /> },
-    // Always include the Assessment tab
+    { name: "Activities", path: "/activities", icon: <LayoutGrid className="mr-2 h-4 w-4" /> },
     { name: "Assessment", path: "/assessment", icon: <ClipboardList className="mr-2 h-4 w-4" /> }
   ];
 
@@ -50,9 +44,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   };
 
   const handleNavigation = (path: string) => {
-    // Close mobile nav if open
     setOpen(false);
-    // Navigate to the path
     navigate(path);
   };
 
@@ -87,7 +79,6 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
     <div className="min-h-screen flex flex-col">
       {isLoggedIn && !hideNav && (
         <>
-          {/* Mobile navigation */}
           <div className="md:hidden flex items-center justify-between p-4 bg-white shadow-sm sticky top-0 z-10">
             <div className="flex items-center">
               <img 
@@ -117,7 +108,6 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
             </Sheet>
           </div>
           
-          {/* Desktop navigation */}
           <div className="hidden md:flex h-screen">
             <div className="w-64 bg-white shadow-md p-6 flex flex-col">
               <div className="flex items-center mb-6">
@@ -150,12 +140,10 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
             </div>
           </div>
           
-          {/* Main content for mobile */}
           <main className="md:hidden flex-1 p-4">{children}</main>
         </>
       )}
       
-      {/* No navigation layout */}
       {(!isLoggedIn || hideNav) && (
         <main className="flex-1">{children}</main>
       )}

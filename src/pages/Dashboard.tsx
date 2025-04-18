@@ -1,4 +1,3 @@
-
 import { useUser } from "@/contexts/UserContext";
 import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
@@ -6,7 +5,6 @@ import NoActiveChildPrompt from "@/components/dashboard/NoActiveChildPrompt";
 import ChildProfileSelector from "@/components/dashboard/ChildProfileSelector";
 import WelcomeHeader from "@/components/dashboard/WelcomeHeader";
 import StatsCards from "@/components/dashboard/StatsCards";
-import DailyActivities from "@/components/dashboard/DailyActivities";
 import AchievementsSection from "@/components/dashboard/AchievementsSection";
 import WelcomePrompt from "@/components/dashboard/WelcomePrompt";
 import EmotionalGrowthInsights from "@/components/dashboard/EmotionalGrowthInsights";
@@ -127,46 +125,40 @@ const Dashboard = () => {
                 {currentChild && (
                   <>
                     <WelcomeHeader currentChild={currentChild} />
-                    
                     <StatsCards currentChild={currentChild} />
                     
-                    <DailyActivities 
-                      currentChild={currentChild}
-                      currentChildId={currentChildId!}
-                    />
+                    {/* Emotional Growth Insights now appears before Achievements */}
+                    {currentChild && (
+                      <EmotionalGrowthInsights 
+                        currentChild={currentChild} 
+                        insight={latestInsight}
+                        loading={insightLoading}
+                        fetchHistoricalInsights={fetchHistoricalInsights}
+                        historicalInsights={historicalInsights}
+                        historicalLoading={historicalLoading}
+                        isFallbackData={isFallbackData}
+                        hasInsufficientData={hasInsufficientData}
+                      />
+                    )}
 
                     <AchievementsSection 
                       currentChild={currentChild}
                       currentChildId={currentChildId!}
                     />
                     
-                    {currentChild && (
-                      <>
-                        <EmotionalGrowthInsights 
-                          currentChild={currentChild} 
-                          insight={latestInsight}
-                          loading={insightLoading}
-                          fetchHistoricalInsights={fetchHistoricalInsights}
-                          historicalInsights={historicalInsights}
-                          historicalLoading={historicalLoading}
-                          isFallbackData={isFallbackData}
-                          hasInsufficientData={hasInsufficientData}
-                        />
-                        
-                        {((isFallbackData || connectionError || isDbConnected === false) && isDevelopment) && (
-                          <div className="mb-8 flex justify-center">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={insertSampleData}
-                              className="flex items-center gap-1 text-sm text-muted-foreground"
-                            >
-                              <Beaker className="h-4 w-4" />
-                              Generate Sample Emotional Data
-                            </Button>
-                          </div>
-                        )}
-                      </>
+                    {/* Sample data generation button for development */}
+                    {((isFallbackData || connectionError || isDbConnected === false) && isDevelopment) && (
+                      <div className="mb-8 flex justify-center">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={insertSampleData}
+                          className="flex items-center gap-1 text-sm text-muted-foreground"
+                        >
+                          <Beaker className="h-4 w-4" />
+                          Generate Sample Emotional Data
+                        </Button>
+                      </div>
                     )}
                   </>
                 )}
