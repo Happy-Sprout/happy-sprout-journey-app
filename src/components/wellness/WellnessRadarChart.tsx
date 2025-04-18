@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { JournalEntry } from "@/types/journal";
 import { cn } from "@/lib/utils";
 import { Smile, Meh, Frown, Heart, Droplet, Moon, Activity, Brain, Star, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WellnessRadarChartProps {
   journalEntry: JournalEntry | null;
@@ -27,7 +27,6 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   return null;
 };
 
-// Emotion color mapping
 const emotionColors = {
   happy: "yellow-400",
   excited: "yellow-500",
@@ -40,7 +39,6 @@ const emotionColors = {
   tired: "gray-500",
 };
 
-// Maps the mood intensity to an emotion color
 const getMoodColor = (moodValue: number): string => {
   if (moodValue >= 8) return "bg-yellow-400 text-yellow-800";
   if (moodValue >= 6) return "bg-green-400 text-green-800";
@@ -51,6 +49,7 @@ const getMoodColor = (moodValue: number): string => {
 
 const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
   const [view, setView] = useState<"radar" | "list">("radar");
+  const isMobile = useIsMobile();
 
   if (!journalEntry) {
     return (
@@ -72,10 +71,6 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
     { subject: "Confidence", A: journalEntry.confidence, fullMark: 10 },
   ];
 
-  // Get the mood color based on the journal entry's mood value
-  const moodColor = getMoodColor(journalEntry.mood);
-  
-  // Map emotional metrics to icons
   const metricsWithIcons = [
     { name: "Mood", value: journalEntry.mood, icon: <Smile className="h-4 w-4" />, max: 10 },
     { name: "Sleep", value: journalEntry.sleep, icon: <Moon className="h-4 w-4" />, max: 10 },
@@ -88,15 +83,15 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 border">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 border">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
         <h3 className="text-lg font-medium">Wellness Wheel</h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-end">
           <Button 
             variant={view === "radar" ? "default" : "outline"} 
             size="sm" 
             onClick={() => setView("radar")}
-            className="rounded-full"
+            className="rounded-full text-xs sm:text-sm flex-1 sm:flex-none min-w-[80px]"
           >
             Radar View
           </Button>
@@ -104,7 +99,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
             variant={view === "list" ? "default" : "outline"} 
             size="sm" 
             onClick={() => setView("list")}
-            className="rounded-full"
+            className="rounded-full text-xs sm:text-sm flex-1 sm:flex-none min-w-[80px]"
           >
             List View
           </Button>
@@ -112,12 +107,19 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
       </div>
 
       {view === "radar" ? (
-        <div className="w-full h-72 relative">
+        <div className="w-full h-[280px] sm:h-[320px] relative">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={wellnessData}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#666', fontSize: 12 }} />
-              <PolarRadiusAxis angle={90} domain={[0, 10]} />
+            <RadarChart cx="50%" cy="50%" outerRadius={isMobile ? "65%" : "80%"} data={wellnessData}>
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis 
+                dataKey="subject" 
+                tick={{ 
+                  fill: '#666', 
+                  fontSize: isMobile ? 10 : 12,
+                  dy: isMobile ? 3 : 0
+                }} 
+              />
+              <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: isMobile ? 10 : 12 }} />
               <Radar
                 name="Wellness"
                 dataKey="A"
@@ -129,9 +131,12 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
             </RadarChart>
           </ResponsiveContainer>
           
-          {/* Mood indicator in center */}
-          <div className={cn("absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full flex items-center justify-center", moodColor)}>
-            <div className="text-2xl">
+          <div className={cn(
+            "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
+            "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center",
+            getMoodColor(journalEntry.mood)
+          )}>
+            <div className="text-xl sm:text-2xl">
               {journalEntry.mood >= 7 ? "😃" : journalEntry.mood >= 5 ? "🙂" : journalEntry.mood >= 3 ? "😐" : "☹️"}
             </div>
           </div>
@@ -146,11 +151,11 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
               <div className="flex-grow">
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-medium">{metric.name}</span>
-                  <span className="text-sm text-gray-600">{metric.value}/{metric.max}</span>
+                  <span className="text-sm text-gray-600 ml-2">{metric.value}/{metric.max}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className={cn("h-2 rounded-full", moodColor)}
+                    className={cn("h-2 rounded-full", getMoodColor(journalEntry.mood))}
                     style={{ width: `${(metric.value / metric.max) * 100}%` }}
                   ></div>
                 </div>
@@ -160,24 +165,28 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
         </div>
       )}
       
-      {/* Mini Mood Timeline */}
       <div className="mt-4 pt-3 border-t">
-        <div className="overflow-x-auto pb-2">
+        <div className="overflow-x-auto -mx-3 px-3 pb-2">
           <div className="flex gap-2 min-w-max">
-            <div className={cn("px-3 py-1 rounded-full text-sm flex items-center", moodColor)}>
-              {journalEntry.mood >= 7 ? "😃" : journalEntry.mood >= 5 ? "🙂" : journalEntry.mood >= 3 ? "😐" : "☹️"} Mood: {journalEntry.mood}
+            <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1", getMoodColor(journalEntry.mood))}>
+              {journalEntry.mood >= 7 ? "😃" : journalEntry.mood >= 5 ? "🙂" : journalEntry.mood >= 3 ? "😐" : "☹️"} 
+              <span className="hidden sm:inline">Mood:</span> {journalEntry.mood}
             </div>
-            <div className={cn("px-3 py-1 rounded-full text-sm flex items-center bg-blue-100 text-blue-800")}>
-              <Moon className="h-3 w-3 mr-1" /> Sleep: {journalEntry.sleep}
+            <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-blue-100 text-blue-800")}>
+              <Moon className="h-3 w-3" /> 
+              <span className="hidden sm:inline">Sleep:</span> {journalEntry.sleep}
             </div>
-            <div className={cn("px-3 py-1 rounded-full text-sm flex items-center bg-cyan-100 text-cyan-800")}>
-              <Droplet className="h-3 w-3 mr-1" /> Water: {journalEntry.water}
+            <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-cyan-100 text-cyan-800")}>
+              <Droplet className="h-3 w-3" /> 
+              <span className="hidden sm:inline">Water:</span> {journalEntry.water}
             </div>
-            <div className={cn("px-3 py-1 rounded-full text-sm flex items-center bg-green-100 text-green-800")}>
-              <Activity className="h-3 w-3 mr-1" /> Exercise: {journalEntry.exercise}
+            <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-green-100 text-green-800")}>
+              <Activity className="h-3 w-3" /> 
+              <span className="hidden sm:inline">Exercise:</span> {journalEntry.exercise}
             </div>
-            <div className={cn("px-3 py-1 rounded-full text-sm flex items-center bg-purple-100 text-purple-800")}>
-              <Brain className="h-3 w-3 mr-1" /> Mindfulness: {journalEntry.mindfulness}
+            <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-purple-100 text-purple-800")}>
+              <Brain className="h-3 w-3" /> 
+              <span className="hidden sm:inline">Mindfulness:</span> {journalEntry.mindfulness}
             </div>
           </div>
         </div>
