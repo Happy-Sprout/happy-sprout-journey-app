@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ const Activities = () => {
   const [journalCompleted, setJournalCompleted] = useState(false);
   const [dailyCheckInCompleted, setDailyCheckInCompleted] = useState(false);
   const [todayEntry, setTodayEntry] = useState(null);
+  // Use a stable key for view mode state to prevent unintended re-renders
   const [viewMode, setViewMode] = useState<"list" | "visual">("list");
   const currentChild = getCurrentChild();
   const { getTodayEntry } = useJournalEntries(currentChildId);
@@ -23,6 +25,7 @@ const Activities = () => {
     const checkTodayJournalEntry = async () => {
       if (currentChildId) {
         const entry = await getTodayEntry();
+        console.log("Found today's entry:", entry);
         setJournalCompleted(!!entry);
         setTodayEntry(entry);
       }
@@ -47,18 +50,25 @@ const Activities = () => {
     }
   }, [currentChild]);
 
+  // Memoize the handler to prevent unnecessary re-renders
+  const handleViewModeChange = (value: string | null) => {
+    if (value) {
+      setViewMode(value as "list" | "visual");
+    }
+  };
+
   return (
     <Layout requireAuth>
       <div className="container mx-auto px-4">
         <h1 className="text-2xl font-bold mb-6">Daily Activities</h1>
         
         <div className="mb-6">
-          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "list" | "visual")}>
-            <ToggleGroupItem value="list" aria-label="List View" className="flex items-center gap-2">
+          <ToggleGroup type="single" value={viewMode} onValueChange={handleViewModeChange}>
+            <ToggleGroupItem value="list" aria-label="List View" className="flex items-center gap-2 z-0">
               <List className="h-4 w-4" />
               List View
             </ToggleGroupItem>
-            <ToggleGroupItem value="visual" aria-label="Visual View" className="flex items-center gap-2">
+            <ToggleGroupItem value="visual" aria-label="Visual View" className="flex items-center gap-2 z-0">
               <Activity className="h-4 w-4" />
               Visual View
             </ToggleGroupItem>
@@ -85,7 +95,7 @@ const Activities = () => {
                     </p>
                   </div>
                   <Button 
-                    className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
+                    className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0 z-0"
                     onClick={() => navigate("/daily-check-in")}
                     disabled={dailyCheckInCompleted}
                   >
@@ -113,7 +123,7 @@ const Activities = () => {
                     </p>
                   </div>
                   <Button 
-                    className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
+                    className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0 z-0"
                     onClick={() => navigate("/journal")}
                     disabled={journalCompleted}
                   >
@@ -153,7 +163,7 @@ const Activities = () => {
                       </p>
                     </div>
                     <Button 
-                      className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
+                      className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0 z-0"
                       onClick={() => navigate("/daily-check-in")}
                       disabled={dailyCheckInCompleted}
                     >
@@ -181,7 +191,7 @@ const Activities = () => {
                       </p>
                     </div>
                     <Button 
-                      className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
+                      className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0 z-0"
                       onClick={() => navigate("/journal")}
                       disabled={journalCompleted}
                     >

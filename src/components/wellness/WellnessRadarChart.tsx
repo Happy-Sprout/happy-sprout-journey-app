@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { JournalEntry } from "@/types/journal";
@@ -27,18 +28,6 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   return null;
 };
 
-const emotionColors = {
-  happy: "yellow-400",
-  excited: "yellow-500",
-  calm: "blue-300",
-  neutral: "gray-400",
-  sad: "blue-500",
-  angry: "red-500",
-  scared: "purple-400",
-  worried: "orange-400",
-  tired: "gray-500",
-};
-
 const getMoodColor = (moodValue: number): string => {
   if (moodValue >= 8) return "bg-yellow-400 text-yellow-800";
   if (moodValue >= 6) return "bg-green-400 text-green-800";
@@ -61,7 +50,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
   }
 
   const wellnessData = [
-    { subject: "Mood", A: journalEntry.mood, fullMark: 10 },
+    { subject: "Mood", A: journalEntry.mood_intensity || journalEntry.mood === "happy" ? 8 : journalEntry.mood === "neutral" ? 5 : 3, fullMark: 10 },
     { subject: "Sleep", A: journalEntry.sleep, fullMark: 10 },
     { subject: "Water", A: journalEntry.water, fullMark: 10 },
     { subject: "Exercise", A: journalEntry.exercise, fullMark: 10 },
@@ -72,7 +61,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
   ];
 
   const metricsWithIcons = [
-    { name: "Mood", value: journalEntry.mood, icon: <Smile className="h-4 w-4" />, max: 10 },
+    { name: "Mood", value: journalEntry.mood_intensity || (journalEntry.mood === "happy" ? 8 : journalEntry.mood === "neutral" ? 5 : 3), icon: <Smile className="h-4 w-4" />, max: 10 },
     { name: "Sleep", value: journalEntry.sleep, icon: <Moon className="h-4 w-4" />, max: 10 },
     { name: "Water", value: journalEntry.water, icon: <Droplet className="h-4 w-4" />, max: 10 },
     { name: "Exercise", value: journalEntry.exercise, icon: <Activity className="h-4 w-4" />, max: 10 },
@@ -81,6 +70,12 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
     { name: "Positivity", value: journalEntry.positivity, icon: <Star className="h-4 w-4" />, max: 10 },
     { name: "Confidence", value: journalEntry.confidence, icon: <Zap className="h-4 w-4" />, max: 10 },
   ];
+
+  // We ensure the moodValue is valid for display - default to 5 if not available
+  const moodValue = journalEntry.mood_intensity || 
+                   (journalEntry.mood === "happy" ? 8 : 
+                    journalEntry.mood === "neutral" ? 5 : 
+                    journalEntry.mood === "sad" ? 3 : 5);
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 border">
@@ -91,7 +86,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
             variant={view === "radar" ? "default" : "outline"} 
             size="sm" 
             onClick={() => setView("radar")}
-            className="rounded-full text-xs sm:text-sm flex-1 sm:flex-none min-w-[80px]"
+            className="rounded-full text-xs sm:text-sm flex-1 sm:flex-none min-w-[80px] z-0"
           >
             Radar View
           </Button>
@@ -99,7 +94,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
             variant={view === "list" ? "default" : "outline"} 
             size="sm" 
             onClick={() => setView("list")}
-            className="rounded-full text-xs sm:text-sm flex-1 sm:flex-none min-w-[80px]"
+            className="rounded-full text-xs sm:text-sm flex-1 sm:flex-none min-w-[80px] z-0"
           >
             List View
           </Button>
@@ -107,7 +102,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
       </div>
 
       {view === "radar" ? (
-        <div className="w-full h-[280px] sm:h-[320px] relative">
+        <div className="w-full h-[280px] sm:h-[320px] relative" style={{ minHeight: "200px" }}>
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius={isMobile ? "65%" : "80%"} data={wellnessData}>
               <PolarGrid stroke="#e5e7eb" />
@@ -134,10 +129,10 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
           <div className={cn(
             "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
             "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center",
-            getMoodColor(journalEntry.mood)
+            getMoodColor(moodValue)
           )}>
             <div className="text-xl sm:text-2xl">
-              {journalEntry.mood >= 7 ? "😃" : journalEntry.mood >= 5 ? "🙂" : journalEntry.mood >= 3 ? "😐" : "☹️"}
+              {moodValue >= 7 ? "😃" : moodValue >= 5 ? "🙂" : moodValue >= 3 ? "😐" : "☹️"}
             </div>
           </div>
         </div>
@@ -155,7 +150,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className={cn("h-2 rounded-full", getMoodColor(journalEntry.mood))}
+                    className={cn("h-2 rounded-full", getMoodColor(moodValue))}
                     style={{ width: `${(metric.value / metric.max) * 100}%` }}
                   ></div>
                 </div>
@@ -168,9 +163,9 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
       <div className="mt-4 pt-3 border-t">
         <div className="overflow-x-auto -mx-3 px-3 pb-2">
           <div className="flex gap-2 min-w-max">
-            <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1", getMoodColor(journalEntry.mood))}>
-              {journalEntry.mood >= 7 ? "😃" : journalEntry.mood >= 5 ? "🙂" : journalEntry.mood >= 3 ? "😐" : "☹️"} 
-              <span className="hidden sm:inline">Mood:</span> {journalEntry.mood}
+            <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1", getMoodColor(moodValue))}>
+              {moodValue >= 7 ? "😃" : moodValue >= 5 ? "🙂" : moodValue >= 3 ? "😐" : "☹️"} 
+              <span className="hidden sm:inline">Mood:</span> {moodValue}
             </div>
             <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-blue-100 text-blue-800")}>
               <Moon className="h-3 w-3" /> 
