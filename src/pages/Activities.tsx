@@ -9,6 +9,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
 import WellnessRadarChart from "@/components/wellness/WellnessRadarChart";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Activities = () => {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ const Activities = () => {
   const [journalCompleted, setJournalCompleted] = useState(false);
   const [dailyCheckInCompleted, setDailyCheckInCompleted] = useState(false);
   const [todayEntry, setTodayEntry] = useState(null);
+  const [journalLoading, setJournalLoading] = useState(true);
+  
   // Use a stable key for view mode state to prevent unintended re-renders
   const [viewMode, setViewMode] = useState<"list" | "visual">("list");
   const currentChild = getCurrentChild();
@@ -31,13 +34,16 @@ const Activities = () => {
     const checkTodayJournalEntry = async () => {
       if (currentChildId) {
         try {
+          setJournalLoading(true);
           console.log("Activities: Checking for today's journal entry");
           const entry = await getTodayEntry();
           console.log("Activities: Today's entry check result:", entry);
           setJournalCompleted(!!entry);
           setTodayEntry(entry);
+          setJournalLoading(false);
         } catch (error) {
           console.error("Activities: Error checking today's entry:", error);
+          setJournalLoading(false);
         }
       }
     };
@@ -51,6 +57,7 @@ const Activities = () => {
       console.log("Activities: Using cached today entry status:", !!cachedTodayEntry);
       setJournalCompleted(!!cachedTodayEntry);
       setTodayEntry(cachedTodayEntry);
+      setJournalLoading(false);
     }
   }, [cachedTodayEntry, todayEntryLoaded]);
 
@@ -172,7 +179,13 @@ const Activities = () => {
                 <CardTitle>Today's Wellness Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                <WellnessRadarChart journalEntry={todayEntry} />
+                {journalLoading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <LoadingSpinner message="Loading wellness data..." />
+                  </div>
+                ) : (
+                  <WellnessRadarChart journalEntry={todayEntry} />
+                )}
               </CardContent>
             </Card>
 

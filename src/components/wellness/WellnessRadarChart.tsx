@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { JournalEntry } from "@/types/journal";
 import { cn } from "@/lib/utils";
@@ -61,26 +61,27 @@ const WellnessRadarChart = ({ journalEntry, loading = false }: WellnessRadarChar
     );
   }
 
+  // Ensure we have all the required properties with fallbacks
   const wellnessData = [
     { subject: "Mood", A: journalEntry.mood || 5, fullMark: 10 },
-    { subject: "Sleep", A: journalEntry.sleep, fullMark: 10 },
-    { subject: "Water", A: journalEntry.water, fullMark: 10 },
-    { subject: "Exercise", A: journalEntry.exercise, fullMark: 10 },
-    { subject: "Mindfulness", A: journalEntry.mindfulness, fullMark: 10 },
-    { subject: "Kindness", A: journalEntry.kindness, fullMark: 10 },
-    { subject: "Positivity", A: journalEntry.positivity, fullMark: 10 },
-    { subject: "Confidence", A: journalEntry.confidence, fullMark: 10 },
+    { subject: "Sleep", A: journalEntry.sleep || 7, fullMark: 10 },
+    { subject: "Water", A: journalEntry.water || 4, fullMark: 10 },
+    { subject: "Exercise", A: journalEntry.exercise || 3, fullMark: 10 },
+    { subject: "Mindfulness", A: journalEntry.mindfulness || 5, fullMark: 10 },
+    { subject: "Kindness", A: journalEntry.kindness || 5, fullMark: 10 },
+    { subject: "Positivity", A: journalEntry.positivity || 6, fullMark: 10 },
+    { subject: "Confidence", A: journalEntry.confidence || 5, fullMark: 10 },
   ];
 
   const metricsWithIcons = [
     { name: "Mood", value: journalEntry.mood || 5, icon: <Smile className="h-4 w-4" />, max: 10 },
-    { name: "Sleep", value: journalEntry.sleep, icon: <Moon className="h-4 w-4" />, max: 10 },
-    { name: "Water", value: journalEntry.water, icon: <Droplet className="h-4 w-4" />, max: 10 },
-    { name: "Exercise", value: journalEntry.exercise, icon: <Activity className="h-4 w-4" />, max: 10 },
-    { name: "Mindfulness", value: journalEntry.mindfulness, icon: <Brain className="h-4 w-4" />, max: 10 },
-    { name: "Kindness", value: journalEntry.kindness, icon: <Heart className="h-4 w-4" />, max: 10 },
-    { name: "Positivity", value: journalEntry.positivity, icon: <Star className="h-4 w-4" />, max: 10 },
-    { name: "Confidence", value: journalEntry.confidence, icon: <Zap className="h-4 w-4" />, max: 10 },
+    { name: "Sleep", value: journalEntry.sleep || 7, icon: <Moon className="h-4 w-4" />, max: 10 },
+    { name: "Water", value: journalEntry.water || 4, icon: <Droplet className="h-4 w-4" />, max: 10 },
+    { name: "Exercise", value: journalEntry.exercise || 3, icon: <Activity className="h-4 w-4" />, max: 10 },
+    { name: "Mindfulness", value: journalEntry.mindfulness || 5, icon: <Brain className="h-4 w-4" />, max: 10 },
+    { name: "Kindness", value: journalEntry.kindness || 5, icon: <Heart className="h-4 w-4" />, max: 10 },
+    { name: "Positivity", value: journalEntry.positivity || 6, icon: <Star className="h-4 w-4" />, max: 10 },
+    { name: "Confidence", value: journalEntry.confidence || 5, icon: <Zap className="h-4 w-4" />, max: 10 },
   ];
 
   // We ensure the moodValue is valid for display - default to 5 if not available
@@ -159,7 +160,7 @@ const WellnessRadarChart = ({ journalEntry, loading = false }: WellnessRadarChar
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className={cn("h-2 rounded-full", getMoodColor(moodValue))}
+                    className={cn("h-2 rounded-full", getMoodColor(metric.value))}
                     style={{ width: `${(metric.value / metric.max) * 100}%` }}
                   ></div>
                 </div>
@@ -178,19 +179,19 @@ const WellnessRadarChart = ({ journalEntry, loading = false }: WellnessRadarChar
             </div>
             <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-blue-100 text-blue-800")}>
               <Moon className="h-3 w-3" /> 
-              <span className="hidden sm:inline">Sleep:</span> {journalEntry.sleep}
+              <span className="hidden sm:inline">Sleep:</span> {journalEntry.sleep || 7}
             </div>
             <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-cyan-100 text-cyan-800")}>
               <Droplet className="h-3 w-3" /> 
-              <span className="hidden sm:inline">Water:</span> {journalEntry.water}
+              <span className="hidden sm:inline">Water:</span> {journalEntry.water || 4}
             </div>
             <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-green-100 text-green-800")}>
               <Activity className="h-3 w-3" /> 
-              <span className="hidden sm:inline">Exercise:</span> {journalEntry.exercise}
+              <span className="hidden sm:inline">Exercise:</span> {journalEntry.exercise || 3}
             </div>
             <div className={cn("px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 bg-purple-100 text-purple-800")}>
               <Brain className="h-3 w-3" /> 
-              <span className="hidden sm:inline">Mindfulness:</span> {journalEntry.mindfulness}
+              <span className="hidden sm:inline">Mindfulness:</span> {journalEntry.mindfulness || 5}
             </div>
           </div>
         </div>

@@ -43,7 +43,6 @@ const Journal = () => {
     lowestSELArea
   } = useEmotionalInsights(currentChildId);
 
-  // Use cached today entry state if available
   useEffect(() => {
     if (todayEntryLoaded) {
       console.log("Journal: Using cached today entry status:", !!cachedTodayEntry);
@@ -69,7 +68,6 @@ const Journal = () => {
       }
     };
     
-    // Log the current date to check for timezone issues
     if (getTodayDateString) {
       const todayString = getTodayDateString();
       console.log("Journal: Today's date string:", todayString);

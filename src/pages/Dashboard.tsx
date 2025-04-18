@@ -18,7 +18,6 @@ import { Beaker } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { JournalEntry } from "@/types/journal";
-import DailyActivities from "@/components/dashboard/DailyActivities";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
@@ -178,14 +177,6 @@ const Dashboard = () => {
                 {currentChild && (
                   <>
                     <WelcomeHeader currentChild={currentChild} />
-                    
-                    {/* Daily Activities (Journal, Check-in) */}
-                    {currentChild && currentChildId && (
-                      <DailyActivities 
-                        currentChild={currentChild} 
-                        currentChildId={currentChildId}
-                      />
-                    )}
                     
                     <StatsCards currentChild={currentChild} />
                     
