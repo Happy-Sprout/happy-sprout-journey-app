@@ -17,13 +17,15 @@ import { Button } from "@/components/ui/button";
 import { Beaker } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { JournalEntry } from "@/types/journal";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
   const currentChild = getCurrentChild();
   const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [todayEntry, setTodayEntry] = useState(null);
+  const [todayEntry, setTodayEntry] = useState<JournalEntry | null>(null);
+  const [journalLoading, setJournalLoading] = useState(true);
   const isDevelopment = import.meta.env.DEV;
   const { toast } = useToast();
   
@@ -45,11 +47,21 @@ const Dashboard = () => {
   
   const { getTodayEntry } = useJournalEntries(currentChildId);
   
+  // Fetch today's journal entry when component mounts or child changes
   useEffect(() => {
     const fetchTodayEntry = async () => {
       if (currentChildId) {
-        const entry = await getTodayEntry();
-        setTodayEntry(entry);
+        setJournalLoading(true);
+        try {
+          console.log("Fetching today's journal entry for childId:", currentChildId);
+          const entry = await getTodayEntry();
+          console.log("Retrieved today's entry:", entry);
+          setTodayEntry(entry);
+        } catch (error) {
+          console.error("Error fetching today's journal entry:", error);
+        } finally {
+          setJournalLoading(false);
+        }
       }
     };
     
@@ -159,10 +171,16 @@ const Dashboard = () => {
                     )}
                     
                     {/* Wellness Radar Chart Integration */}
-                    {currentChild && todayEntry && (
+                    {currentChild && (
                       <div className="mb-8 mt-6">
                         <h2 className="text-xl font-semibold mb-4">Today's Wellness</h2>
-                        <WellnessRadarChart journalEntry={todayEntry} />
+                        {journalLoading ? (
+                          <div className="flex justify-center items-center h-64 bg-gray-50 rounded-lg border">
+                            <LoadingSpinner message="Loading wellness data..." />
+                          </div>
+                        ) : (
+                          <WellnessRadarChart journalEntry={todayEntry} />
+                        )}
                       </div>
                     )}
 

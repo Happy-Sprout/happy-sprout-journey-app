@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { successToast, warningToast } from "@/components/ui/toast-extensions";
 import { JournalEntry, DBJournalEntry } from "@/types/journal";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useJournalEntries = (childId: string | undefined) => {
@@ -76,16 +76,19 @@ export const useJournalEntries = (childId: string | undefined) => {
     if (!childId) return null;
     
     try {
-      const today = format(new Date(), "yyyy-MM-dd");
-      const startOfDay = `${today}T00:00:00.000Z`;
-      const endOfDay = `${today}T23:59:59.999Z`;
+      // Use date-fns to create today's date range in ISO format
+      const today = new Date();
+      const startOfToday = startOfDay(today).toISOString();
+      const endOfToday = endOfDay(today).toISOString();
+      
+      console.log("Checking for journal entry between:", startOfToday, "and", endOfToday);
       
       const { data, error } = await supabase
         .from('journal_entries')
         .select('*')
         .eq('child_id', childId)
-        .gte('created_at', startOfDay)
-        .lte('created_at', endOfDay)
+        .gte('created_at', startOfToday)
+        .lte('created_at', endOfToday)
         .order('created_at', { ascending: false })
         .limit(1);
         

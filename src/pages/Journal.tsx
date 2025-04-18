@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -13,7 +12,8 @@ import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
 import { checkForBadgeUnlocks, getBadgeInfo } from "@/utils/childUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRightCircle } from "lucide-react";
+import { ArrowRightCircle, Clock } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Journal = () => {
   const { getCurrentChild, currentChildId, childProfiles, setChildProfiles } = useUser();
@@ -22,6 +22,7 @@ const Journal = () => {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [currentTab, setCurrentTab] = useState("new");
   const [todayEntryExists, setTodayEntryExists] = useState(false);
+  const [checkingTodayEntry, setCheckingTodayEntry] = useState(true);
   const [selectedPrompt, setSelectedPrompt] = useState("");
   const [promptHighlightId, setPromptHighlightId] = useState<number | null>(null);
   
@@ -43,10 +44,15 @@ const Journal = () => {
     
     const checkTodayEntry = async () => {
       try {
+        setCheckingTodayEntry(true);
+        console.log("Checking for today's journal entry");
         const entry = await getTodayEntry();
+        console.log("Today's entry check result:", entry);
         setTodayEntryExists(!!entry);
       } catch (error) {
         console.error("Error checking today's entry:", error);
+      } finally {
+        setCheckingTodayEntry(false);
       }
     };
     
@@ -71,7 +77,6 @@ const Journal = () => {
     }
     
     try {
-      // Include the selected prompt in the journal entry data
       const entryWithPrompt = {
         ...entry,
         selectedPrompt: selectedPrompt || null
@@ -81,7 +86,6 @@ const Journal = () => {
       
       if (newEntry) {
         try {
-          // Log activity with XP earned
           await supabase
             .from('user_activity_logs')
             .insert([{
@@ -95,7 +99,6 @@ const Journal = () => {
               }
             }]);
           
-          // Trigger emotional insight analysis
           const journalText = `
             What went well: ${entry.wentWell}
             What went badly: ${entry.wentBadly}
@@ -104,10 +107,8 @@ const Journal = () => {
             Tomorrow's plan: ${entry.tomorrowPlan}
           `;
           
-          // We'll call this in the background, we don't need to wait for it
           const newInsight = await analyzeEntry(journalText);
           
-          // Check for SEL badge unlocks if we have an insight
           if (newInsight && currentChild) {
             const selScores = {
               selfAwareness: newInsight.self_awareness,
@@ -123,7 +124,6 @@ const Journal = () => {
             });
             
             if (newBadges.length > 0) {
-              // Update child badges in the database
               const combinedBadges = [...(currentChild.badges || []), ...newBadges];
               
               await supabase
@@ -131,7 +131,6 @@ const Journal = () => {
                 .update({ badges: combinedBadges })
                 .eq('child_id', currentChildId);
                 
-              // Update in the local state as well
               if (childProfiles) {
                 const updatedProfiles = childProfiles.map(profile => 
                   profile.id === currentChildId 
@@ -141,7 +140,6 @@ const Journal = () => {
                 setChildProfiles(updatedProfiles);
               }
               
-              // Show notification for new badges
               newBadges.forEach(badge => {
                 const badgeInfo = getBadgeInfo(badge);
                 successToast({
@@ -152,7 +150,6 @@ const Journal = () => {
             }
           }
           
-          // Check if user completed both check-in and journal today for bonus XP
           const { data: todayCheckIn } = await supabase
             .from('user_activity_logs')
             .select('*')
@@ -162,7 +159,6 @@ const Journal = () => {
             .single();
             
           if (todayCheckIn) {
-            // Award bonus XP for completing both activities
             const { data: progressData } = await supabase
               .from('child_progress')
               .select('xp_points')
@@ -175,7 +171,6 @@ const Journal = () => {
                 .update({ xp_points: (progressData.xp_points || 0) + 5 })
                 .eq('child_id', currentChildId);
                 
-              // Log the bonus XP
               await supabase
                 .from('user_activity_logs')
                 .insert([{
@@ -209,13 +204,10 @@ const Journal = () => {
     }
   };
 
-  // Handler to select a prompt for the journal
   const handleSelectPrompt = (prompt: string, index: number) => {
     setSelectedPrompt(prompt);
-    // Highlight the selected prompt
     setPromptHighlightId(index);
     
-    // Auto-scroll to the journal form
     setTimeout(() => {
       document.getElementById('journal-form')?.scrollIntoView({
         behavior: 'smooth',
@@ -239,18 +231,32 @@ const Journal = () => {
           </TabsList>
           
           <TabsContent value="new">
-            {todayEntryExists ? (
+            {checkingTodayEntry ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <LoadingSpinner message="Checking today's journal status..." />
+              </div>
+            ) : todayEntryExists ? (
               <div className="sprout-card text-center py-8">
                 <h2 className="text-2xl font-bold text-sprout-purple mb-4">You've completed today's journal entry!</h2>
                 <p className="mb-6 text-lg">
                   Great job! You earned 15 XP. You can come back tomorrow to write another entry.
                 </p>
-                <button 
-                  className="sprout-button"
-                  onClick={() => setCurrentTab("history")}
-                >
-                  View Journal History
-                </button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Button 
+                    className="sprout-button"
+                    onClick={() => setCurrentTab("history")}
+                  >
+                    View Journal History
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-1"
+                    onClick={() => window.location.href = '/dashboard'}
+                  >
+                    <Clock className="h-4 w-4" />
+                    View Today's Wellness
+                  </Button>
+                </div>
               </div>
             ) : (
               <>
