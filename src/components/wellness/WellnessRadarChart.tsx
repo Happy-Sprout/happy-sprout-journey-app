@@ -50,7 +50,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
   }
 
   const wellnessData = [
-    { subject: "Mood", A: journalEntry.mood_intensity || journalEntry.mood === "happy" ? 8 : journalEntry.mood === "neutral" ? 5 : 3, fullMark: 10 },
+    { subject: "Mood", A: journalEntry.mood || 5, fullMark: 10 },
     { subject: "Sleep", A: journalEntry.sleep, fullMark: 10 },
     { subject: "Water", A: journalEntry.water, fullMark: 10 },
     { subject: "Exercise", A: journalEntry.exercise, fullMark: 10 },
@@ -61,7 +61,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
   ];
 
   const metricsWithIcons = [
-    { name: "Mood", value: journalEntry.mood_intensity || (journalEntry.mood === "happy" ? 8 : journalEntry.mood === "neutral" ? 5 : 3), icon: <Smile className="h-4 w-4" />, max: 10 },
+    { name: "Mood", value: journalEntry.mood || 5, icon: <Smile className="h-4 w-4" />, max: 10 },
     { name: "Sleep", value: journalEntry.sleep, icon: <Moon className="h-4 w-4" />, max: 10 },
     { name: "Water", value: journalEntry.water, icon: <Droplet className="h-4 w-4" />, max: 10 },
     { name: "Exercise", value: journalEntry.exercise, icon: <Activity className="h-4 w-4" />, max: 10 },
@@ -72,10 +72,7 @@ const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
   ];
 
   // We ensure the moodValue is valid for display - default to 5 if not available
-  const moodValue = journalEntry.mood_intensity || 
-                   (journalEntry.mood === "happy" ? 8 : 
-                    journalEntry.mood === "neutral" ? 5 : 
-                    journalEntry.mood === "sad" ? 3 : 5);
+  const moodValue = journalEntry.mood || 5;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 border">
