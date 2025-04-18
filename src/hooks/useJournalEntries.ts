@@ -1,9 +1,8 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { successToast, warningToast } from "@/components/ui/toast-extensions";
 import { JournalEntry, DBJournalEntry } from "@/types/journal";
-import { format, startOfDay, endOfDay, parseISO } from "date-fns";
+import { format, startOfDay, endOfDay, parseISO, isValid } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useJournalEntries = (childId: string | undefined) => {
@@ -11,6 +10,22 @@ export const useJournalEntries = (childId: string | undefined) => {
   const [loading, setLoading] = useState(false);
   const [todayEntryLoaded, setTodayEntryLoaded] = useState(false);
   const [cachedTodayEntry, setCachedTodayEntry] = useState<JournalEntry | null>(null);
+
+  const formatDateString = useCallback((date: Date | string): string => {
+    if (typeof date === 'string') {
+      const parsedDate = parseISO(date);
+      if (!isValid(parsedDate)) {
+        console.error("Invalid date string:", date);
+        return format(new Date(), "yyyy-MM-dd");
+      }
+      return format(parsedDate, "yyyy-MM-dd");
+    }
+    return format(date, "yyyy-MM-dd");
+  }, []);
+
+  const getTodayDateString = useCallback((): string => {
+    return formatDateString(new Date());
+  }, [formatDateString]);
 
   useEffect(() => {
     if (childId) {
@@ -43,7 +58,7 @@ export const useJournalEntries = (childId: string | undefined) => {
         const formattedEntries: JournalEntry[] = data.map((entry: DBJournalEntry) => ({
           id: entry.id,
           childId: entry.child_id,
-          date: format(new Date(entry.created_at), "yyyy-MM-dd"),
+          date: formatDateString(new Date(entry.created_at)),
           mood: entry.mood_intensity || 5,
           water: entry.water || 4,
           sleep: entry.sleep || 7,
@@ -62,9 +77,14 @@ export const useJournalEntries = (childId: string | undefined) => {
         
         setJournalEntries(formattedEntries);
         
-        // Check if today's entry is in the loaded entries
-        const todayDateString = format(new Date(), "yyyy-MM-dd");
-        const todayEntry = formattedEntries.find(entry => entry.date === todayDateString);
+        const todayDateString = getTodayDateString();
+        console.log("Checking for today's entry with date:", todayDateString);
+        
+        const todayEntry = formattedEntries.find(entry => {
+          const entryMatches = entry.date === todayDateString;
+          console.log(`Entry date: ${entry.date}, matches today (${todayDateString}): ${entryMatches}`);
+          return entryMatches;
+        });
         
         if (todayEntry) {
           console.log("Today's entry found in fetched entries:", todayEntry);
@@ -73,11 +93,13 @@ export const useJournalEntries = (childId: string | undefined) => {
         } else {
           console.log("No entry found for today:", todayDateString);
           setCachedTodayEntry(null);
+          setTodayEntryLoaded(true);
         }
       } else {
         console.log("No journal entries found for child:", childId);
         setJournalEntries([]);
         setCachedTodayEntry(null);
+        setTodayEntryLoaded(true);
       }
     } catch (error) {
       console.error("Error in fetchJournalEntries:", error);
@@ -88,28 +110,19 @@ export const useJournalEntries = (childId: string | undefined) => {
     }
   };
 
-  const getTodayEntry = async (): Promise<JournalEntry | null> => {
+  const getTodayEntry = useCallback(async (): Promise<JournalEntry | null> => {
     if (!childId) return null;
     
-    // First, check if we already have the entry loaded
-    if (todayEntryLoaded && cachedTodayEntry) {
-      console.log("Returning cached today's entry:", cachedTodayEntry);
+    if (todayEntryLoaded) {
+      console.log("Using cached today's entry status:", !!cachedTodayEntry);
       return cachedTodayEntry;
     }
     
-    // If we've already checked and didn't find today's entry, return null
-    if (todayEntryLoaded && !cachedTodayEntry) {
-      console.log("Today's entry already checked and not found");
-      return null;
-    }
-    
     try {
-      // Use date-fns to create today's date range in ISO format
-      const today = new Date();
-      // Normalize to midnight UTC to ensure consistent comparison
-      const todayString = format(today, "yyyy-MM-dd");
-      const startOfToday = format(startOfDay(parseISO(todayString)), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-      const endOfToday = format(endOfDay(parseISO(todayString)), "yyyy-MM-dd'T'23:59:59.999'Z'");
+      const todayString = getTodayDateString();
+      const today = parseISO(todayString);
+      const startOfToday = format(startOfDay(today), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+      const endOfToday = format(endOfDay(today), "yyyy-MM-dd'T'23:59:59.999'Z'");
       
       console.log("Checking for journal entry between:", startOfToday, "and", endOfToday);
       console.log("Today's date string:", todayString);
@@ -133,7 +146,7 @@ export const useJournalEntries = (childId: string | undefined) => {
         const todayEntry = {
           id: data[0].id,
           childId: data[0].child_id,
-          date: format(new Date(data[0].created_at), "yyyy-MM-dd"),
+          date: formatDateString(new Date(data[0].created_at)),
           mood: data[0].mood_intensity || 5,
           water: data[0].water || 4,
           sleep: data[0].sleep || 7,
@@ -150,14 +163,12 @@ export const useJournalEntries = (childId: string | undefined) => {
           completed: true
         };
         
-        // Cache the result
         setCachedTodayEntry(todayEntry);
         setTodayEntryLoaded(true);
         
         return todayEntry;
       }
       
-      // No entry found, mark as checked
       setTodayEntryLoaded(true);
       setCachedTodayEntry(null);
       return null;
@@ -165,7 +176,7 @@ export const useJournalEntries = (childId: string | undefined) => {
       console.error("Error checking for today's entry:", error);
       return null;
     }
-  };
+  }, [childId, cachedTodayEntry, todayEntryLoaded, formatDateString, getTodayDateString]);
 
   const saveJournalEntry = async (entry: Omit<JournalEntry, "id" | "childId" | "date" | "completed">) => {
     if (!childId) {
@@ -182,7 +193,6 @@ export const useJournalEntries = (childId: string | undefined) => {
       console.log("Saving journal entry for child:", childId);
       console.log("Entry data:", entry);
       
-      // Check if there's already an entry for today
       const todayEntry = await getTodayEntry();
       
       const journalData = {
@@ -209,7 +219,6 @@ export const useJournalEntries = (childId: string | undefined) => {
       let savedEntry: JournalEntry | null = null;
       
       if (todayEntry) {
-        // Update today's entry
         console.log("Updating existing journal entry for today with ID:", todayEntry.id);
         result = await supabase
           .from('journal_entries')
@@ -229,11 +238,10 @@ export const useJournalEntries = (childId: string | undefined) => {
         
         console.log("Journal entry updated successfully:", result.data);
         
-        // Update state with the updated entry
         const updatedEntry: JournalEntry = {
           id: todayEntry.id,
           childId: childId,
-          date: format(new Date(), "yyyy-MM-dd"),
+          date: formatDateString(new Date()),
           mood: entry.mood,
           water: entry.water,
           sleep: entry.sleep,
@@ -250,7 +258,6 @@ export const useJournalEntries = (childId: string | undefined) => {
           completed: true,
         };
         
-        // Update the state to replace the old entry with the new one
         setJournalEntries(prevEntries => {
           const filtered = prevEntries.filter(e => e.id !== todayEntry.id);
           return [updatedEntry, ...filtered];
@@ -263,7 +270,6 @@ export const useJournalEntries = (childId: string | undefined) => {
           description: "Your journal entry for today has been updated.",
         });
       } else {
-        // Create new entry
         console.log("Creating new journal entry for today");
         result = await supabase
           .from('journal_entries')
@@ -286,7 +292,7 @@ export const useJournalEntries = (childId: string | undefined) => {
           const newEntry: JournalEntry = {
             id: result.data[0].id,
             childId: childId,
-            date: format(new Date(), "yyyy-MM-dd"),
+            date: formatDateString(new Date()),
             mood: entry.mood,
             water: entry.water,
             sleep: entry.sleep,
@@ -303,7 +309,6 @@ export const useJournalEntries = (childId: string | undefined) => {
             completed: true,
           };
           
-          // Award XP for completing a journal entry (15 XP as per requirements)
           try {
             const { data: childData } = await supabase
               .from('child_progress')
@@ -313,7 +318,7 @@ export const useJournalEntries = (childId: string | undefined) => {
               
             if (childData) {
               const currentXP = childData.xp_points || 0;
-              const newXP = currentXP + 15; // Award 15 XP for journal entry
+              const newXP = currentXP + 15;
               
               await supabase
                 .from('child_progress')
@@ -324,7 +329,6 @@ export const useJournalEntries = (childId: string | undefined) => {
             }
           } catch (xpError) {
             console.error("Error awarding XP:", xpError);
-            // Continue even if XP award fails
           }
           
           setJournalEntries(prevEntries => [newEntry, ...prevEntries]);
@@ -337,10 +341,8 @@ export const useJournalEntries = (childId: string | undefined) => {
         }
       }
       
-      // Trigger emotional analysis after saving journal entry
       if (savedEntry) {
         try {
-          // Call the analyze-emotional-growth edge function
           await fetch('https://ghucegvhempgmdykosiw.functions.supabase.co/analyze-emotional-growth', {
             method: 'POST',
             headers: {
@@ -354,7 +356,6 @@ export const useJournalEntries = (childId: string | undefined) => {
           console.log("Emotional growth analysis triggered");
         } catch (analysisError) {
           console.error("Error triggering emotional growth analysis:", analysisError);
-          // Non-blocking - continue even if analysis fails
         }
       }
       
@@ -378,6 +379,7 @@ export const useJournalEntries = (childId: string | undefined) => {
     saveJournalEntry,
     getTodayEntry,
     todayEntryLoaded,
-    cachedTodayEntry
+    cachedTodayEntry,
+    getTodayDateString
   };
 };

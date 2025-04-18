@@ -19,20 +19,40 @@ const Activities = () => {
   // Use a stable key for view mode state to prevent unintended re-renders
   const [viewMode, setViewMode] = useState<"list" | "visual">("list");
   const currentChild = getCurrentChild();
-  const { getTodayEntry } = useJournalEntries(currentChildId);
+  const { 
+    getTodayEntry, 
+    todayEntryLoaded, 
+    cachedTodayEntry,
+    getTodayDateString
+  } = useJournalEntries(currentChildId);
 
+  // Initial loading of today's entry and check-in status
   useEffect(() => {
     const checkTodayJournalEntry = async () => {
       if (currentChildId) {
-        const entry = await getTodayEntry();
-        console.log("Found today's entry:", entry);
-        setJournalCompleted(!!entry);
-        setTodayEntry(entry);
+        try {
+          console.log("Activities: Checking for today's journal entry");
+          const entry = await getTodayEntry();
+          console.log("Activities: Today's entry check result:", entry);
+          setJournalCompleted(!!entry);
+          setTodayEntry(entry);
+        } catch (error) {
+          console.error("Activities: Error checking today's entry:", error);
+        }
       }
     };
     
     checkTodayJournalEntry();
   }, [currentChildId, getTodayEntry]);
+
+  // Use cached entry if available
+  useEffect(() => {
+    if (todayEntryLoaded) {
+      console.log("Activities: Using cached today entry status:", !!cachedTodayEntry);
+      setJournalCompleted(!!cachedTodayEntry);
+      setTodayEntry(cachedTodayEntry);
+    }
+  }, [cachedTodayEntry, todayEntryLoaded]);
 
   useEffect(() => {
     if (currentChild) {
@@ -56,6 +76,18 @@ const Activities = () => {
       setViewMode(value as "list" | "visual");
     }
   };
+
+  useEffect(() => {
+    // Log date information for debugging
+    if (todayEntry) {
+      const todayDateString = getTodayDateString ? getTodayDateString() : new Date().toISOString().split('T')[0];
+      console.log("Activities: Comparing dates", {
+        todayString: todayDateString,
+        entryDate: todayEntry.date,
+        matches: todayEntry.date === todayDateString
+      });
+    }
+  }, [todayEntry, getTodayDateString]);
 
   return (
     <Layout requireAuth>

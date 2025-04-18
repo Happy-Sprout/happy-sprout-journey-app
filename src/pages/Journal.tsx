@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -34,7 +33,8 @@ const Journal = () => {
     saveJournalEntry,
     getTodayEntry,
     todayEntryLoaded,
-    cachedTodayEntry
+    cachedTodayEntry,
+    getTodayDateString
   } = useJournalEntries(currentChildId);
   
   const { 
@@ -70,16 +70,18 @@ const Journal = () => {
     };
     
     // Log the current date to check for timezone issues
-    const today = new Date();
-    console.log("Journal: Current date check:", {
-      date: today,
-      isoString: today.toISOString(),
-      isoDate: today.toISOString().split('T')[0],
-      localDate: format(today, 'yyyy-MM-dd')
-    });
+    if (getTodayDateString) {
+      const todayString = getTodayDateString();
+      console.log("Journal: Today's date string:", todayString);
+      
+      if (cachedTodayEntry) {
+        console.log("Journal: Cached entry date:", cachedTodayEntry.date);
+        console.log("Journal: Date match?", cachedTodayEntry.date === todayString);
+      }
+    }
     
     checkTodayEntry();
-  }, [currentChildId, getTodayEntry]);
+  }, [currentChildId, getTodayEntry, getTodayDateString, cachedTodayEntry]);
 
   const handleSubmitJournalEntry = async (entry: any) => {
     if (!currentChild) {
