@@ -1,14 +1,16 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { JournalEntry } from "@/types/journal";
 import { cn } from "@/lib/utils";
 import { Smile, Meh, Frown, Heart, Droplet, Moon, Activity, Brain, Star, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface WellnessRadarChartProps {
   journalEntry: JournalEntry | null;
+  loading?: boolean;
 }
 
 interface CustomTooltipProps {
@@ -36,9 +38,19 @@ const getMoodColor = (moodValue: number): string => {
   return "bg-red-300 text-red-800";
 };
 
-const WellnessRadarChart = ({ journalEntry }: WellnessRadarChartProps) => {
+const WellnessRadarChart = ({ journalEntry, loading = false }: WellnessRadarChartProps) => {
   const [view, setView] = useState<"radar" | "list">("radar");
   const isMobile = useIsMobile();
+  
+  console.log("WellnessRadarChart rendering with entry:", journalEntry, "Loading:", loading);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg border border-gray-200 p-4">
+        <LoadingSpinner message="Loading wellness data..." />
+      </div>
+    );
+  }
 
   if (!journalEntry) {
     return (

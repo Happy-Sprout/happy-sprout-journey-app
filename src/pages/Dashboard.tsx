@@ -18,6 +18,7 @@ import { Beaker } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { JournalEntry } from "@/types/journal";
+import DailyActivities from "@/components/dashboard/DailyActivities";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
@@ -45,7 +46,11 @@ const Dashboard = () => {
     connectionError
   } = useEmotionalInsights(stableChildId());
   
-  const { getTodayEntry } = useJournalEntries(currentChildId);
+  const { 
+    getTodayEntry, 
+    todayEntryLoaded, 
+    cachedTodayEntry 
+  } = useJournalEntries(currentChildId);
   
   // Fetch today's journal entry when component mounts or child changes
   useEffect(() => {
@@ -53,12 +58,12 @@ const Dashboard = () => {
       if (currentChildId) {
         setJournalLoading(true);
         try {
-          console.log("Fetching today's journal entry for childId:", currentChildId);
+          console.log("Dashboard: Fetching today's journal entry for childId:", currentChildId);
           const entry = await getTodayEntry();
-          console.log("Retrieved today's entry:", entry);
+          console.log("Dashboard: Retrieved today's entry:", entry);
           setTodayEntry(entry);
         } catch (error) {
-          console.error("Error fetching today's journal entry:", error);
+          console.error("Dashboard: Error fetching today's journal entry:", error);
         } finally {
           setJournalLoading(false);
         }
@@ -67,6 +72,25 @@ const Dashboard = () => {
     
     fetchTodayEntry();
   }, [currentChildId, getTodayEntry]);
+  
+  // Use cached entry value if available
+  useEffect(() => {
+    if (cachedTodayEntry && todayEntryLoaded) {
+      console.log("Dashboard: Using cached today entry:", cachedTodayEntry);
+      setTodayEntry(cachedTodayEntry);
+      setJournalLoading(false);
+    }
+  }, [cachedTodayEntry, todayEntryLoaded]);
+  
+  // Add additional log to check date consistency
+  useEffect(() => {
+    const todayString = new Date().toISOString().split('T')[0];
+    console.log("Dashboard: Today's ISO date string:", todayString);
+    if (todayEntry) {
+      console.log("Dashboard: Today's entry date:", todayEntry.date);
+      console.log("Dashboard: Date match?", todayEntry.date === todayString);
+    }
+  }, [todayEntry]);
   
   // Check database connection only once on mount or when in development mode
   useEffect(() => {
@@ -154,6 +178,15 @@ const Dashboard = () => {
                 {currentChild && (
                   <>
                     <WelcomeHeader currentChild={currentChild} />
+                    
+                    {/* Daily Activities (Journal, Check-in) */}
+                    {currentChild && currentChildId && (
+                      <DailyActivities 
+                        currentChild={currentChild} 
+                        currentChildId={currentChildId}
+                      />
+                    )}
+                    
                     <StatsCards currentChild={currentChild} />
                     
                     {/* Emotional Growth Insights now appears before Achievements */}
@@ -174,13 +207,10 @@ const Dashboard = () => {
                     {currentChild && (
                       <div className="mb-8 mt-6">
                         <h2 className="text-xl font-semibold mb-4">Today's Wellness</h2>
-                        {journalLoading ? (
-                          <div className="flex justify-center items-center h-64 bg-gray-50 rounded-lg border">
-                            <LoadingSpinner message="Loading wellness data..." />
-                          </div>
-                        ) : (
-                          <WellnessRadarChart journalEntry={todayEntry} />
-                        )}
+                        <WellnessRadarChart 
+                          journalEntry={todayEntry} 
+                          loading={journalLoading} 
+                        />
                       </div>
                     )}
 

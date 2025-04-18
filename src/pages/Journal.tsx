@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -12,8 +13,9 @@ import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
 import { checkForBadgeUnlocks, getBadgeInfo } from "@/utils/childUtils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRightCircle, Clock } from "lucide-react";
+import { ArrowRightCircle, Clock, CalendarCheck } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { format } from "date-fns";
 
 const Journal = () => {
   const { getCurrentChild, currentChildId, childProfiles, setChildProfiles } = useUser();
@@ -30,7 +32,9 @@ const Journal = () => {
     journalEntries, 
     loading, 
     saveJournalEntry,
-    getTodayEntry
+    getTodayEntry,
+    todayEntryLoaded,
+    cachedTodayEntry
   } = useJournalEntries(currentChildId);
   
   const { 
@@ -39,22 +43,40 @@ const Journal = () => {
     lowestSELArea
   } = useEmotionalInsights(currentChildId);
 
+  // Use cached today entry state if available
+  useEffect(() => {
+    if (todayEntryLoaded) {
+      console.log("Journal: Using cached today entry status:", !!cachedTodayEntry);
+      setTodayEntryExists(!!cachedTodayEntry);
+      setCheckingTodayEntry(false);
+    }
+  }, [todayEntryLoaded, cachedTodayEntry]);
+
   useEffect(() => {
     if (!currentChildId) return;
     
     const checkTodayEntry = async () => {
       try {
         setCheckingTodayEntry(true);
-        console.log("Checking for today's journal entry");
+        console.log("Journal: Checking for today's journal entry");
         const entry = await getTodayEntry();
-        console.log("Today's entry check result:", entry);
+        console.log("Journal: Today's entry check result:", entry);
         setTodayEntryExists(!!entry);
       } catch (error) {
-        console.error("Error checking today's entry:", error);
+        console.error("Journal: Error checking today's entry:", error);
       } finally {
         setCheckingTodayEntry(false);
       }
     };
+    
+    // Log the current date to check for timezone issues
+    const today = new Date();
+    console.log("Journal: Current date check:", {
+      date: today,
+      isoString: today.toISOString(),
+      isoDate: today.toISOString().split('T')[0],
+      localDate: format(today, 'yyyy-MM-dd')
+    });
     
     checkTodayEntry();
   }, [currentChildId, getTodayEntry]);
@@ -236,7 +258,12 @@ const Journal = () => {
                 <LoadingSpinner message="Checking today's journal status..." />
               </div>
             ) : todayEntryExists ? (
-              <div className="sprout-card text-center py-8">
+              <div className="sprout-card text-center py-8 border rounded-lg">
+                <div className="mb-4 flex justify-center">
+                  <div className="bg-green-100 text-green-700 p-3 rounded-full">
+                    <CalendarCheck className="h-8 w-8" />
+                  </div>
+                </div>
                 <h2 className="text-2xl font-bold text-sprout-purple mb-4">You've completed today's journal entry!</h2>
                 <p className="mb-6 text-lg">
                   Great job! You earned 15 XP. You can come back tomorrow to write another entry.
