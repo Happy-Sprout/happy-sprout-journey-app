@@ -1,3 +1,4 @@
+
 import { useUser } from "@/contexts/UserContext";
 import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
@@ -8,7 +9,9 @@ import StatsCards from "@/components/dashboard/StatsCards";
 import AchievementsSection from "@/components/dashboard/AchievementsSection";
 import WelcomePrompt from "@/components/dashboard/WelcomePrompt";
 import EmotionalGrowthInsights from "@/components/dashboard/EmotionalGrowthInsights";
+import WellnessRadarChart from "@/components/wellness/WellnessRadarChart";
 import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
+import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Beaker } from "lucide-react";
@@ -20,6 +23,7 @@ const Dashboard = () => {
   const currentChild = getCurrentChild();
   const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [todayEntry, setTodayEntry] = useState(null);
   const isDevelopment = import.meta.env.DEV;
   const { toast } = useToast();
   
@@ -38,6 +42,19 @@ const Dashboard = () => {
     insertSampleData,
     connectionError
   } = useEmotionalInsights(stableChildId());
+  
+  const { getTodayEntry } = useJournalEntries(currentChildId);
+  
+  useEffect(() => {
+    const fetchTodayEntry = async () => {
+      if (currentChildId) {
+        const entry = await getTodayEntry();
+        setTodayEntry(entry);
+      }
+    };
+    
+    fetchTodayEntry();
+  }, [currentChildId, getTodayEntry]);
   
   // Check database connection only once on mount or when in development mode
   useEffect(() => {
@@ -139,6 +156,14 @@ const Dashboard = () => {
                         isFallbackData={isFallbackData}
                         hasInsufficientData={hasInsufficientData}
                       />
+                    )}
+                    
+                    {/* Wellness Radar Chart Integration */}
+                    {currentChild && todayEntry && (
+                      <div className="mb-8 mt-6">
+                        <h2 className="text-xl font-semibold mb-4">Today's Wellness</h2>
+                        <WellnessRadarChart journalEntry={todayEntry} />
+                      </div>
                     )}
 
                     <AchievementsSection 

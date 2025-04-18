@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, CalendarDays, Check } from "lucide-react";
@@ -6,21 +7,23 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
-import { useState, useEffect } from "react";
+import WellnessRadarChart from "@/components/wellness/WellnessRadarChart";
 
 const Activities = () => {
   const navigate = useNavigate();
   const { getCurrentChild, currentChildId } = useUser();
   const [journalCompleted, setJournalCompleted] = useState(false);
   const [dailyCheckInCompleted, setDailyCheckInCompleted] = useState(false);
+  const [todayEntry, setTodayEntry] = useState(null);
   const currentChild = getCurrentChild();
   const { getTodayEntry } = useJournalEntries(currentChildId);
   
   useEffect(() => {
     const checkTodayJournalEntry = async () => {
       if (currentChildId) {
-        const todayEntry = await getTodayEntry();
-        setJournalCompleted(!!todayEntry);
+        const entry = await getTodayEntry();
+        setJournalCompleted(!!entry);
+        setTodayEntry(entry);
       }
     };
     
@@ -106,6 +109,12 @@ const Activities = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+        
+        {/* Wellness Radar Chart Section */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Wellness Tracker</h2>
+          <WellnessRadarChart journalEntry={todayEntry} />
         </div>
       </div>
     </Layout>
