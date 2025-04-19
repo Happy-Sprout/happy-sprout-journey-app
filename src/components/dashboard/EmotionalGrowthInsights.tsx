@@ -1,6 +1,6 @@
 import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, addWeeks, startOfWeek } from "date-fns";
+import { format, addWeeks, startOfWeek, isAfter } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChildProfile } from "@/types/childProfile";
@@ -73,7 +73,8 @@ const EmotionalGrowthInsights = ({
   const isMobile = useIsMobile();
   const formattedDateRange = `${format(currentWeekStart, "MMM d")} - ${format(addWeeks(currentWeekStart, 1), "MMM d")}`;
   const radarData = getRadarChartData(insight, isMobile);
-  const isCurrentOrFutureWeek = startOfWeek(addWeeks(currentWeekStart, 1), { weekStartsOn: 1 }) >= startOfWeek(new Date(), { weekStartsOn: 1 });
+  const nextWeekStart = addWeeks(currentWeekStart, 1);
+  const isNextDisabled = historicalLoading || isAfter(nextWeekStart, new Date());
 
   if (loading) {
     return (
@@ -153,7 +154,7 @@ const EmotionalGrowthInsights = ({
                   variant="outline" 
                   size="sm" 
                   onClick={onNextWeek}
-                  disabled={historicalLoading || isCurrentOrFutureWeek}
+                  disabled={isNextDisabled}
                 >
                   Next Week
                   <ChevronRight className="h-4 w-4 ml-1" />
