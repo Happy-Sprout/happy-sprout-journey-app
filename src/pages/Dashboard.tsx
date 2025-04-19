@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -134,7 +135,7 @@ const Dashboard = () => {
   
   return (
     <Layout requireAuth>
-      <div className="container mx-auto px-4">
+      <div className="bg-sprout-cream min-h-screen">
         {isLoading ? (
           <DashboardLoading />
         ) : (

@@ -1,7 +1,6 @@
 
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
-import WelcomeHeader from "./WelcomeHeader";
 import EmotionalGrowthInsights from "./EmotionalGrowthInsights";
 import WellnessRadarChart from "../wellness/WellnessRadarChart";
 import AchievementsSection from "./AchievementsSection";
@@ -48,17 +47,16 @@ const DashboardContent = ({
 }: DashboardContentProps) => {
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Stats sidebar for mobile */}
-      <div className="lg:hidden mb-6 px-4 sm:px-6">
-        <StatsSidebar currentChild={currentChild} />
-      </div>
-
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main content (spans 3 columns on large screens) */}
-          <main className="lg:col-span-3 space-y-6">
+        {/* Stats sidebar for mobile - shown at top on small screens */}
+        <div className="lg:hidden mb-6">
+          <StatsSidebar currentChild={currentChild} />
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:space-x-6">
+          {/* Main content */}
+          <main className="w-full lg:w-3/4 space-y-6">
             <HeaderIllustration />
-            <WelcomeHeader currentChild={currentChild} />
             
             <DailyActivities 
               currentChild={currentChild} 
@@ -93,17 +91,19 @@ const DashboardContent = ({
               currentChildId={currentChildId}
             />
             
-            <DevelopmentTools 
-              isFallbackData={isFallbackData}
-              connectionError={connectionError}
-              isDbConnected={isDbConnected}
-              isDevelopment={isDevelopment}
-              insertSampleData={insertSampleData}
-            />
+            {isDevelopment && (
+              <DevelopmentTools 
+                isFallbackData={isFallbackData}
+                connectionError={connectionError}
+                isDbConnected={isDbConnected}
+                isDevelopment={isDevelopment}
+                insertSampleData={insertSampleData}
+              />
+            )}
           </main>
 
-          {/* Right sidebar (stats) - hidden on mobile, 1 column on large screens */}
-          <aside className="hidden lg:block space-y-4">
+          {/* Right sidebar - hidden on mobile */}
+          <aside className="hidden lg:block w-64 space-y-4">
             <StatsSidebar currentChild={currentChild} />
           </aside>
         </div>
