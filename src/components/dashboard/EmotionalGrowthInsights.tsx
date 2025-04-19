@@ -1,7 +1,6 @@
-
-import React, { useState } from "react";
+import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, addWeeks } from "date-fns";
+import { format, addWeeks, startOfWeek } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChildProfile } from "@/types/childProfile";
@@ -12,7 +11,7 @@ import {
   PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface EmotionalGrowthInsightsProps {
@@ -33,7 +32,6 @@ interface EmotionalGrowthInsightsProps {
 const getRadarChartData = (insight: EmotionalInsight | null, isMobile: boolean) => {
   if (!insight) return [];
 
-  // Ensure radar chart data is in percentage format (0-100)
   return [
     { 
       skill: isMobile ? "Self-Aware" : "Self-Awareness", 
@@ -75,11 +73,8 @@ const EmotionalGrowthInsights = ({
   const isMobile = useIsMobile();
   const formattedDateRange = `${format(currentWeekStart, "MMM d")} - ${format(addWeeks(currentWeekStart, 1), "MMM d")}`;
   const radarData = getRadarChartData(insight, isMobile);
+  const isCurrentOrFutureWeek = startOfWeek(addWeeks(currentWeekStart, 1), { weekStartsOn: 1 }) >= startOfWeek(new Date(), { weekStartsOn: 1 });
 
-  // Debug data issues
-  console.log("[EmotionalGrowthInsights-DEBUG] Historical insights:", historicalInsights);
-  console.log("[EmotionalGrowthInsights-DEBUG] Latest insight:", insight);
-  
   if (loading) {
     return (
       <Card className="shadow-sm">
@@ -142,32 +137,26 @@ const EmotionalGrowthInsights = ({
           </TabsContent>
 
           <TabsContent value="trends" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4">
                 <Button 
                   variant="outline" 
-                  size="icon" 
+                  size="sm"
                   onClick={onPrevWeek}
                   disabled={historicalLoading}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Prev Week
                 </Button>
                 <span className="text-sm font-medium">{formattedDateRange}</span>
                 <Button 
                   variant="outline" 
-                  size="icon" 
+                  size="sm" 
                   onClick={onNextWeek}
-                  disabled={historicalLoading || currentWeekStart >= new Date()}
+                  disabled={historicalLoading || isCurrentOrFutureWeek}
                 >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={onResetWeek}
-                  disabled={historicalLoading}
-                >
-                  <RefreshCw className="h-4 w-4" />
+                  Next Week
+                  <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
 
