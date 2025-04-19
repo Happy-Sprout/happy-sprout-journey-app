@@ -4,8 +4,6 @@ import { JournalEntry } from "@/types/journal";
 import { Period } from "@/hooks/useEmotionalInsights";
 import EmotionalGrowthInsights from "../EmotionalGrowthInsights";
 import WellnessSection from "../wellness/WellnessSection";
-import DailyActivities from "../DailyActivities";
-import HeaderIllustration from "../HeaderIllustration";
 import DevelopmentTools from "../DevelopmentTools";
 import { useState } from "react";
 
