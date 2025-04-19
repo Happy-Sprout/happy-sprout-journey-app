@@ -387,6 +387,72 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     return result;
   };
 
+  const generateSampleHistoricalData = useCallback((period: Period, childId: string, startDate?: Date): EmotionalInsight[] => {
+    const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+    const sampleData: EmotionalInsight[] = [];
+    const currentDate = new Date();
+    
+    console.log("[useEmotionalInsights-DEBUG] Generating sample data for period:", period);
+    console.log("[useEmotionalInsights-DEBUG] Sample data weekStart:", weekStart.toISOString());
+    console.log("[useEmotionalInsights-DEBUG] Sample data weekEnd:", weekEnd.toISOString());
+    
+    if (period === 'weekly') {
+      for (let i = 0; i < 7; i++) {
+        if (i % 2 === 0 || i === 6) {
+          const date = addDays(weekStart, i);
+          
+          if (!isAfter(date, currentDate)) {
+            const dayProgress = i / 6;
+            const samplePoint: EmotionalInsight = {
+              id: `sample-daily-${i}`,
+              child_id: childId,
+              self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
+              self_management: 0.45 + (0.35 * dayProgress) + (Math.random() * 0.1),
+              social_awareness: 0.5 + (0.3 * dayProgress) + (Math.random() * 0.1),
+              relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
+              responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
+              created_at: date.toISOString(),
+              display_date: format(date, 'yyyy-MM-dd'),
+              source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
+            };
+            
+            sampleData.push(samplePoint);
+          }
+        }
+      }
+    } else {
+      const monthStart = startOfMonth(new Date());
+      const monthEnd = endOfMonth(monthStart);
+      
+      for (let i = 0; i < 30; i++) {
+        const date = addDays(monthStart, i);
+        
+        if (!isAfter(date, currentDate)) {
+          const dayProgress = i / 30;
+          const samplePoint: EmotionalInsight = {
+            id: `sample-daily-${i}`,
+            child_id: childId,
+            self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
+            self_management: 0.45 + (0.35 * dayProgress) + (Math.random() * 0.1),
+            social_awareness: 0.5 + (0.3 * dayProgress) + (Math.random() * 0.1),
+            relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
+            responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
+            created_at: date.toISOString(),
+            display_date: format(date, 'yyyy-MM-dd'),
+            source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
+          };
+          
+          sampleData.push(samplePoint);
+        }
+      }
+    }
+    
+    return sampleData.sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  }, []);
+
   const fetchHistoricalInsights = useCallback(async (period: Period = 'weekly', startDate?: Date) => {
     if (!childId) {
       console.log("[useEmotionalInsights-DEBUG] No childId provided for fetchHistoricalInsights");
@@ -558,72 +624,6 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       setHistoricalLoading(false);
     }
   }, [childId, toast, generateSampleHistoricalData, fetchInsights]);
-
-  const generateSampleHistoricalData = useCallback((period: Period, childId: string, startDate?: Date): EmotionalInsight[] => {
-    const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-    const sampleData: EmotionalInsight[] = [];
-    const currentDate = new Date();
-    
-    console.log("[useEmotionalInsights-DEBUG] Generating sample data for period:", period);
-    console.log("[useEmotionalInsights-DEBUG] Sample data weekStart:", weekStart.toISOString());
-    console.log("[useEmotionalInsights-DEBUG] Sample data weekEnd:", weekEnd.toISOString());
-    
-    if (period === 'weekly') {
-      for (let i = 0; i < 7; i++) {
-        if (i % 2 === 0 || i === 6) {
-          const date = addDays(weekStart, i);
-          
-          if (!isAfter(date, currentDate)) {
-            const dayProgress = i / 6;
-            const samplePoint: EmotionalInsight = {
-              id: `sample-daily-${i}`,
-              child_id: childId,
-              self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
-              self_management: 0.45 + (0.35 * dayProgress) + (Math.random() * 0.1),
-              social_awareness: 0.5 + (0.3 * dayProgress) + (Math.random() * 0.1),
-              relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
-              responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
-              created_at: date.toISOString(),
-              display_date: format(date, 'yyyy-MM-dd'),
-              source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
-            };
-            
-            sampleData.push(samplePoint);
-          }
-        }
-      }
-    } else {
-      const monthStart = startOfMonth(new Date());
-      const monthEnd = endOfMonth(monthStart);
-      
-      for (let i = 0; i < 30; i++) {
-        const date = addDays(monthStart, i);
-        
-        if (!isAfter(date, currentDate)) {
-          const dayProgress = i / 30;
-          const samplePoint: EmotionalInsight = {
-            id: `sample-daily-${i}`,
-            child_id: childId,
-            self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
-            self_management: 0.45 + (0.35 * dayProgress) + (Math.random() * 0.1),
-            social_awareness: 0.5 + (0.3 * dayProgress) + (Math.random() * 0.1),
-            relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
-            responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
-            created_at: date.toISOString(),
-            display_date: format(date, 'yyyy-MM-dd'),
-            source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
-          };
-          
-          sampleData.push(samplePoint);
-        }
-      }
-    }
-    
-    return sampleData.sort((a, b) => 
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-  }, []);
 
   const insertSampleData = useCallback(async () => {
     if (!childId || !IS_DEVELOPMENT) return;
