@@ -61,6 +61,13 @@ const Dashboard = () => {
   // Ensure the date is properly passed to fetchHistoricalInsights
   const fetchHistoricalInsightsWithDate = useCallback(async (period: Period, startDate?: Date) => {
     console.log(`[Dashboard-DEBUG] Fetching insights for period: ${period}, date:`, startDate);
+    
+    if (!startDate) {
+      console.log(`[Dashboard-DEBUG] No start date provided, using current week`);
+    } else {
+      console.log(`[Dashboard-DEBUG] Start date provided:`, startDate.toISOString());
+    }
+    
     // Make sure we pass the actual startDate to the hook
     return await fetchHistoricalInsights(period, startDate);
   }, [fetchHistoricalInsights]);

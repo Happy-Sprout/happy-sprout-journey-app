@@ -1,4 +1,3 @@
-
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,6 +115,7 @@ const EmotionalGrowthInsights = ({
     return endDate;
   }, [currentWeekStart]);
 
+  // Debug on mount
   useEffect(() => {
     console.log("[EmotionalGrowthInsights-DEBUG] Component mounted");
     console.log("[EmotionalGrowthInsights-DEBUG] Initial currentWeekStart:", currentWeekStart.toISOString());
@@ -191,6 +191,7 @@ const EmotionalGrowthInsights = ({
     }
   }, [selectedTab, selectedPeriod, fetchHistoricalInsights, currentWeekStart, weekEndDate]);
 
+  // Fetch data when tab or week changes
   useEffect(() => {
     if (selectedTab === "trends") {
       console.log("[EmotionalGrowthInsights-DEBUG] Selected tab is 'trends', fetching historical data");
@@ -198,6 +199,7 @@ const EmotionalGrowthInsights = ({
     }
   }, [selectedTab, currentWeekStart, fetchHistoricalData]);
 
+  // Debug when historical insights update
   useEffect(() => {
     console.log("[EmotionalGrowthInsights-DEBUG] historicalInsights updated:", historicalInsights);
     console.log("[EmotionalGrowthInsights-DEBUG] insights count:", historicalInsights.length);
@@ -215,45 +217,6 @@ const EmotionalGrowthInsights = ({
       });
     }
   }, [historicalInsights]);
-
-  const radarChartData = useMemo(() => {
-    if (!insight) return [];
-    
-    const labels = isMobile ? SEL_LABELS_MOBILE : SEL_LABELS;
-    
-    return [
-      {
-        subject: labels.self_awareness,
-        A: insight.self_awareness * 100,
-        fullMark: 100,
-        key: "self_awareness"
-      },
-      {
-        subject: labels.self_management,
-        A: insight.self_management * 100,
-        fullMark: 100,
-        key: "self_management"
-      },
-      {
-        subject: labels.social_awareness,
-        A: insight.social_awareness * 100,
-        fullMark: 100,
-        key: "social_awareness"
-      },
-      {
-        subject: labels.relationship_skills,
-        A: insight.relationship_skills * 100,
-        fullMark: 100,
-        key: "relationship_skills"
-      },
-      {
-        subject: labels.responsible_decision_making,
-        A: insight.responsible_decision_making * 100,
-        fullMark: 100,
-        key: "responsible_decision_making"
-      }
-    ];
-  }, [insight, isMobile]);
 
   const formatDateForPeriod = (dateStr: string, period: Period) => {
     if (!dateStr || !isValid(new Date(dateStr))) return '';

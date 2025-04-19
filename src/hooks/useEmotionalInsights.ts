@@ -24,6 +24,73 @@ export type Period = 'weekly' | 'monthly' | 'all';
 const MIN_DATA_POINTS_FOR_CHART = 2;
 const IS_DEVELOPMENT = import.meta.env.DEV;
 
+// Helper function to generate sample data for development and testing
+const generateSampleHistoricalData = (period: Period, childId: string, startDate?: Date): EmotionalInsight[] => {
+  const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+  const sampleData: EmotionalInsight[] = [];
+  const currentDate = new Date();
+  
+  console.log("[useEmotionalInsights-DEBUG] Generating sample data for period:", period);
+  console.log("[useEmotionalInsights-DEBUG] Sample data weekStart:", weekStart.toISOString());
+  console.log("[useEmotionalInsights-DEBUG] Sample data weekEnd:", weekEnd.toISOString());
+  
+  if (period === 'weekly') {
+    for (let i = 0; i < 7; i++) {
+      if (i % 2 === 0 || i === 6) {
+        const date = addDays(weekStart, i);
+        
+        if (!isAfter(date, currentDate)) {
+          const dayProgress = i / 6;
+          const samplePoint: EmotionalInsight = {
+            id: `sample-daily-${i}`,
+            child_id: childId,
+            self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
+            self_management: 0.45 + (0.35 * dayProgress) + (Math.random() * 0.1),
+            social_awareness: 0.5 + (0.3 * dayProgress) + (Math.random() * 0.1),
+            relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
+            responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
+            created_at: date.toISOString(),
+            display_date: format(date, 'yyyy-MM-dd'),
+            source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
+          };
+          
+          sampleData.push(samplePoint);
+        }
+      }
+    }
+  } else {
+    const monthStart = startOfMonth(new Date());
+    const monthEnd = endOfMonth(monthStart);
+    
+    for (let i = 0; i < 30; i++) {
+      const date = addDays(monthStart, i);
+      
+      if (!isAfter(date, currentDate)) {
+        const dayProgress = i / 30;
+        const samplePoint: EmotionalInsight = {
+          id: `sample-daily-${i}`,
+          child_id: childId,
+          self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
+          self_management: 0.45 + (0.35 * dayProgress) + (Math.random() * 0.1),
+          social_awareness: 0.5 + (0.3 * dayProgress) + (Math.random() * 0.1),
+          relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
+          responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
+          created_at: date.toISOString(),
+          display_date: format(date, 'yyyy-MM-dd'),
+          source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
+        };
+        
+        sampleData.push(samplePoint);
+      }
+    }
+  }
+  
+  return sampleData.sort((a, b) => 
+    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+};
+
 const sampleInsightsData: EmotionalInsight[] = [
   {
     id: 'sample-1',
@@ -387,77 +454,19 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     return result;
   };
 
-  const generateSampleHistoricalData = useCallback((period: Period, childId: string, startDate?: Date): EmotionalInsight[] => {
-    const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-    const sampleData: EmotionalInsight[] = [];
-    const currentDate = new Date();
-    
-    console.log("[useEmotionalInsights-DEBUG] Generating sample data for period:", period);
-    console.log("[useEmotionalInsights-DEBUG] Sample data weekStart:", weekStart.toISOString());
-    console.log("[useEmotionalInsights-DEBUG] Sample data weekEnd:", weekEnd.toISOString());
-    
-    if (period === 'weekly') {
-      for (let i = 0; i < 7; i++) {
-        if (i % 2 === 0 || i === 6) {
-          const date = addDays(weekStart, i);
-          
-          if (!isAfter(date, currentDate)) {
-            const dayProgress = i / 6;
-            const samplePoint: EmotionalInsight = {
-              id: `sample-daily-${i}`,
-              child_id: childId,
-              self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
-              self_management: 0.45 + (0.35 * dayProgress) + (Math.random() * 0.1),
-              social_awareness: 0.5 + (0.3 * dayProgress) + (Math.random() * 0.1),
-              relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
-              responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
-              created_at: date.toISOString(),
-              display_date: format(date, 'yyyy-MM-dd'),
-              source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
-            };
-            
-            sampleData.push(samplePoint);
-          }
-        }
-      }
-    } else {
-      const monthStart = startOfMonth(new Date());
-      const monthEnd = endOfMonth(monthStart);
-      
-      for (let i = 0; i < 30; i++) {
-        const date = addDays(monthStart, i);
-        
-        if (!isAfter(date, currentDate)) {
-          const dayProgress = i / 30;
-          const samplePoint: EmotionalInsight = {
-            id: `sample-daily-${i}`,
-            child_id: childId,
-            self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
-            self_management: 0.45 + (0.35 * dayProgress) + (Math.random() * 0.1),
-            social_awareness: 0.5 + (0.3 * dayProgress) + (Math.random() * 0.1),
-            relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
-            responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
-            created_at: date.toISOString(),
-            display_date: format(date, 'yyyy-MM-dd'),
-            source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
-          };
-          
-          sampleData.push(samplePoint);
-        }
-      }
-    }
-    
-    return sampleData.sort((a, b) => 
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-  }, []);
-
   const fetchHistoricalInsights = useCallback(async (period: Period = 'weekly', startDate?: Date) => {
     if (!childId) {
       console.log("[useEmotionalInsights-DEBUG] No childId provided for fetchHistoricalInsights");
       return;
     }
+    
+    // Add enhanced debugging
+    console.log("[DEBUG] fetchHistoricalInsights called with:", {
+      childId,
+      period,
+      startDate: startDate?.toISOString(),
+      callerStack: new Error().stack
+    });
     
     setHistoricalLoading(true);
     setHasInsufficientData(false);
@@ -475,8 +484,12 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       
       const targetEndDate = endOfWeek(targetStartDate, { weekStartsOn: 1 });
       
+      // Create a more inclusive end date by adding a day to ensure we capture all data
+      const inclusiveEndDate = addDays(targetEndDate, 1);
+      
       console.log(`[useEmotionalInsights-DEBUG] Calculated targetStartDate: ${targetStartDate.toISOString()}`);
       console.log(`[useEmotionalInsights-DEBUG] Calculated targetEndDate: ${targetEndDate.toISOString()}`);
+      console.log(`[useEmotionalInsights-DEBUG] Inclusive end date: ${inclusiveEndDate.toISOString()}`);
       console.log(`[useEmotionalInsights-DEBUG] Fetching historical insights for period: ${period}, childId: ${childId}`);
       
       const { error: pingError } = await supabase.from('sel_insights').select('id').limit(1);
@@ -487,9 +500,17 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       }
       
       const formattedStartDate = targetStartDate.toISOString();
-      const formattedEndDate = targetEndDate.toISOString();
+      const formattedEndDate = inclusiveEndDate.toISOString();
       
       console.log(`[useEmotionalInsights-DEBUG] Query date range: ${formattedStartDate} to ${formattedEndDate}`);
+      
+      // Log the exact SQL query we're going to run
+      console.log(`[useEmotionalInsights-DEBUG] SQL query equivalent: 
+        SELECT * FROM sel_insights 
+        WHERE child_id = '${childId}'
+        AND created_at >= '${formattedStartDate}'
+        AND created_at <= '${formattedEndDate}'
+        ORDER BY created_at ASC`);
       
       const { data: weekData, error: weekError } = await supabase
         .from('sel_insights')
@@ -733,21 +754,4 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       console.error("Error in analyzeEntry:", error);
       return null;
     }
-  }, [childId, fetchInsights]);
-
-  return {
-    insights,
-    latestInsight,
-    loading,
-    fetchInsights,
-    analyzeEntry,
-    fetchHistoricalInsights,
-    historicalInsights,
-    historicalLoading,
-    isFallbackData,
-    hasInsufficientData,
-    insertSampleData,
-    connectionError,
-    lowestSELArea
-  };
-};
+  }, [childId, fetchInsights
