@@ -276,7 +276,7 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
               <div>
                 <h3 className="text-purple-700 font-semibold mb-1">→ Biggest Growth Area</h3>
                 <p className="text-gray-700">
-                  {biggestGrowth.dimension}: Improved by +{biggestGrowth.change} points
+                  {biggestGrowth.dimension}: Improved by +{biggestGrowth.change}%
                 </p>
               </div>
             )}
@@ -284,14 +284,14 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
             <div>
               <h3 className="text-purple-700 font-semibold mb-1">→ Strongest Skill</h3>
               <p className="text-gray-700">
-                {strongestSkill.dimension} with a score of {strongestSkill.postScore}/100
+                {strongestSkill.dimension} with a score of {strongestSkill.postScore}%
               </p>
             </div>
 
             <div>
               <h3 className="text-purple-700 font-semibold mb-1">→ Area for Continued Focus</h3>
               <p className="text-gray-700">
-                {weakestSkill.dimension} currently at {weakestSkill.postScore}/100
+                {weakestSkill.dimension} currently at {weakestSkill.postScore}%
               </p>
             </div>
           </CardContent>
