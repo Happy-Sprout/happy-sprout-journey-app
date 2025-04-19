@@ -1,11 +1,10 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import NoActiveChildPrompt from "@/components/dashboard/NoActiveChildPrompt";
 import ChildProfileSelector from "@/components/dashboard/ChildProfileSelector";
 import WelcomePrompt from "@/components/dashboard/WelcomePrompt";
-import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
+import { useEmotionalInsights, Period } from "@/hooks/useEmotionalInsights";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +27,7 @@ const Dashboard = () => {
   const { 
     latestInsight, 
     loading: insightLoading,
-    fetchHistoricalInsights,
+    fetchHistoricalInsights: fetchInsights,
     historicalInsights,
     historicalLoading,
     isFallbackData,
@@ -42,6 +41,10 @@ const Dashboard = () => {
     todayEntryLoaded, 
     cachedTodayEntry 
   } = useJournalEntries(currentChildId);
+  
+  const fetchHistoricalInsights = useCallback(async (period: Period) => {
+    return await fetchInsights(period);
+  }, [fetchInsights]);
   
   useEffect(() => {
     const fetchTodayEntry = async () => {

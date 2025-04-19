@@ -8,13 +8,14 @@ import WellnessRadarChart from "../wellness/WellnessRadarChart";
 import AchievementsSection from "./AchievementsSection";
 import DevelopmentTools from "./DevelopmentTools";
 import HeaderIllustration from "./HeaderIllustration";
+import { Period } from "@/hooks/useEmotionalInsights";
 
 interface DashboardContentProps {
   currentChild: ChildProfile;
   currentChildId: string;
   latestInsight: any;
   insightLoading: boolean;
-  fetchHistoricalInsights: () => void;
+  fetchHistoricalInsights: (period: Period) => Promise<void>;
   historicalInsights: any[];
   historicalLoading: boolean;
   isFallbackData: boolean;
