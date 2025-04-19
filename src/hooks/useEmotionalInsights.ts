@@ -1,11 +1,15 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO, startOfWeek, isValid, addDays, isAfter, endOfWeek } from "date-fns";
+import { format, startOfWeek, endOfWeek, isValid, addDays, isAfter } from "date-fns";
 import { EmotionalInsight, Period, SELAreaKey } from "@/types/emotionalInsights";
 import { SEL_AREA_PROMPTS, MIN_DATA_POINTS_FOR_CHART, IS_DEVELOPMENT } from "@/constants/selPrompts";
 import { generateSampleHistoricalData, sampleInsightsData } from "@/utils/sampleDataGenerator";
 import { aggregateInsightsByPeriod } from "@/utils/insightsAggregation";
+
+// Re-export types that are needed by components
+export type { EmotionalInsight, Period, SELAreaKey } from "@/types/emotionalInsights";
 
 export const useEmotionalInsights = (childId: string | undefined) => {
   const [insights, setInsights] = useState<EmotionalInsight[]>([]);

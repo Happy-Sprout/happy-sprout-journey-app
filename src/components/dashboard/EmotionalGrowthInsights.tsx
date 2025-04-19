@@ -35,7 +35,6 @@ interface EmotionalGrowthInsightsProps {
   hasInsufficientData: boolean;
 }
 
-// Helper function to prepare radar chart data from insight
 const getRadarChartData = (insight: EmotionalInsight | null, isMobile: boolean) => {
   if (!insight) return [];
 
@@ -189,7 +188,6 @@ const EmotionalGrowthInsights = ({
                     <Legend />
                     <Line type="monotone" dataKey="self_awareness" stroke="#8884d8" name="Self-Awareness" />
                     <Line type="monotone" dataKey="self_management" stroke="#82ca9d" name="Self-Management" />
-                    {/* Add more lines for other skills as needed */}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
