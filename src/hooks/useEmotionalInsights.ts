@@ -369,7 +369,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       
       return {
         id: `aggregated-${dateKey}`,
-        child_id: childId || '',
+        child_id: mostRecentInsight.child_id,
         self_awareness: avgSelfAwareness,
         self_management: avgSelfManagement,
         social_awareness: avgSocialAwareness,
@@ -377,7 +377,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         responsible_decision_making: avgResponsibleDecisionMaking,
         created_at: mostRecentInsight.created_at,
         display_date: dateKey,
-        source_text: mostRecentInsight.source_text || ''
+        source_text: mostRecentInsight.source_text || 'Aggregated data'
       };
     }).sort((a, b) => 
       new Date(a.display_date || a.created_at).getTime() - new Date(b.display_date || b.created_at).getTime()
