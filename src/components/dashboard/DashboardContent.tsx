@@ -1,4 +1,3 @@
-
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
 import EmotionalGrowthInsights from "./EmotionalGrowthInsights";
@@ -48,13 +47,11 @@ const DashboardContent = ({
   return (
     <div className="min-h-screen flex flex-col">
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
-        {/* Stats sidebar for mobile - shown at top on small screens */}
         <div className="lg:hidden mb-6">
           <StatsSidebar currentChild={currentChild} />
         </div>
 
         <div className="flex flex-col lg:flex-row lg:space-x-6">
-          {/* Main content */}
           <main className="w-full lg:w-3/4 space-y-6">
             <HeaderIllustration />
             
@@ -85,11 +82,6 @@ const DashboardContent = ({
                 </div>
               </div>
             </div>
-
-            <AchievementsSection 
-              currentChild={currentChild}
-              currentChildId={currentChildId}
-            />
             
             {isDevelopment && (
               <DevelopmentTools 
@@ -102,7 +94,6 @@ const DashboardContent = ({
             )}
           </main>
 
-          {/* Right sidebar - hidden on mobile */}
           <aside className="hidden lg:block w-64 space-y-4">
             <StatsSidebar currentChild={currentChild} />
           </aside>

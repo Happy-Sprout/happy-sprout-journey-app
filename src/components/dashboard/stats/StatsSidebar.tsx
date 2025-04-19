@@ -14,7 +14,7 @@ const StatsSidebar = ({ currentChild }: StatsSidebarProps) => {
     <div className="space-y-4">
       <DailyStreakCard streakCount={currentChild.streakCount || 0} />
       <XPCard xpPoints={currentChild.xpPoints || 0} />
-      <BadgesCard badges={currentChild.badges || []} />
+      <BadgesCard currentChild={currentChild} />
       <DailyInspirationCard />
     </div>
   );
