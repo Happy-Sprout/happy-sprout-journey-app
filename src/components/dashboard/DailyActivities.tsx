@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, CalendarDays, Check, Confetti } from "lucide-react";
+import { BookOpen, CalendarDays, Check, Star } from "lucide-react";
 import { ChildProfile } from "@/types/childProfile";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
 
@@ -19,7 +18,6 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
   
   const { getTodayEntry, todayEntryLoaded, cachedTodayEntry } = useJournalEntries(currentChildId);
   
-  // Initial check for today's entry
   useEffect(() => {
     const checkTodayJournalEntry = async () => {
       if (currentChildId) {
@@ -37,7 +35,6 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
     checkTodayJournalEntry();
   }, [currentChildId, getTodayEntry]);
   
-  // Use cached entry if available
   useEffect(() => {
     if (todayEntryLoaded) {
       console.log("DailyActivities: Using cached today entry status:", !!cachedTodayEntry);
@@ -77,7 +74,7 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
         <div className="space-y-4">
           <div className={`flex flex-col sm:flex-row items-start sm:items-center p-3 ${dailyCheckInCompleted ? 'bg-sprout-green/10' : 'bg-sprout-orange/10'} rounded-lg`}>
             <div className={`mr-4 ${dailyCheckInCompleted ? 'bg-sprout-green' : 'bg-sprout-orange'} text-white p-2 rounded-full mb-2 sm:mb-0`}>
-              {dailyCheckInCompleted ? <Confetti className="h-5 w-5" /> : <CalendarDays className="h-5 w-5" />}
+              {dailyCheckInCompleted ? <Check className="h-5 w-5" /> : <CalendarDays className="h-5 w-5" />}
             </div>
             <div className="flex-1 mb-2 sm:mb-0">
               <h3 className="font-medium">Daily Check-In</h3>
@@ -98,7 +95,7 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
           
           <div className={`flex flex-col sm:flex-row items-start sm:items-center p-3 ${journalCompleted ? 'bg-sprout-green/10' : 'bg-sprout-purple/10'} rounded-lg`}>
             <div className={`mr-4 ${journalCompleted ? 'bg-sprout-green' : 'bg-sprout-purple'} text-white p-2 rounded-full mb-2 sm:mb-0`}>
-              {journalCompleted ? <Confetti className="h-5 w-5" /> : <BookOpen className="h-5 w-5" />}
+              {journalCompleted ? <Check className="h-5 w-5" /> : <BookOpen className="h-5 w-5" />}
             </div>
             <div className="flex-1 mb-2 sm:mb-0">
               <h3 className="font-medium">Journal Entry</h3>
