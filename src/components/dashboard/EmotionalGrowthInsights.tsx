@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addWeeks } from "date-fns";
@@ -32,26 +33,27 @@ interface EmotionalGrowthInsightsProps {
 const getRadarChartData = (insight: EmotionalInsight | null, isMobile: boolean) => {
   if (!insight) return [];
 
+  // Ensure radar chart data is in percentage format (0-100)
   return [
     { 
       skill: isMobile ? "Self-Aware" : "Self-Awareness", 
-      value: insight.self_awareness * 100
+      value: insight.self_awareness 
     },
     { 
       skill: isMobile ? "Self-Manage" : "Self-Management", 
-      value: insight.self_management * 100 
+      value: insight.self_management
     },
     { 
       skill: isMobile ? "Social" : "Social Awareness", 
-      value: insight.social_awareness * 100 
+      value: insight.social_awareness
     },
     { 
       skill: isMobile ? "Relations" : "Relationship Skills", 
-      value: insight.relationship_skills * 100 
+      value: insight.relationship_skills
     },
     { 
       skill: isMobile ? "Decisions" : "Decision Making", 
-      value: insight.responsible_decision_making * 100 
+      value: insight.responsible_decision_making
     }
   ];
 };
@@ -73,6 +75,10 @@ const EmotionalGrowthInsights = ({
   const isMobile = useIsMobile();
   const formattedDateRange = `${format(currentWeekStart, "MMM d")} - ${format(addWeeks(currentWeekStart, 1), "MMM d")}`;
   const radarData = getRadarChartData(insight, isMobile);
+
+  // Debug data issues
+  console.log("[EmotionalGrowthInsights-DEBUG] Historical insights:", historicalInsights);
+  console.log("[EmotionalGrowthInsights-DEBUG] Latest insight:", insight);
   
   if (loading) {
     return (
@@ -181,7 +187,10 @@ const EmotionalGrowthInsights = ({
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="display_date" />
                     <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                    <Tooltip formatter={(value: number) => `${value.toFixed(0)}%`} />
+                    <Tooltip 
+                      formatter={(value: number) => `${value.toFixed(0)}%`}
+                      labelFormatter={(label) => `Day: ${label}`}
+                    />
                     <Legend 
                       layout="horizontal" 
                       verticalAlign="bottom" 

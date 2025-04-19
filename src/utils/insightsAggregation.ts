@@ -1,3 +1,4 @@
+
 import { format, startOfWeek, startOfMonth, isValid, addDays } from "date-fns";
 import { EmotionalInsight, Period } from "@/types/emotionalInsights";
 
@@ -21,8 +22,14 @@ export const aggregateInsightsByPeriod = (data: EmotionalInsight[], period: Peri
       });
       
       if (dayInsight) {
+        // Convert decimal values (0-1) to percentages (0-100) for chart display
         dailyData.push({
           ...dayInsight,
+          self_awareness: dayInsight.self_awareness * 100,
+          self_management: dayInsight.self_management * 100,
+          social_awareness: dayInsight.social_awareness * 100,
+          relationship_skills: dayInsight.relationship_skills * 100,
+          responsible_decision_making: dayInsight.responsible_decision_making * 100,
           display_date: format(currentDate, 'EEE') // Mon, Tue, etc.
         });
       } else {
@@ -45,7 +52,7 @@ export const aggregateInsightsByPeriod = (data: EmotionalInsight[], period: Peri
     return dailyData;
   }
 
-  // For other periods (monthly/all), keep existing aggregation logic
+  // For other periods (monthly/all), scale values for percentage display
   const groupedData: Record<string, EmotionalInsight[]> = {};
   
   data.forEach(insight => {
@@ -73,11 +80,12 @@ export const aggregateInsightsByPeriod = (data: EmotionalInsight[], period: Peri
   });
   
   const result = Object.entries(groupedData).map(([dateKey, insights]) => {
-    const avgSelfAwareness = insights.reduce((sum, insight) => sum + insight.self_awareness, 0) / insights.length;
-    const avgSelfManagement = insights.reduce((sum, insight) => sum + insight.self_management, 0) / insights.length;
-    const avgSocialAwareness = insights.reduce((sum, insight) => sum + insight.social_awareness, 0) / insights.length;
-    const avgRelationshipSkills = insights.reduce((sum, insight) => sum + insight.relationship_skills, 0) / insights.length;
-    const avgResponsibleDecisionMaking = insights.reduce((sum, insight) => sum + insight.responsible_decision_making, 0) / insights.length;
+    // Calculate averages and convert to percentage scale (0-100)
+    const avgSelfAwareness = insights.reduce((sum, insight) => sum + insight.self_awareness, 0) / insights.length * 100;
+    const avgSelfManagement = insights.reduce((sum, insight) => sum + insight.self_management, 0) / insights.length * 100;
+    const avgSocialAwareness = insights.reduce((sum, insight) => sum + insight.social_awareness, 0) / insights.length * 100;
+    const avgRelationshipSkills = insights.reduce((sum, insight) => sum + insight.relationship_skills, 0) / insights.length * 100;
+    const avgResponsibleDecisionMaking = insights.reduce((sum, insight) => sum + insight.responsible_decision_making, 0) / insights.length * 100;
     
     const sortedByDate = [...insights].sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
