@@ -1,662 +1,211 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Radar, 
-  RadarChart, 
-  PolarGrid, 
-  PolarAngleAxis, 
-  PolarRadiusAxis, 
-  ResponsiveContainer, 
-  Tooltip,
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ChildProfile } from "@/types/childProfile";
+import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
+import {
   LineChart,
   Line,
-  CartesianGrid,
   XAxis,
   YAxis,
-  Legend
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar
 } from "recharts";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ChevronLeft, ChevronRight, RefreshCw, Info, Thermometer, TrendingUp } from "lucide-react";
+import { format, subWeeks, addWeeks, startOfWeek } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, parseISO, isValid, startOfWeek, endOfWeek, addWeeks, subWeeks, isBefore, isAfter } from "date-fns";
-import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon } from "lucide-react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { 
-  HoverCard,
-  HoverCardTrigger,
-  HoverCardContent
-} from "@/components/ui/hover-card";
-import { Tooltip as UITooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
-import { ChildProfile } from "@/hooks/useChildren";
-import { useLayoutEffect } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-
-const SEL_DESCRIPTIONS = {
-  self_awareness: "Understanding one's emotions, personal goals, and values.",
-  self_management: "Regulating emotions and behaviors to achieve goals.",
-  social_awareness: "Showing understanding and empathy for others.",
-  relationship_skills: "Forming positive relationships, teamwork, conflict resolution.",
-  responsible_decision_making: "Making ethical, constructive choices."
-};
-
-const SEL_ICONS = {
-  self_awareness: <Brain className="w-4 h-4" />,
-  self_management: <Heart className="w-4 h-4" />,
-  social_awareness: <Users className="w-4 h-4" />,
-  relationship_skills: <MessageCircle className="w-4 h-4" />,
-  responsible_decision_making: <Lightbulb className="w-4 h-4" />
-};
-
-const SEL_LABELS = {
-  self_awareness: "Self-Awareness 🌱",
-  self_management: "Self-Management 💪",
-  social_awareness: "Social Awareness 🤝",
-  relationship_skills: "Relationship Skills 💬",
-  responsible_decision_making: "Decision-Making 🧠"
-};
-
-const SEL_LABELS_MOBILE = {
-  self_awareness: "Awareness 🌱",
-  self_management: "Management 💪",
-  social_awareness: "Social 🤝",
-  relationship_skills: "Relations 💬",
-  responsible_decision_making: "Decisions 🧠"
-};
-
-const SEL_COLORS = {
-  self_awareness: "#8884d8",
-  self_management: "#82ca9d",
-  social_awareness: "#ffc658",
-  relationship_skills: "#ff8042",
-  responsible_decision_making: "#0088fe"
-};
 
 interface EmotionalGrowthInsightsProps {
   currentChild: ChildProfile;
   insight: EmotionalInsight | null;
-  loading?: boolean;
+  loading: boolean;
   fetchHistoricalInsights: (period: Period, startDate?: Date) => Promise<void>;
   historicalInsights: EmotionalInsight[];
   historicalLoading: boolean;
-  isFallbackData?: boolean;
-  hasInsufficientData?: boolean;
+  isFallbackData: boolean;
+  hasInsufficientData: boolean;
 }
 
-const EmotionalGrowthInsights = ({ 
-  currentChild, 
-  insight, 
-  loading = false,
+// Helper function to prepare radar chart data from insight
+const getRadarChartData = (insight: EmotionalInsight | null, isMobile: boolean) => {
+  if (!insight) return [];
+
+  return [
+    { 
+      skill: isMobile ? "Self-Aware" : "Self-Awareness", 
+      value: insight.self_awareness * 10 
+    },
+    { 
+      skill: isMobile ? "Self-Manage" : "Self-Management", 
+      value: insight.self_management * 10 
+    },
+    { 
+      skill: isMobile ? "Social" : "Social Awareness", 
+      value: insight.social_awareness * 10 
+    },
+    { 
+      skill: isMobile ? "Relations" : "Relationship Skills", 
+      value: insight.relationship_skills * 10 
+    },
+    { 
+      skill: isMobile ? "Decisions" : "Decision Making", 
+      value: insight.responsible_decision_making * 10 
+    }
+  ];
+};
+
+const EmotionalGrowthInsights = ({
+  currentChild,
+  insight,
+  loading,
   fetchHistoricalInsights,
   historicalInsights,
-  historicalLoading = false,
-  isFallbackData = false,
-  hasInsufficientData = false
+  historicalLoading,
+  isFallbackData,
+  hasInsufficientData
 }: EmotionalGrowthInsightsProps) => {
-  const [selectedTab, setSelectedTab] = useState("compare");
-  const [selectedPeriod] = useState<Period>("weekly");
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    // Always use weekStartsOn: 1 (Monday) for consistency
-    const today = new Date();
-    console.log("[EmotionalGrowthInsights-DEBUG] Initializing component with today's date:", today.toISOString());
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-    console.log("[EmotionalGrowthInsights-DEBUG] Initial week start:", weekStart.toISOString());
-    return weekStart;
-  });
-  
-  const isDevelopment = import.meta.env.DEV;
-  const chartContainerRef = useRef<HTMLDivElement | null>(null);
-  const [connectionError, setConnectionError] = useState(false);
   const isMobile = useIsMobile();
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
+  const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   
-  const weekEndDate = useMemo(() => {
-    const endDate = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
-    console.log("[EmotionalGrowthInsights-DEBUG] Calculated week end date:", endDate.toISOString());
-    return endDate;
-  }, [currentWeekStart]);
-
-  // Debug on mount
+  const prevWeekStart = subWeeks(currentWeekStart, 1);
+  const nextWeekStart = addWeeks(currentWeekStart, 1);
+  const today = new Date();
+  
+  const formattedDateRange = `${format(currentWeekStart, "MMM d")} - ${format(addWeeks(currentWeekStart, 1), "MMM d")}`;
+  
   useEffect(() => {
-    console.log("[EmotionalGrowthInsights-DEBUG] Component mounted");
-    console.log("[EmotionalGrowthInsights-DEBUG] Initial currentWeekStart:", currentWeekStart.toISOString());
-    console.log("[EmotionalGrowthInsights-DEBUG] Initial weekEndDate:", weekEndDate.toISOString());
-    console.log("[EmotionalGrowthInsights-DEBUG] Has insights data:", !!historicalInsights.length);
-    
-    if (historicalInsights.length > 0) {
-      console.log("[EmotionalGrowthInsights-DEBUG] First insight date:", historicalInsights[0].created_at);
-      console.log("[EmotionalGrowthInsights-DEBUG] Has display_date:", !!historicalInsights[0].display_date);
-    }
-  }, []);
-
-  const handlePreviousWeek = useCallback(() => {
-    setCurrentWeekStart(prevWeekStart => {
-      const newWeekStart = subWeeks(prevWeekStart, 1);
-      console.log("[EmotionalGrowthInsights-DEBUG] Setting previous week start:", newWeekStart.toISOString());
-      return newWeekStart;
-    });
-  }, []);
-
-  const handleNextWeek = useCallback(() => {
-    setCurrentWeekStart(prevWeekStart => {
-      const newWeekStart = addWeeks(prevWeekStart, 1);
-      console.log("[EmotionalGrowthInsights-DEBUG] Setting next week start:", newWeekStart.toISOString());
-      return newWeekStart;
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    const updateChartContainer = () => {
-      if (chartContainerRef.current) {
-        // Force a minimum size on the chart container to prevent recharts warnings
-        chartContainerRef.current.style.minHeight = isMobile ? "380px" : "300px";
-        chartContainerRef.current.style.minWidth = "100%";
-        
-        console.log("[EmotionalGrowthInsights-DEBUG] Updated chart container dimensions:", {
-          width: chartContainerRef.current.clientWidth,
-          height: chartContainerRef.current.clientHeight,
-          minHeight: isMobile ? "380px" : "300px"
-        });
-      }
-    };
-    
-    // Initial setup
-    updateChartContainer();
-    
-    // Set up resize observer
-    if (chartContainerRef.current) {
-      const resizeObserver = new ResizeObserver(() => {
-        console.log("[EmotionalGrowthInsights-DEBUG] Container size changed, updating");
-        updateChartContainer();
-      });
-      resizeObserver.observe(chartContainerRef.current);
-      
-      return () => resizeObserver.disconnect();
-    }
-  }, [isMobile]);
-
-  const fetchHistoricalData = useCallback(async () => {
-    if (selectedTab === "trends") {
-      try {
-        console.log(`[EmotionalGrowthInsights-DEBUG] Fetching data for week starting: ${currentWeekStart.toISOString()}`);
-        console.log(`[EmotionalGrowthInsights-DEBUG] Week end date: ${weekEndDate.toISOString()}`);
-        console.log(`[EmotionalGrowthInsights-DEBUG] Selected period: ${selectedPeriod}`);
-        
-        // Make sure we're passing the correct date to fetchHistoricalInsights
-        await fetchHistoricalInsights(selectedPeriod, currentWeekStart);
-        setConnectionError(false);
-      } catch (error) {
-        console.error("[EmotionalGrowthInsights-DEBUG] Error fetching historical data:", error);
-        setConnectionError(true);
-      }
-    }
-  }, [selectedTab, selectedPeriod, fetchHistoricalInsights, currentWeekStart, weekEndDate]);
-
-  // Fetch data when tab or week changes
-  useEffect(() => {
-    if (selectedTab === "trends") {
-      console.log("[EmotionalGrowthInsights-DEBUG] Selected tab is 'trends', fetching historical data");
-      fetchHistoricalData();
-    }
-  }, [selectedTab, currentWeekStart, fetchHistoricalData]);
-
-  // Debug when historical insights update
-  useEffect(() => {
-    console.log("[EmotionalGrowthInsights-DEBUG] historicalInsights updated:", historicalInsights);
-    console.log("[EmotionalGrowthInsights-DEBUG] insights count:", historicalInsights.length);
-    if (historicalInsights.length > 0) {
-      console.log("[EmotionalGrowthInsights-DEBUG] First insight date:", historicalInsights[0].created_at);
-      console.log("[EmotionalGrowthInsights-DEBUG] Has display_date:", !!historicalInsights[0].display_date);
-      
-      // Log all insights data for debugging
-      historicalInsights.forEach((insight, index) => {
-        console.log(`[EmotionalGrowthInsights-DEBUG] Insight #${index}:`, {
-          date: insight.display_date || insight.created_at,
-          self_awareness: insight.self_awareness,
-          self_management: insight.self_management
-        });
-      });
-    }
-  }, [historicalInsights]);
-
-  const formatDateForPeriod = (dateStr: string, period: Period) => {
-    if (!dateStr || !isValid(new Date(dateStr))) return '';
-    
-    try {
-      let date;
-      
-      if (typeof dateStr === 'string') {
-        date = parseISO(dateStr);
-      } else {
-        date = new Date(dateStr);
-      }
-      
-      if (!isValid(date)) return 'Invalid Date';
-      
-      switch (period) {
-        case 'weekly':
-          return format(date, 'MMM d');
-        case 'monthly':
-          return format(date, 'MMM yyyy');
-        default:
-          return format(date, 'MMM d');
-      }
-    } catch (error) {
-      console.error("[EmotionalGrowthInsights-DEBUG] Date formatting error:", error);
-      return 'Invalid Date';
-    }
+    fetchHistoricalInsights(selectedPeriod, currentWeekStart);
+  }, [fetchHistoricalInsights, selectedPeriod, currentWeekStart]);
+  
+  const handlePeriodChange = (period: Period) => {
+    setSelectedPeriod(period);
+    fetchHistoricalInsights(period, currentWeekStart);
   };
-
-  const lineChartData = useMemo(() => {
-    if (!historicalInsights || historicalInsights.length === 0) {
-      console.log("[EmotionalGrowthInsights-DEBUG] No historical insights data available for chart");
-      return [];
-    }
-    
-    console.log("[EmotionalGrowthInsights-DEBUG] Creating lineChartData from insights:", historicalInsights.length);
-    
-    const data = historicalInsights.map(insight => {
-      const date = insight.display_date || insight.created_at;
-      const formattedDate = formatDateForPeriod(date, selectedPeriod);
-      
-      console.log(`[EmotionalGrowthInsights-DEBUG] Processing insight:`, {
-        date,
-        formattedDate,
-        selfAwareness: insight.self_awareness,
-        created_at: insight.created_at
-      });
-      
-      return {
-        date: formattedDate,
-        self_awareness: Number((insight.self_awareness * 100).toFixed(1)),
-        self_management: Number((insight.self_management * 100).toFixed(1)),
-        social_awareness: Number((insight.social_awareness * 100).toFixed(1)),
-        relationship_skills: Number((insight.relationship_skills * 100).toFixed(1)),
-        responsible_decision_making: Number((insight.responsible_decision_making * 100).toFixed(1)),
-        raw_date: insight.created_at,
-        dateKey: date
-      };
-    });
-    
-    console.log("[EmotionalGrowthInsights-DEBUG] Final lineChartData:", data);
-    return data;
-  }, [historicalInsights, selectedPeriod]);
-
-  const getGrowthFeedback = useMemo(() => {
-    if (!insight) return null;
-    
-    const skills = [
-      { name: 'self_awareness', value: insight.self_awareness },
-      { name: 'self_management', value: insight.self_management },
-      { name: 'social_awareness', value: insight.social_awareness },
-      { name: 'relationship_skills', value: insight.relationship_skills },
-      { name: 'responsible_decision_making', value: insight.responsible_decision_making }
-    ];
-    
-    const highestSkill = skills.reduce((prev, current) => 
-      (prev.value > current.value) ? prev : current
-    );
-    
-    const lowestSkill = skills.reduce((prev, current) => 
-      (prev.value < current.value) ? prev : current
-    );
-    
-    return (
-      <div className="mt-4 p-3 bg-slate-50 rounded-md">
-        <p className="text-sm text-slate-800">
-          <span className="font-semibold">Growing strength:</span> {SEL_LABELS[highestSkill.name as keyof typeof SEL_LABELS]} 
-          {' '}- {(highestSkill.value * 100).toFixed(0)}%
-        </p>
-        <p className="text-sm text-slate-800 mt-1">
-          <span className="font-semibold">Growth opportunity:</span> {SEL_LABELS[lowestSkill.name as keyof typeof SEL_LABELS]}
-          {' '}- {(lowestSkill.value * 100).toFixed(0)}%
-        </p>
-      </div>
-    );
-  }, [insight]);
-
-  const renderNoDataMessage = useCallback((type: string) => {
-    const messages = {
-      compare: `${currentChild.nickname}'s emotional insights will appear here after completing journal entries or daily check-ins.`,
-      trends: `Keep tracking ${currentChild.nickname}'s emotional growth! Data will appear here as entries are added.`
-    };
-    
-    return (
-      <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6">
-        <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
-        <p className="text-slate-600 text-center font-medium mb-2">
-          No data for this week yet
-        </p>
-        <p className="text-sm text-slate-500 text-center max-w-md">
-          {messages[type as keyof typeof messages]}
-        </p>
-      </div>
-    );
-  }, [currentChild.nickname]);
-
-  if (loading) {
-    return (
-      <Card className="w-full mb-8 animate-pulse">
-        <CardHeader>
-          <CardTitle className="bg-gray-200 h-6 w-48 rounded"></CardTitle>
-          <CardDescription className="bg-gray-100 h-4 w-64 rounded"></CardDescription>
-        </CardHeader>
-        <CardContent className="h-64 bg-gray-50 rounded"></CardContent>
-      </Card>
-    );
-  }
-
-  const formatDateRange = () => {
-    console.log("[EmotionalGrowthInsights-DEBUG] Formatting date range:", {
-      startDate: currentWeekStart.toISOString(),
-      endDate: weekEndDate.toISOString()
-    });
-    const startDate = format(currentWeekStart, "MMM d");
-    const endDate = format(weekEndDate, "MMM d");
-    return `${startDate} - ${endDate}`;
+  
+  const handlePrevWeek = () => {
+    setCurrentWeekStart(prevWeekStart);
   };
-
+  
+  const handleNextWeek = () => {
+    setCurrentWeekStart(nextWeekStart);
+  };
+  
+  const handleToday = () => {
+    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  };
+  
+  const radarData = getRadarChartData(insight, isMobile);
+  
   return (
-    <Card className="w-full mb-8 overflow-hidden">
-      <CardHeader className="pb-2">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <CardTitle>Emotional Growth Insights</CardTitle>
-            <CardDescription>
-              {insight 
-                ? `Last updated: ${format(new Date(insight.created_at), "MMMM d, yyyy")}`
-                : "No insights available yet - complete a journal entry or daily check-in"}
-            </CardDescription>
-          </div>
-          
-          <TooltipProvider>
-            <UITooltip>
-              <TooltipTrigger asChild>
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <button className="text-blue-500 text-sm font-semibold hover:underline">
-                      What is this?
-                    </button>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-80 p-4 z-50">
-                    <div className="space-y-2">
-                      <h4 className="font-semibold">Emotional Growth Insights</h4>
-                      <p className="text-sm">
-                        This chart shows {currentChild.nickname}'s emotional growth based on their journal entries and check-ins.
-                        Each axis represents a key social-emotional learning skill.
-                      </p>
-                      <div className="space-y-1 pt-2">
-                        {Object.entries(SEL_DESCRIPTIONS).map(([key, desc]) => (
-                          <div key={key} className="flex items-start gap-2">
-                            <div className="mt-0.5">{SEL_ICONS[key as keyof typeof SEL_ICONS]}</div>
-                            <div>
-                              <p className="text-xs font-medium">{SEL_LABELS[key as keyof typeof SEL_LABELS]}</p>
-                              <p className="text-xs text-muted-foreground">{desc}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </TooltipTrigger>
-              <TooltipContent>Click for more information</TooltipContent>
-            </UITooltip>
-          </TooltipProvider>
-        </div>
+    <Card className="shadow-sm">
+      <CardHeader>
+        <CardTitle>Emotional Growth Insights</CardTitle>
+        <CardDescription>
+          Tracking emotional well-being and growth for {currentChild.nickname}
+        </CardDescription>
       </CardHeader>
-      
-      <CardContent>
-        {(isFallbackData && isDevelopment) && (
-          <Alert variant="default" className="mb-4 bg-amber-50 border-amber-200 text-amber-800">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <AlertDescription>
-              Using example data for development. Connect to the database to see actual insights.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {connectionError && (
-          <Alert variant="default" className="mb-4 bg-amber-50 border-amber-200 text-amber-800">
-            <DatabaseIcon className="h-4 w-4 text-amber-500" />
-            <AlertDescription>
-              Failed to fetch emotional growth insights. Using sample data for development.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="mb-4 w-full flex flex-wrap sm:grid sm:grid-cols-2 gap-1">
-            <TabsTrigger value="compare" className="flex-1 text-xs sm:text-sm px-2 py-1.5 whitespace-normal h-auto min-h-[2.5rem]">Compare Areas</TabsTrigger>
-            <TabsTrigger value="trends" className="flex-1 text-xs sm:text-sm px-2 py-1.5 whitespace-normal h-auto min-h-[2.5rem]">Growth Trends</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="compare">
-            {insight ? (
-              <>
-                <div 
-                  className="w-full h-64 sm:h-72" 
-                  ref={chartContainerRef}
-                  style={{ minHeight: isMobile ? "380px" : "300px", minWidth: "100%" }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart 
-                      outerRadius={isMobile ? "65%" : "80%"} 
-                      data={radarChartData}
-                      margin={{ top: 10, right: 10, bottom: 20, left: 10 }}
-                    >
-                      <PolarGrid />
-                      <PolarAngleAxis 
-                        dataKey="subject" 
-                        tick={{ fontSize: isMobile ? 9 : 12 }}
-                        tickLine={false}
-                      />
-                      <PolarRadiusAxis 
-                        angle={90} 
-                        domain={[0, 100]} 
-                        tickCount={5}
-                        tick={{ fontSize: isMobile ? 9 : 10 }}
-                      />
-                      <Radar 
-                        name="Skill Level" 
-                        dataKey="A" 
-                        stroke="#8884d8" 
-                        fill="#8884d8" 
-                        fillOpacity={0.6} 
-                      />
-                      <Tooltip 
-                        formatter={(value) => [`${value}%`, "Skill Level"]}
-                        wrapperStyle={{ zIndex: 100 }} 
-                        contentStyle={{ 
-                          backgroundColor: 'white', 
-                          fontSize: isMobile ? '10px' : '12px',
-                          padding: '8px',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px'
-                        }}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-                {getGrowthFeedback}
-              </>
-            ) : (
-              renderNoDataMessage("compare")
-            )}
-          </TabsContent>
-          
-          <TabsContent value="trends">
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-center mb-3">
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handlePreviousWeek}
-                  className="rounded-full"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Prev Week
-                </Button>
-                <span className="text-sm font-medium">
-                  {formatDateRange()}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleNextWeek}
-                  disabled={weekEndDate > new Date()}
-                  className="rounded-full"
-                >
-                  Next Week
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+      <CardContent className="relative">
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner size={48} />
+          </div>
+        ) : hasInsufficientData ? (
+          <div className="text-center py-12">
+            <Info className="mx-auto h-6 w-6 text-gray-500 mb-2" />
+            <p className="text-sm text-gray-500">
+              {isFallbackData
+                ? "Using sample data for demonstration."
+                : "Not enough data to display insights."}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="w-full">
+                <h4 className="mb-2 font-semibold text-sm">Skills Snapshot</h4>
+                <ResponsiveContainer width="100%" height={250}>
+                  <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="80%">
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="skill" />
+                    <PolarRadiusAxis angle={30} domain={[0, 10]} />
+                    <Radar
+                      name="Skills"
+                      dataKey="value"
+                      stroke="#8884d8"
+                      fill="#8884d8"
+                      fillOpacity={0.6}
+                    />
+                    <Tooltip />
+                  </RadarChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-            
-            {historicalLoading ? (
-              <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
-            ) : lineChartData.length >= 2 ? (
-              <div 
-                className="w-full h-72 sm:h-80" 
-                ref={chartContainerRef}
-                style={{ minHeight: isMobile ? "380px" : "300px", minWidth: "100%" }}
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={lineChartData}
-                    margin={isMobile ? 
-                      { top: 5, right: 5, left: 0, bottom: 95 } : 
-                      { top: 5, right: 20, left: 0, bottom: 40 }
-                    }
+              
+              <div className="w-full">
+                <h4 className="mb-2 font-semibold text-sm">Weekly Trends</h4>
+                <div className="flex items-center justify-between mb-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={handlePrevWeek}
+                    disabled={loading}
                   >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium">{formattedDateRange}</span>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={handleNextWeek}
+                    disabled={loading || currentWeekStart >= startOfWeek(today, { weekStartsOn: 1 })}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleToday}
+                    disabled={loading}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={historicalInsights}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: isMobile ? 9 : 10 }}
-                      height={isMobile ? 45 : 30}
-                      padding={{ left: 10, right: 10 }}
-                      tickMargin={isMobile ? 12 : 5}
-                      interval={isMobile ? 'preserveEnd' : 0}
-                      angle={isMobile ? -45 : 0}
-                      textAnchor={isMobile ? "end" : "middle"}
-                    />
-                    <YAxis 
-                      domain={[0, 100]} 
-                      tick={{ fontSize: isMobile ? 9 : 10 }}
-                      width={isMobile ? 30 : 40}
-                      tickMargin={isMobile ? 3 : 5}
-                      tickFormatter={(value) => `${value}`}
-                    />
-                    <Tooltip 
-                      formatter={(value, name) => {
-                        const readableName = name === 'self_awareness' ? 'Self-Awareness' :
-                                            name === 'self_management' ? 'Self-Management' :
-                                            name === 'social_awareness' ? 'Social Awareness' :
-                                            name === 'relationship_skills' ? 'Relationship Skills' :
-                                            name === 'responsible_decision_making' ? 'Decision-Making' : name;
-                        return [`${value}%`, readableName];
-                      }}
-                      labelFormatter={(label, payload) => {
-                        if (payload && payload.length > 0 && payload[0].payload) {
-                          const rawDate = payload[0].payload.raw_date;
-                          return rawDate ? format(new Date(rawDate), 'MMM d, yyyy') : label;
-                        }
-                        return label;
-                      }}
-                      contentStyle={{ 
-                        fontSize: '12px',
-                        zIndex: 1000,
-                        backgroundColor: 'white',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        padding: '8px'
-                      }}
-                      position={isMobile ? { x: 5, y: 75 } : undefined}
-                      wrapperStyle={{ zIndex: 100 }}
-                    />
-                    <Legend 
-                      height={isMobile ? 80 : 36}
-                      iconSize={isMobile ? 6 : 8} 
-                      iconType="circle"
-                      wrapperStyle={{ 
-                        fontSize: isMobile ? '8px' : '10px', 
-                        paddingTop: '10px',
-                        width: '100%',
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        justifyContent: 'center',
-                        gap: '5px',
-                        bottom: 0
-                      }}
-                      layout={isMobile ? "vertical" : "horizontal"}
-                      margin={{ top: 0, left: 0, right: 0, bottom: 0 }}
-                      align="center"
-                      verticalAlign="bottom"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="self_awareness" 
-                      name="Self-Awareness" 
-                      stroke={SEL_COLORS.self_awareness} 
-                      activeDot={{ r: isMobile ? 6 : 8 }} 
-                      dot={{ r: isMobile ? 2 : 3 }}
-                      strokeWidth={isMobile ? 1.5 : 2}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="self_management" 
-                      name="Self-Management" 
-                      stroke={SEL_COLORS.self_management}
-                      dot={{ r: isMobile ? 2 : 3 }}
-                      strokeWidth={isMobile ? 1.5 : 2}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="social_awareness" 
-                      name="Social Awareness" 
-                      stroke={SEL_COLORS.social_awareness}
-                      dot={{ r: isMobile ? 2 : 3 }}
-                      strokeWidth={isMobile ? 1.5 : 2}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="relationship_skills" 
-                      name="Relationship Skills" 
-                      stroke={SEL_COLORS.relationship_skills}
-                      dot={{ r: isMobile ? 2 : 3 }}
-                      strokeWidth={isMobile ? 1.5 : 2}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="responsible_decision_making" 
-                      name="Decision-Making" 
-                      stroke={SEL_COLORS.responsible_decision_making}
-                      dot={{ r: isMobile ? 2 : 3 }}
-                      strokeWidth={isMobile ? 1.5 : 2}
-                    />
+                    <XAxis dataKey="display_date" />
+                    <YAxis domain={[0, 10]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="self_awareness" stroke="#8884d8" name="Self-Awareness" />
+                    <Line type="monotone" dataKey="self_management" stroke="#82ca9d" name="Self-Management" />
+                    {/* Add more lines for other skills as needed */}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            ) : (
-              <div className="w-full min-h-[300px] flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6">
-                <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
-                <p className="text-slate-600 text-center font-medium mb-2">
-                  No data for this week yet
-                </p>
-                <p className="text-sm text-slate-500 text-center max-w-md">
-                  Keep tracking {currentChild.nickname}'s emotional growth! Data will appear here as entries are added.
-                </p>
-                <div className="mt-3 text-xs text-slate-400">
-                  <p>Date range: {format(currentWeekStart, "yyyy-MM-dd")} to {format(weekEndDate, "yyyy-MM-dd")}</p>
-                  <p>Data points: {historicalInsights.length}</p>
-                  {historicalInsights.length > 0 && 
-                    <p>First point date: {historicalInsights[0].display_date || historicalInsights[0].created_at}</p>
-                  }
-                </div>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+            </div>
+          </>
+        )}
       </CardContent>
+      <CardFooter className="flex justify-between items-center">
+        <Tabs defaultValue="weekly" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="weekly" onClick={() => handlePeriodChange("weekly")}>Weekly</TabsTrigger>
+            <TabsTrigger value="monthly" onClick={() => handlePeriodChange("monthly")}>Monthly</TabsTrigger>
+            <TabsTrigger value="all" onClick={() => handlePeriodChange("all")}>All Time</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </CardFooter>
     </Card>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +24,6 @@ export type Period = 'weekly' | 'monthly' | 'all';
 const MIN_DATA_POINTS_FOR_CHART = 2;
 const IS_DEVELOPMENT = import.meta.env.DEV;
 
-// Helper function to generate sample data for development and testing
 const generateSampleHistoricalData = (period: Period, childId: string, startDate?: Date): EmotionalInsight[] => {
   const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -461,7 +459,6 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       return;
     }
     
-    // Add enhanced debugging
     console.log("[DEBUG] fetchHistoricalInsights called with:", {
       childId,
       period,
@@ -485,7 +482,6 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       
       const targetEndDate = endOfWeek(targetStartDate, { weekStartsOn: 1 });
       
-      // Create a more inclusive end date by adding a day to ensure we capture all data
       const inclusiveEndDate = addDays(targetEndDate, 1);
       
       console.log(`[useEmotionalInsights-DEBUG] Calculated targetStartDate: ${targetStartDate.toISOString()}`);
@@ -505,7 +501,6 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       
       console.log(`[useEmotionalInsights-DEBUG] Query date range: ${formattedStartDate} to ${formattedEndDate}`);
       
-      // Log the exact SQL query we're going to run
       console.log(`[useEmotionalInsights-DEBUG] SQL query equivalent: 
         SELECT * FROM sel_insights 
         WHERE child_id = '${childId}'
