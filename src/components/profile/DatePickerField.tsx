@@ -48,6 +48,11 @@ const DatePickerField = ({
     }
   };
   
+  // Calculate a reasonable year range for the calendar
+  const currentYear = new Date().getFullYear();
+  const fromYear = 1990;
+  const toYear = currentYear;
+  
   return (
     <div className="space-y-2">
       <Label htmlFor="date-picker">
@@ -68,7 +73,7 @@ const DatePickerField = ({
             {date ? format(date, 'MMMM d, yyyy') : <span>{placeholder}</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 z-50" align="start" sideOffset={4}>
           <Calendar
             mode="single"
             selected={date}
@@ -79,8 +84,8 @@ const DatePickerField = ({
             }
             initialFocus
             captionLayout="dropdown-buttons"
-            fromYear={1990}
-            toYear={new Date().getFullYear()}
+            fromYear={fromYear}
+            toYear={toYear}
             className="pointer-events-auto"
           />
         </PopoverContent>

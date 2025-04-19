@@ -60,7 +60,12 @@ function Calendar({
         Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
           const handleValueChange = (newValue: string) => {
             if (onChange) {
-              const event = { target: { value: newValue } } as React.ChangeEvent<HTMLSelectElement>;
+              // Create a synthetic event to match the expected type
+              const event = { 
+                target: { 
+                  value: newValue 
+                } 
+              } as React.ChangeEvent<HTMLSelectElement>;
               onChange(event);
             }
           };
@@ -70,11 +75,20 @@ function Calendar({
               value={value?.toString()}
               onValueChange={handleValueChange}
             >
-              <SelectTrigger className="h-7 rounded-md border border-input px-2 py-1 text-xs shadow-sm focus:ring-1">
+              <SelectTrigger className="h-7 w-20 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm focus:ring-1">
                 <SelectValue>{value}</SelectValue>
               </SelectTrigger>
-              <SelectContent className="min-w-[80px] max-h-56 overflow-y-auto">
-                {children}
+              <SelectContent 
+                className="max-h-56 overflow-y-auto" 
+                position="popper"
+                align="start"
+                sideOffset={5}
+              >
+                {React.Children.map(children, child => (
+                  <SelectItem value={(child as any)?.props?.value?.toString() || ""}>
+                    {(child as any)?.props?.children}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           );
