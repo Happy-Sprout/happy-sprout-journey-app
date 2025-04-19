@@ -106,21 +106,18 @@ const EmotionalGrowthInsights = ({
   const isMobile = useIsMobile();
   
   const weekEndDate = useMemo(() => {
-    const endDate = addWeeks(currentWeekStart, 1);
-    return subWeeks(endDate, 0);
+    return endOfWeek(currentWeekStart, { weekStartsOn: 1 });
   }, [currentWeekStart]);
   
   const handlePreviousWeek = useCallback(() => {
     setCurrentWeekStart(prevWeekStart => {
-      const newStart = subWeeks(prevWeekStart, 1);
-      return newStart;
+      return subWeeks(prevWeekStart, 1);
     });
   }, []);
   
   const handleNextWeek = useCallback(() => {
     setCurrentWeekStart(prevWeekStart => {
-      const newStart = addWeeks(prevWeekStart, 1);
-      return newStart;
+      return addWeeks(prevWeekStart, 1);
     });
   }, []);
   

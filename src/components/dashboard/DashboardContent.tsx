@@ -1,3 +1,4 @@
+
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
 import EmotionalGrowthInsights from "./EmotionalGrowthInsights";
@@ -18,7 +19,7 @@ interface DashboardContentProps {
   currentChildId: string;
   latestInsight: any;
   insightLoading: boolean;
-  fetchHistoricalInsights: (period: Period) => Promise<void>;
+  fetchHistoricalInsights: (period: Period, startDate?: Date) => Promise<void>;
   historicalInsights: any[];
   historicalLoading: boolean;
   isFallbackData: boolean;
