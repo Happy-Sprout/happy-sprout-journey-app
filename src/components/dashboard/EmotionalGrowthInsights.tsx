@@ -17,8 +17,8 @@ import {
   Legend
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, parseISO, isValid, startOfWeek, addWeeks } from "date-fns";
-import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon } from "lucide-react";
+import { format, parseISO, isValid, startOfWeek, addWeeks, subWeeks } from "date-fns";
+import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   HoverCard,
   HoverCardTrigger,
@@ -30,7 +30,7 @@ import { ChildProfile } from "@/hooks/useChildren";
 import { Badge } from "@/components/ui/badge";
 import { useLayoutEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button, ChevronLeft, ChevronRight } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 const SEL_DESCRIPTIONS = {
   self_awareness: "Understanding one's emotions, personal goals, and values.",
@@ -103,6 +103,14 @@ const EmotionalGrowthInsights = ({
   const [connectionError, setConnectionError] = useState(false);
   const previousDataFetchedRef = useRef<boolean>(false);
   const isMobile = useIsMobile();
+  
+  const handlePreviousWeek = () => {
+    setCurrentWeekStart(prevWeekStart => subWeeks(prevWeekStart, 1));
+  };
+  
+  const handleNextWeek = () => {
+    setCurrentWeekStart(prevWeekStart => addWeeks(prevWeekStart, 1));
+  };
   
   useLayoutEffect(() => {
     if (chartContainerRef.current) {
