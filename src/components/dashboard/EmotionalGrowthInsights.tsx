@@ -1,3 +1,4 @@
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,8 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, isValid, startOfWeek, addWeeks, subWeeks } from "date-fns";
-import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   HoverCard,
   HoverCardTrigger,
@@ -101,7 +103,6 @@ const EmotionalGrowthInsights = ({
   const [chartHeight, setChartHeight] = useState(0);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [connectionError, setConnectionError] = useState(false);
-  const previousDataFetchedRef = useRef<boolean>(false);
   const isMobile = useIsMobile();
   
   const handlePreviousWeek = useCallback(() => {
@@ -133,6 +134,7 @@ const EmotionalGrowthInsights = ({
   const fetchHistoricalData = useCallback(async () => {
     if (selectedTab === "trends") {
       try {
+        console.log(`Fetching data for week starting: ${currentWeekStart.toISOString()}`);
         await fetchHistoricalInsights(selectedPeriod, currentWeekStart);
         setConnectionError(false);
       } catch (error) {
@@ -218,6 +220,8 @@ const EmotionalGrowthInsights = ({
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) return [];
     
+    // Always use the data returned by the fetchHistoricalInsights call
+    // The date filtering happens in the backend or in the hook
     return historicalInsights.map(insight => {
       const date = insight.display_date || insight.created_at;
       const formattedDate = formatDateForPeriod(date, selectedPeriod);

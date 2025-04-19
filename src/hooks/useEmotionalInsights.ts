@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { warningToast } from "@/components/ui/toast-extensions";
-import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks, addDays } from "date-fns";
+import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks, addDays, isAfter, isBefore, endOfWeek } from "date-fns";
 
 export type EmotionalInsight = {
   id: string;
@@ -376,7 +376,11 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     setHasInsufficientData(false);
     
     try {
+      const targetStartDate = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
+      const targetEndDate = endOfWeek(targetStartDate, { weekStartsOn: 1 });
+      
       console.log(`Fetching historical insights for period: ${period}, childId: ${childId}`);
+      console.log(`Date range: ${targetStartDate.toISOString()} to ${targetEndDate.toISOString()}`);
       
       const { error: pingError } = await supabase.from('sel_insights').select('id').limit(1);
       
@@ -385,18 +389,12 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         throw new Error("Database connection failed");
       }
       
-      const now = new Date();
-      const weekStart = startDate || startOfWeek(now, { weekStartsOn: 1 });
-      const weekEnd = addWeeks(weekStart, 1);
-      
-      console.log(`Fetching data from ${weekStart.toISOString()} to ${weekEnd.toISOString()}`);
-      
       let query = supabase
         .from('sel_insights')
         .select('*')
         .eq('child_id', childId)
-        .gte('created_at', weekStart.toISOString())
-        .lt('created_at', weekEnd.toISOString())
+        .gte('created_at', targetStartDate.toISOString())
+        .lte('created_at', targetEndDate.toISOString())
         .order('created_at', { ascending: true });
       
       const { data, error } = await query;
@@ -427,7 +425,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         
         if (IS_DEVELOPMENT) {
           console.log("Using sample historical data for development");
-          const sampleHistorical = generateSampleHistoricalData(period, childId, weekStart);
+          const sampleHistorical = generateSampleHistoricalData(period, childId, targetStartDate);
           setHistoricalInsights(sampleHistorical);
           setIsFallbackData(true);
         } else {
@@ -454,15 +452,15 @@ export const useEmotionalInsights = (childId: string | undefined) => {
   }, [childId]);
 
   const generateSampleHistoricalData = useCallback((period: Period, childId: string, startDate?: Date): EmotionalInsight[] => {
-    const now = new Date();
-    const weekStart = startDate || startOfWeek(now, { weekStartsOn: 1 });
+    const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekEnd = addWeeks(weekStart, 1);
     const sampleData: EmotionalInsight[] = [];
     
     if (period === 'weekly') {
       for (let i = 0; i < 7; i++) {
         const date = addDays(weekStart, i);
         
-        if (date <= now) {
+        if (!isAfter(date, new Date())) {
           sampleData.push({
             id: `sample-daily-${i}`,
             child_id: childId,
@@ -471,7 +469,8 @@ export const useEmotionalInsights = (childId: string | undefined) => {
             social_awareness: 0.5 + (0.3 * (i / 7)) + (Math.random() * 0.1),
             relationship_skills: 0.4 + (0.35 * (i / 7)) + (Math.random() * 0.1),
             responsible_decision_making: 0.45 + (0.4 * (i / 7)) + (Math.random() * 0.1),
-            created_at: date.toISOString()
+            created_at: date.toISOString(),
+            display_date: format(date, 'yyyy-MM-dd')
           });
         }
       }

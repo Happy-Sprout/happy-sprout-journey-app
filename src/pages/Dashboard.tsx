@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -9,7 +8,6 @@ import { useEmotionalInsights, Period } from "@/hooks/useEmotionalInsights";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { JournalEntry } from "@/types/journal";
 import DashboardLoading from "@/components/dashboard/DashboardLoading";
 import DashboardContent from "@/components/dashboard/DashboardContent";
 
@@ -43,6 +41,7 @@ const Dashboard = () => {
   } = useJournalEntries(currentChildId);
   
   const fetchHistoricalInsights = useCallback(async (period: Period, startDate?: Date) => {
+    console.log(`Dashboard fetching insights for period: ${period}, date: ${startDate?.toISOString()}`);
     return await fetchInsights(period, startDate);
   }, [fetchInsights]);
 
