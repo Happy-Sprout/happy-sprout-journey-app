@@ -1,28 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, addWeeks } from "date-fns";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChildProfile } from "@/types/childProfile";
 import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, Legend, RadarChart, PolarGrid,
+  PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ChevronLeft, ChevronRight, RefreshCw, Info, Thermometer, TrendingUp } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface EmotionalGrowthInsightsProps {
   currentChild: ChildProfile;
@@ -83,8 +73,6 @@ const EmotionalGrowthInsights = ({
   const isMobile = useIsMobile();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
   
-  const today = new Date();
-  
   const formattedDateRange = `${format(currentWeekStart, "MMM d")} - ${format(addWeeks(currentWeekStart, 1), "MMM d")}`;
   
   const handlePeriodChange = (period: Period) => {
@@ -96,6 +84,30 @@ const EmotionalGrowthInsights = ({
   
   console.log("[EGI] historicalInsights:", historicalInsights);
   
+  if (loading) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent className="flex justify-center py-12">
+          <LoadingSpinner size={48} />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (hasInsufficientData) {
+    return (
+      <Card className="shadow-sm">
+        <CardContent className="text-center py-12">
+          <p className="text-sm text-gray-500">
+            {isFallbackData
+              ? "Using sample data for demonstration."
+              : "Not enough data to display insights."}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-sm">
       <CardHeader>
@@ -104,110 +116,114 @@ const EmotionalGrowthInsights = ({
           Tracking emotional well-being and growth for {currentChild.nickname}
         </CardDescription>
       </CardHeader>
-      <CardContent className="relative">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner size={48} />
-          </div>
-        ) : hasInsufficientData ? (
-          <div className="text-center py-12">
-            <Info className="mx-auto h-6 w-6 text-gray-500 mb-2" />
-            <p className="text-sm text-gray-500">
-              {isFallbackData
-                ? "Using sample data for demonstration."
-                : "Not enough data to display insights."}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="w-full">
-                <h4 className="mb-2 font-semibold text-sm">Skills Snapshot</h4>
-                <ResponsiveContainer width="100%" height={250}>
-                  <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="80%">
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="skill" />
-                    <PolarRadiusAxis angle={30} domain={[0, 10]} />
-                    <Radar
-                      name="Skills"
-                      dataKey="value"
-                      stroke="#8884d8"
-                      fill="#8884d8"
-                      fillOpacity={0.6}
-                    />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="w-full">
-                <h4 className="mb-2 font-semibold text-sm">Weekly Trends</h4>
-                <div className="flex items-center justify-between mb-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={onPrevWeek}
-                    disabled={loading || historicalLoading}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-medium">{formattedDateRange}</span>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={onNextWeek}
-                    disabled={loading || historicalLoading || currentWeekStart >= new Date()}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={onResetWeek}
-                    disabled={loading || historicalLoading}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <ResponsiveContainer width="100%" height={250}>
-                  {historicalLoading ? (
-                    <div className="flex justify-center items-center h-full">
-                      <LoadingSpinner size={32} />
-                    </div>
-                  ) : historicalInsights && historicalInsights.length > 0 ? (
-                    <LineChart data={historicalInsights}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="display_date" />
-                      <YAxis domain={[0, 10]} />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="self_awareness" stroke="#8884d8" name="Self-Awareness" />
-                      <Line type="monotone" dataKey="self_management" stroke="#82ca9d" name="Self-Management" />
-                      <Line type="monotone" dataKey="social_awareness" stroke="#ffc658" name="Social Awareness" />
-                      <Line type="monotone" dataKey="relationship_skills" stroke="#ff7300" name="Relationship Skills" />
-                      <Line type="monotone" dataKey="responsible_decision_making" stroke="#413ea0" name="Decision-Making" />
-                    </LineChart>
-                  ) : (
-                    <div className="flex justify-center items-center h-full">
-                      <p className="text-sm text-gray-500">No data available for this period</p>
-                    </div>
-                  )}
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
-      <CardFooter className="flex justify-between items-center">
-        <Tabs defaultValue="weekly" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="weekly" onClick={() => handlePeriodChange("weekly")}>Weekly</TabsTrigger>
-            <TabsTrigger value="monthly" onClick={() => handlePeriodChange("monthly")}>Monthly</TabsTrigger>
-            <TabsTrigger value="all" onClick={() => handlePeriodChange("all")}>All Time</TabsTrigger>
+
+      <CardContent className="pt-6">
+        <Tabs defaultValue="snapshot" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="snapshot">Compare Areas</TabsTrigger>
+            <TabsTrigger value="trends">Growth Trends</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="snapshot" className="space-y-4">
+            <h4 className="font-semibold">Skills Snapshot</h4>
+            <div className="w-full h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="skill" />
+                  <PolarRadiusAxis angle={30} domain={[0, 10]} />
+                  <Radar 
+                    name="Skills" 
+                    dataKey="value" 
+                    stroke="#8884d8" 
+                    fill="#8884d8" 
+                    fillOpacity={0.6}
+                  />
+                  <Tooltip />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="trends" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={onPrevWeek}
+                  disabled={historicalLoading}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium">{formattedDateRange}</span>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={onNextWeek}
+                  disabled={historicalLoading || currentWeekStart >= new Date()}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onResetWeek}
+                  disabled={historicalLoading}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <Tabs defaultValue="weekly" className="w-60">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="weekly" onClick={() => handlePeriodChange("weekly")}>
+                    Weekly
+                  </TabsTrigger>
+                  <TabsTrigger value="monthly" onClick={() => handlePeriodChange("monthly")}>
+                    Monthly
+                  </TabsTrigger>
+                  <TabsTrigger value="all" onClick={() => handlePeriodChange("all")}>
+                    All Time
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <div className="w-full h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                {historicalLoading ? (
+                  <div className="flex justify-center items-center h-full">
+                    <LoadingSpinner size={32} />
+                  </div>
+                ) : historicalInsights && historicalInsights.length > 0 ? (
+                  <LineChart data={historicalInsights}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="display_date" />
+                    <YAxis domain={[0, 10]} />
+                    <Tooltip />
+                    <Legend 
+                      layout="horizontal" 
+                      verticalAlign="bottom" 
+                      align="center"
+                      wrapperStyle={{ paddingTop: 8 }}
+                    />
+                    <Line type="monotone" dataKey="self_awareness" stroke="#8884d8" name="Self-Awareness" />
+                    <Line type="monotone" dataKey="self_management" stroke="#82ca9d" name="Self-Management" />
+                    <Line type="monotone" dataKey="social_awareness" stroke="#ffc658" name="Social Awareness" />
+                    <Line type="monotone" dataKey="relationship_skills" stroke="#ff7300" name="Relationship Skills" />
+                    <Line type="monotone" dataKey="responsible_decision_making" stroke="#413ea0" name="Decision-Making" />
+                  </LineChart>
+                ) : (
+                  <div className="flex justify-center items-center h-full">
+                    <p className="text-sm text-gray-500">No data for this period</p>
+                  </div>
+                )}
+              </ResponsiveContainer>
+            </div>
+          </TabsContent>
         </Tabs>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 };
