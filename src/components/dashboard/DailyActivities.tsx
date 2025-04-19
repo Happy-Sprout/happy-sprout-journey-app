@@ -73,7 +73,7 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
             </div>
             {checkingDailyStatus ? (
               <div className="sm:ml-auto flex items-center space-x-2">
-                <LoadingSpinner size="sm" />
+                <LoadingSpinner size={24} />
                 <span className="text-sm text-gray-500">Checking...</span>
               </div>
             ) : (
@@ -101,7 +101,7 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
             </div>
             {isCheckingTodayEntry ? (
               <div className="sm:ml-auto flex items-center space-x-2">
-                <LoadingSpinner size="sm" />
+                <LoadingSpinner size={24} />
                 <span className="text-sm text-gray-500">Checking...</span>
               </div>
             ) : (
