@@ -4,7 +4,7 @@ import { format, addWeeks } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChildProfile } from "@/types/childProfile";
-import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
+import { EmotionalInsight } from "@/types/emotionalInsights";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, Legend, RadarChart, PolarGrid,
@@ -35,23 +35,23 @@ const getRadarChartData = (insight: EmotionalInsight | null, isMobile: boolean) 
   return [
     { 
       skill: isMobile ? "Self-Aware" : "Self-Awareness", 
-      value: insight.self_awareness * 10 
+      value: insight.self_awareness * 100
     },
     { 
       skill: isMobile ? "Self-Manage" : "Self-Management", 
-      value: insight.self_management * 10 
+      value: insight.self_management * 100 
     },
     { 
       skill: isMobile ? "Social" : "Social Awareness", 
-      value: insight.social_awareness * 10 
+      value: insight.social_awareness * 100 
     },
     { 
       skill: isMobile ? "Relations" : "Relationship Skills", 
-      value: insight.relationship_skills * 10 
+      value: insight.relationship_skills * 100 
     },
     { 
       skill: isMobile ? "Decisions" : "Decision Making", 
-      value: insight.responsible_decision_making * 10 
+      value: insight.responsible_decision_making * 100 
     }
   ];
 };
@@ -71,18 +71,8 @@ const EmotionalGrowthInsights = ({
   onResetWeek
 }: EmotionalGrowthInsightsProps) => {
   const isMobile = useIsMobile();
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
-  
   const formattedDateRange = `${format(currentWeekStart, "MMM d")} - ${format(addWeeks(currentWeekStart, 1), "MMM d")}`;
-  
-  const handlePeriodChange = (period: Period) => {
-    setSelectedPeriod(period);
-    fetchHistoricalInsights(period, currentWeekStart);
-  };
-  
   const radarData = getRadarChartData(insight, isMobile);
-  
-  console.log("[EGI] historicalInsights:", historicalInsights);
   
   if (loading) {
     return (
@@ -131,7 +121,7 @@ const EmotionalGrowthInsights = ({
                 <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
                   <PolarGrid />
                   <PolarAngleAxis dataKey="skill" />
-                  <PolarRadiusAxis angle={30} domain={[0, 10]} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tickFormatter={(val) => `${val.toFixed(0)}%`} />
                   <Radar 
                     name="Skills" 
                     dataKey="value" 
@@ -139,7 +129,7 @@ const EmotionalGrowthInsights = ({
                     fill="#8884d8" 
                     fillOpacity={0.6}
                   />
-                  <Tooltip />
+                  <Tooltip formatter={(value: number) => `${value.toFixed(0)}%`} />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
@@ -175,19 +165,9 @@ const EmotionalGrowthInsights = ({
                 </Button>
               </div>
 
-              <Tabs defaultValue="weekly" className="w-60">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="weekly" onClick={() => handlePeriodChange("weekly")}>
-                    Weekly
-                  </TabsTrigger>
-                  <TabsTrigger value="monthly" onClick={() => handlePeriodChange("monthly")}>
-                    Monthly
-                  </TabsTrigger>
-                  <TabsTrigger value="all" onClick={() => handlePeriodChange("all")}>
-                    All Time
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <span className="bg-sprout-purple/10 text-sprout-purple px-3 py-1 rounded-full text-sm">
+                Weekly
+              </span>
             </div>
 
             <div className="w-full h-64">
@@ -200,8 +180,8 @@ const EmotionalGrowthInsights = ({
                   <LineChart data={historicalInsights}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="display_date" />
-                    <YAxis domain={[0, 10]} />
-                    <Tooltip />
+                    <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                    <Tooltip formatter={(value: number) => `${value.toFixed(0)}%`} />
                     <Legend 
                       layout="horizontal" 
                       verticalAlign="bottom" 
@@ -216,7 +196,7 @@ const EmotionalGrowthInsights = ({
                   </LineChart>
                 ) : (
                   <div className="flex justify-center items-center h-full">
-                    <p className="text-sm text-gray-500">No data for this period</p>
+                    <p className="text-sm text-gray-500">No data for this week</p>
                   </div>
                 )}
               </ResponsiveContainer>
