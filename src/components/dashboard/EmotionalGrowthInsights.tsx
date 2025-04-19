@@ -1,3 +1,4 @@
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -309,6 +310,13 @@ const EmotionalGrowthInsights = ({
     );
   }
 
+  // Format the display date range for the selected week
+  const formatDateRange = () => {
+    const startDate = format(currentWeekStart, "MMM d");
+    const endDate = format(weekEndDate, "MMM d");
+    return `${startDate} - ${endDate}`;
+  };
+
   return (
     <Card className="w-full mb-8 overflow-hidden">
       <CardHeader className="pb-2">
@@ -450,7 +458,7 @@ const EmotionalGrowthInsights = ({
                   Prev Week
                 </Button>
                 <span className="text-sm font-medium">
-                  {format(currentWeekStart, "MMM d")} - {format(weekEndDate, "MMM d")}
+                  {formatDateRange()}
                 </span>
                 <Button
                   size="sm"

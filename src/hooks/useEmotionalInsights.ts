@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -376,6 +377,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     setHasInsufficientData(false);
     
     try {
+      // Make sure we have a valid startDate, defaulting to the current week's start
       const targetStartDate = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
       const targetEndDate = endOfWeek(targetStartDate, { weekStartsOn: 1 });
       
@@ -464,12 +466,13 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
     const weekEnd = addWeeks(weekStart, 1);
     const sampleData: EmotionalInsight[] = [];
+    const currentDate = new Date();
     
     if (period === 'weekly') {
       for (let i = 0; i < 7; i++) {
         const date = addDays(weekStart, i);
         
-        if (!isAfter(date, new Date())) {
+        if (!isAfter(date, currentDate)) {
           sampleData.push({
             id: `sample-daily-${i}`,
             child_id: childId,
@@ -486,7 +489,6 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     } else {
       const dataPoints = period === 'monthly' ? 24 : 30;
       const intervalDays = period === 'monthly' ? 7 : 14;
-      const currentDate = new Date();
       
       for (let i = 0; i < dataPoints; i++) {
         const date = new Date(currentDate);
