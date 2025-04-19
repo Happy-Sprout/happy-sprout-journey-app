@@ -4,29 +4,36 @@ project_id = "ghucegvhempgmdykosiw"
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "storage"]
+schemas = ["public", "storage", "graphql_public"]
 
 [db]
 port = 54322
 
 [studio]
-port = 54323
-
-[storage]
 enabled = true
+port = 54323
+api_url = "http://localhost"
+
+[inbucket]
+enabled = true
+port = 54324
 
 [auth]
 enabled = true
+port = 54325
 
 [realtime]
 enabled = true
 
-[analytics]
+[storage]
 enabled = true
-port = 54327
 
 [functions]
 [functions.analyze-emotional-growth]
-verify_jwt = false
+verify_jwt = true
+
 [functions.batch-process-journal-entries]
-verify_jwt = false
+verify_jwt = true
+
+[functions.get-daily-inspiration]
+verify_jwt = true
