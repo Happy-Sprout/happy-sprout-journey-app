@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { startOfWeek, addWeeks } from "date-fns";
 import { ChildProfile } from "@/types/childProfile";
@@ -50,20 +49,14 @@ const DashboardContent = ({
 
   useEffect(() => {
     if (currentChildId) {
-      console.log("[DashboardContent-DEBUG] Fetching historical insights on mount/child change");
+      console.log("[DashboardContent] load week:", currentWeekStart);
       fetchHistoricalInsights("weekly", currentWeekStart);
     }
   }, [currentChildId, currentWeekStart, fetchHistoricalInsights]);
 
-  const handlePrevWeek = () => {
-    setCurrentWeekStart(prev => addWeeks(prev, -1));
-  };
-
-  const handleNextWeek = () => {
-    setCurrentWeekStart(prev => addWeeks(prev, 1));
-  };
-
-  const handleResetToCurrentWeek = () => {
+  const handlePrevWeek = () => setCurrentWeekStart(w => addWeeks(w, -1));
+  const handleNextWeek = () => setCurrentWeekStart(w => addWeeks(w, 1));
+  const handleResetWeek = () => {
     setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
   };
 
@@ -102,7 +95,7 @@ const DashboardContent = ({
               currentWeekStart={currentWeekStart}
               onPrevWeek={handlePrevWeek}
               onNextWeek={handleNextWeek}
-              onResetWeek={handleResetToCurrentWeek}
+              onResetWeek={handleResetWeek}
             />
           </main>
 

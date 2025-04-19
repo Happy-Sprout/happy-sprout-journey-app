@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { format, addWeeks } from "date-fns";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { ChildProfile } from "@/types/childProfile";
 import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import {
@@ -21,7 +22,6 @@ import {
 } from "recharts";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ChevronLeft, ChevronRight, RefreshCw, Info, Thermometer, TrendingUp } from "lucide-react";
-import { format, addWeeks } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EmotionalGrowthInsightsProps {
@@ -93,6 +93,8 @@ const EmotionalGrowthInsights = ({
   };
   
   const radarData = getRadarChartData(insight, isMobile);
+  
+  console.log("[EGI] historicalInsights:", historicalInsights);
   
   return (
     <Card className="shadow-sm">
@@ -182,6 +184,9 @@ const EmotionalGrowthInsights = ({
                       <Legend />
                       <Line type="monotone" dataKey="self_awareness" stroke="#8884d8" name="Self-Awareness" />
                       <Line type="monotone" dataKey="self_management" stroke="#82ca9d" name="Self-Management" />
+                      <Line type="monotone" dataKey="social_awareness" stroke="#ffc658" name="Social Awareness" />
+                      <Line type="monotone" dataKey="relationship_skills" stroke="#ff7300" name="Relationship Skills" />
+                      <Line type="monotone" dataKey="responsible_decision_making" stroke="#413ea0" name="Decision-Making" />
                     </LineChart>
                   ) : (
                     <div className="flex justify-center items-center h-full">
