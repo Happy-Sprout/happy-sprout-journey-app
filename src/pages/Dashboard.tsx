@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -23,12 +22,6 @@ const Dashboard = () => {
   console.log("[Dashboard-DEBUG] Current child ID:", currentChildId);
   console.log("[Dashboard-DEBUG] Current child:", currentChild);
   
-  // Make the child ID stable to prevent unnecessary re-fetches
-  const stableChildId = useCallback(() => {
-    console.log("[Dashboard-DEBUG] Using stable child ID:", currentChildId);
-    return currentChildId;
-  }, [currentChildId]);
-
   const { 
     latestInsight, 
     loading: insightLoading,
@@ -39,9 +32,8 @@ const Dashboard = () => {
     hasInsufficientData,
     insertSampleData,
     connectionError
-  } = useEmotionalInsights(stableChildId());
+  } = useEmotionalInsights(currentChildId);
   
-  // Log the emotional insights state for debugging
   useEffect(() => {
     console.log("[Dashboard-DEBUG] Latest insight:", latestInsight);
     console.log("[Dashboard-DEBUG] Historical insights count:", historicalInsights?.length || 0);
@@ -58,7 +50,6 @@ const Dashboard = () => {
     isCheckingTodayEntry
   } = useJournalEntries(currentChildId);
   
-  // Ensure the date is properly passed to fetchHistoricalInsights
   const fetchHistoricalInsightsWithDate = useCallback(async (period: Period, startDate?: Date) => {
     console.log(`[Dashboard-DEBUG] Fetching insights for period: ${period}, date:`, startDate);
     
@@ -68,7 +59,6 @@ const Dashboard = () => {
       console.log(`[Dashboard-DEBUG] Start date provided:`, startDate.toISOString());
     }
     
-    // Make sure we pass the actual startDate to the hook
     return await fetchHistoricalInsights(period, startDate);
   }, [fetchHistoricalInsights]);
 

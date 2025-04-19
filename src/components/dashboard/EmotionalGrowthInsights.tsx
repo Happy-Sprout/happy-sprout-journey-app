@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import {
 } from "recharts";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ChevronLeft, ChevronRight, RefreshCw, Info, Thermometer, TrendingUp } from "lucide-react";
-import { format, subWeeks, addWeeks, startOfWeek } from "date-fns";
+import { format, addWeeks } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EmotionalGrowthInsightsProps {
@@ -33,6 +34,10 @@ interface EmotionalGrowthInsightsProps {
   historicalLoading: boolean;
   isFallbackData: boolean;
   hasInsufficientData: boolean;
+  currentWeekStart: Date;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+  onResetWeek: () => void;
 }
 
 const getRadarChartData = (insight: EmotionalInsight | null, isMobile: boolean) => {
@@ -70,37 +75,22 @@ const EmotionalGrowthInsights = ({
   historicalInsights,
   historicalLoading,
   isFallbackData,
-  hasInsufficientData
+  hasInsufficientData,
+  currentWeekStart,
+  onPrevWeek,
+  onNextWeek,
+  onResetWeek
 }: EmotionalGrowthInsightsProps) => {
   const isMobile = useIsMobile();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
-  const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   
-  const prevWeekStart = subWeeks(currentWeekStart, 1);
-  const nextWeekStart = addWeeks(currentWeekStart, 1);
   const today = new Date();
   
   const formattedDateRange = `${format(currentWeekStart, "MMM d")} - ${format(addWeeks(currentWeekStart, 1), "MMM d")}`;
   
-  useEffect(() => {
-    fetchHistoricalInsights(selectedPeriod, currentWeekStart);
-  }, [fetchHistoricalInsights, selectedPeriod, currentWeekStart]);
-  
   const handlePeriodChange = (period: Period) => {
     setSelectedPeriod(period);
     fetchHistoricalInsights(period, currentWeekStart);
-  };
-  
-  const handlePrevWeek = () => {
-    setCurrentWeekStart(prevWeekStart);
-  };
-  
-  const handleNextWeek = () => {
-    setCurrentWeekStart(nextWeekStart);
-  };
-  
-  const handleToday = () => {
-    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
   };
   
   const radarData = getRadarChartData(insight, isMobile);
@@ -155,8 +145,8 @@ const EmotionalGrowthInsights = ({
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    onClick={handlePrevWeek}
-                    disabled={loading}
+                    onClick={onPrevWeek}
+                    disabled={loading || historicalLoading}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -164,31 +154,41 @@ const EmotionalGrowthInsights = ({
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    onClick={handleNextWeek}
-                    disabled={loading || currentWeekStart >= startOfWeek(today, { weekStartsOn: 1 })}
+                    onClick={onNextWeek}
+                    disabled={loading || historicalLoading || currentWeekStart >= new Date()}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    onClick={handleToday}
-                    disabled={loading}
+                    onClick={onResetWeek}
+                    disabled={loading || historicalLoading}
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </div>
                 
                 <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={historicalInsights}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="display_date" />
-                    <YAxis domain={[0, 10]} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="self_awareness" stroke="#8884d8" name="Self-Awareness" />
-                    <Line type="monotone" dataKey="self_management" stroke="#82ca9d" name="Self-Management" />
-                  </LineChart>
+                  {historicalLoading ? (
+                    <div className="flex justify-center items-center h-full">
+                      <LoadingSpinner size={32} />
+                    </div>
+                  ) : historicalInsights && historicalInsights.length > 0 ? (
+                    <LineChart data={historicalInsights}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="display_date" />
+                      <YAxis domain={[0, 10]} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="self_awareness" stroke="#8884d8" name="Self-Awareness" />
+                      <Line type="monotone" dataKey="self_management" stroke="#82ca9d" name="Self-Management" />
+                    </LineChart>
+                  ) : (
+                    <div className="flex justify-center items-center h-full">
+                      <p className="text-sm text-gray-500">No data available for this period</p>
+                    </div>
+                  )}
                 </ResponsiveContainer>
               </div>
             </div>

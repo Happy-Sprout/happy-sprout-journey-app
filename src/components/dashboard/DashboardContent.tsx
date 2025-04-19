@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
 import EmotionalGrowthInsights from "./EmotionalGrowthInsights";
@@ -13,6 +14,7 @@ import StatsSidebar from "./stats/StatsSidebar";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { List, BarChart2 } from "lucide-react";
+import { startOfWeek, addWeeks } from "date-fns";
 
 interface DashboardContentProps {
   currentChild: ChildProfile;
@@ -52,6 +54,30 @@ const DashboardContent = ({
   insertSampleData
 }: DashboardContentProps) => {
   const [wellnessView, setWellnessView] = useState<"radar" | "trend">("trend");
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => 
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
+
+  // Effect to fetch historical insights when the dashboard loads or when child/week changes
+  useEffect(() => {
+    if (currentChildId) {
+      console.log("[DashboardContent-DEBUG] Fetching historical insights on mount/child change");
+      fetchHistoricalInsights("weekly", currentWeekStart);
+    }
+  }, [currentChildId, currentWeekStart, fetchHistoricalInsights]);
+
+  // Helper functions for week navigation that will be passed to EmotionalGrowthInsights
+  const handlePrevWeek = () => {
+    setCurrentWeekStart(prev => addWeeks(prev, -1));
+  };
+
+  const handleNextWeek = () => {
+    setCurrentWeekStart(prev => addWeeks(prev, 1));
+  };
+
+  const handleResetToCurrentWeek = () => {
+    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -79,6 +105,10 @@ const DashboardContent = ({
                 historicalLoading={historicalLoading}
                 isFallbackData={isFallbackData}
                 hasInsufficientData={hasInsufficientData}
+                currentWeekStart={currentWeekStart}
+                onPrevWeek={handlePrevWeek}
+                onNextWeek={handleNextWeek}
+                onResetWeek={handleResetToCurrentWeek}
               />
               
               <div className="mt-8">
