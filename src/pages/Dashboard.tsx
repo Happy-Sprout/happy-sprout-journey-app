@@ -20,19 +20,19 @@ const Dashboard = () => {
   const isDevelopment = import.meta.env.DEV;
   const { toast } = useToast();
   
-  console.log("[Dashboard-FIXED] Current child ID:", currentChildId);
-  console.log("[Dashboard-FIXED] Current child:", currentChild);
+  console.log("[Dashboard-DEBUG] Current child ID:", currentChildId);
+  console.log("[Dashboard-DEBUG] Current child:", currentChild);
   
   // Make the child ID stable to prevent unnecessary re-fetches
   const stableChildId = useCallback(() => {
-    console.log("[Dashboard-FIXED] Using stable child ID:", currentChildId);
+    console.log("[Dashboard-DEBUG] Using stable child ID:", currentChildId);
     return currentChildId;
   }, [currentChildId]);
 
   const { 
     latestInsight, 
     loading: insightLoading,
-    fetchHistoricalInsights: fetchInsights,
+    fetchHistoricalInsights,
     historicalInsights,
     historicalLoading,
     isFallbackData,
@@ -43,12 +43,12 @@ const Dashboard = () => {
   
   // Log the emotional insights state for debugging
   useEffect(() => {
-    console.log("[Dashboard-FIXED] Latest insight:", latestInsight);
-    console.log("[Dashboard-FIXED] Historical insights count:", historicalInsights?.length || 0);
-    console.log("[Dashboard-FIXED] Insight loading:", insightLoading);
-    console.log("[Dashboard-FIXED] Historical loading:", historicalLoading);
-    console.log("[Dashboard-FIXED] Has insufficient data:", hasInsufficientData);
-    console.log("[Dashboard-FIXED] Is fallback data:", isFallbackData);
+    console.log("[Dashboard-DEBUG] Latest insight:", latestInsight);
+    console.log("[Dashboard-DEBUG] Historical insights count:", historicalInsights?.length || 0);
+    console.log("[Dashboard-DEBUG] Insight loading:", insightLoading);
+    console.log("[Dashboard-DEBUG] Historical loading:", historicalLoading);
+    console.log("[Dashboard-DEBUG] Has insufficient data:", hasInsufficientData);
+    console.log("[Dashboard-DEBUG] Is fallback data:", isFallbackData);
   }, [latestInsight, historicalInsights, insightLoading, historicalLoading, hasInsufficientData, isFallbackData]);
   
   const { 
@@ -59,11 +59,11 @@ const Dashboard = () => {
   } = useJournalEntries(currentChildId);
   
   // Ensure the date is properly passed to fetchHistoricalInsights
-  const fetchHistoricalInsights = useCallback(async (period: Period, startDate?: Date) => {
-    console.log(`[Dashboard-FIXED] Fetching insights for period: ${period}, date: ${startDate?.toISOString() || 'none'}`);
+  const fetchHistoricalInsightsWithDate = useCallback(async (period: Period, startDate?: Date) => {
+    console.log(`[Dashboard-DEBUG] Fetching insights for period: ${period}, date:`, startDate);
     // Make sure we pass the actual startDate to the hook
-    return await fetchInsights(period, startDate);
-  }, [fetchInsights]);
+    return await fetchHistoricalInsights(period, startDate);
+  }, [fetchHistoricalInsights]);
 
   useEffect(() => {
     let isMounted = true;
@@ -74,7 +74,7 @@ const Dashboard = () => {
           setIsDbConnected(!error);
           
           if (error && isDevelopment) {
-            console.error("[Dashboard-FIXED] Database connection check failed:", error);
+            console.error("[Dashboard-DEBUG] Database connection check failed:", error);
             toast({
               title: "Database connection error",
               description: "Using sample data for development purposes.",
@@ -84,7 +84,7 @@ const Dashboard = () => {
           }
         }
       } catch (err) {
-        console.error("[Dashboard-FIXED] Error checking database connection:", err);
+        console.error("[Dashboard-DEBUG] Error checking database connection:", err);
         if (isMounted) {
           setIsDbConnected(false);
         }
@@ -148,7 +148,7 @@ const Dashboard = () => {
                     currentChildId={currentChildId!}
                     latestInsight={latestInsight}
                     insightLoading={insightLoading}
-                    fetchHistoricalInsights={fetchHistoricalInsights}
+                    fetchHistoricalInsights={fetchHistoricalInsightsWithDate}
                     historicalInsights={historicalInsights}
                     historicalLoading={historicalLoading}
                     isFallbackData={isFallbackData}

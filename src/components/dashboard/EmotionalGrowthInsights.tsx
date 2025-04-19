@@ -99,41 +99,39 @@ const EmotionalGrowthInsights = ({
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     // Always use weekStartsOn: 1 (Monday) for consistency
     const today = new Date();
-    console.log("[EmotionalGrowthInsights-FIXED] Today's date:", today.toISOString());
+    console.log("[EmotionalGrowthInsights-DEBUG] Initializing component with today's date:", today.toISOString());
     const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-    console.log("[EmotionalGrowthInsights-FIXED] Initial week start:", weekStart.toISOString());
+    console.log("[EmotionalGrowthInsights-DEBUG] Initial week start:", weekStart.toISOString());
     return weekStart;
   });
   
   const isDevelopment = import.meta.env.DEV;
-  const [chartWidth, setChartWidth] = useState(0);
-  const [chartHeight, setChartHeight] = useState(0);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [connectionError, setConnectionError] = useState(false);
   const isMobile = useIsMobile();
   
   const weekEndDate = useMemo(() => {
     const endDate = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
-    console.log("[EmotionalGrowthInsights-FIXED] Calculated week end date:", endDate.toISOString());
+    console.log("[EmotionalGrowthInsights-DEBUG] Calculated week end date:", endDate.toISOString());
     return endDate;
   }, [currentWeekStart]);
 
   useEffect(() => {
-    console.log("[EmotionalGrowthInsights-FIXED] Component mounted");
-    console.log("[EmotionalGrowthInsights-FIXED] Initial currentWeekStart:", currentWeekStart.toISOString());
-    console.log("[EmotionalGrowthInsights-FIXED] Initial weekEndDate:", weekEndDate.toISOString());
-    console.log("[EmotionalGrowthInsights-FIXED] Has insights data:", !!historicalInsights.length);
+    console.log("[EmotionalGrowthInsights-DEBUG] Component mounted");
+    console.log("[EmotionalGrowthInsights-DEBUG] Initial currentWeekStart:", currentWeekStart.toISOString());
+    console.log("[EmotionalGrowthInsights-DEBUG] Initial weekEndDate:", weekEndDate.toISOString());
+    console.log("[EmotionalGrowthInsights-DEBUG] Has insights data:", !!historicalInsights.length);
     
     if (historicalInsights.length > 0) {
-      console.log("[EmotionalGrowthInsights-FIXED] First insight date:", historicalInsights[0].created_at);
-      console.log("[EmotionalGrowthInsights-FIXED] Has display_date:", !!historicalInsights[0].display_date);
+      console.log("[EmotionalGrowthInsights-DEBUG] First insight date:", historicalInsights[0].created_at);
+      console.log("[EmotionalGrowthInsights-DEBUG] Has display_date:", !!historicalInsights[0].display_date);
     }
   }, []);
 
   const handlePreviousWeek = useCallback(() => {
     setCurrentWeekStart(prevWeekStart => {
       const newWeekStart = subWeeks(prevWeekStart, 1);
-      console.log("[EmotionalGrowthInsights-FIXED] Setting previous week start:", newWeekStart.toISOString());
+      console.log("[EmotionalGrowthInsights-DEBUG] Setting previous week start:", newWeekStart.toISOString());
       return newWeekStart;
     });
   }, []);
@@ -141,29 +139,34 @@ const EmotionalGrowthInsights = ({
   const handleNextWeek = useCallback(() => {
     setCurrentWeekStart(prevWeekStart => {
       const newWeekStart = addWeeks(prevWeekStart, 1);
-      console.log("[EmotionalGrowthInsights-FIXED] Setting next week start:", newWeekStart.toISOString());
+      console.log("[EmotionalGrowthInsights-DEBUG] Setting next week start:", newWeekStart.toISOString());
       return newWeekStart;
     });
   }, []);
 
   useLayoutEffect(() => {
+    const updateChartContainer = () => {
+      if (chartContainerRef.current) {
+        // Force a minimum size on the chart container to prevent recharts warnings
+        chartContainerRef.current.style.minHeight = isMobile ? "380px" : "300px";
+        chartContainerRef.current.style.minWidth = "100%";
+        
+        console.log("[EmotionalGrowthInsights-DEBUG] Updated chart container dimensions:", {
+          width: chartContainerRef.current.clientWidth,
+          height: chartContainerRef.current.clientHeight,
+          minHeight: isMobile ? "380px" : "300px"
+        });
+      }
+    };
+    
+    // Initial setup
+    updateChartContainer();
+    
+    // Set up resize observer
     if (chartContainerRef.current) {
-      const updateSize = () => {
-        if (chartContainerRef.current) {
-          setChartWidth(chartContainerRef.current.clientWidth);
-          const minHeight = isMobile ? 380 : 300;
-          setChartHeight(Math.max(chartContainerRef.current.clientHeight, minHeight));
-          console.log("[EmotionalGrowthInsights-FIXED] Chart container dimensions:", {
-            width: chartContainerRef.current.clientWidth,
-            height: Math.max(chartContainerRef.current.clientHeight, minHeight)
-          });
-        }
-      };
-      
-      updateSize();
       const resizeObserver = new ResizeObserver(() => {
-        console.log("[EmotionalGrowthInsights-FIXED] Container size changed, updating");
-        updateSize();
+        console.log("[EmotionalGrowthInsights-DEBUG] Container size changed, updating");
+        updateChartContainer();
       });
       resizeObserver.observe(chartContainerRef.current);
       
@@ -174,12 +177,15 @@ const EmotionalGrowthInsights = ({
   const fetchHistoricalData = useCallback(async () => {
     if (selectedTab === "trends") {
       try {
-        console.log(`[EmotionalGrowthInsights-FIXED] Fetching data for week starting: ${currentWeekStart.toISOString()}`);
-        console.log(`[EmotionalGrowthInsights-FIXED] Week end date: ${weekEndDate.toISOString()}`);
+        console.log(`[EmotionalGrowthInsights-DEBUG] Fetching data for week starting: ${currentWeekStart.toISOString()}`);
+        console.log(`[EmotionalGrowthInsights-DEBUG] Week end date: ${weekEndDate.toISOString()}`);
+        console.log(`[EmotionalGrowthInsights-DEBUG] Selected period: ${selectedPeriod}`);
+        
+        // Make sure we're passing the correct date to fetchHistoricalInsights
         await fetchHistoricalInsights(selectedPeriod, currentWeekStart);
         setConnectionError(false);
       } catch (error) {
-        console.error("[EmotionalGrowthInsights-FIXED] Error fetching historical data:", error);
+        console.error("[EmotionalGrowthInsights-DEBUG] Error fetching historical data:", error);
         setConnectionError(true);
       }
     }
@@ -187,21 +193,21 @@ const EmotionalGrowthInsights = ({
 
   useEffect(() => {
     if (selectedTab === "trends") {
-      console.log("[EmotionalGrowthInsights-FIXED] Selected tab is 'trends', fetching historical data");
+      console.log("[EmotionalGrowthInsights-DEBUG] Selected tab is 'trends', fetching historical data");
       fetchHistoricalData();
     }
   }, [selectedTab, currentWeekStart, fetchHistoricalData]);
 
   useEffect(() => {
-    console.log("[EmotionalGrowthInsights-FIXED] historicalInsights updated:", historicalInsights);
-    console.log("[EmotionalGrowthInsights-FIXED] insights count:", historicalInsights.length);
+    console.log("[EmotionalGrowthInsights-DEBUG] historicalInsights updated:", historicalInsights);
+    console.log("[EmotionalGrowthInsights-DEBUG] insights count:", historicalInsights.length);
     if (historicalInsights.length > 0) {
-      console.log("[EmotionalGrowthInsights-FIXED] First insight date:", historicalInsights[0].created_at);
-      console.log("[EmotionalGrowthInsights-FIXED] Has display_date:", !!historicalInsights[0].display_date);
+      console.log("[EmotionalGrowthInsights-DEBUG] First insight date:", historicalInsights[0].created_at);
+      console.log("[EmotionalGrowthInsights-DEBUG] Has display_date:", !!historicalInsights[0].display_date);
       
       // Log all insights data for debugging
       historicalInsights.forEach((insight, index) => {
-        console.log(`[EmotionalGrowthInsights-FIXED] Insight #${index}:`, {
+        console.log(`[EmotionalGrowthInsights-DEBUG] Insight #${index}:`, {
           date: insight.display_date || insight.created_at,
           self_awareness: insight.self_awareness,
           self_management: insight.self_management
@@ -272,24 +278,24 @@ const EmotionalGrowthInsights = ({
           return format(date, 'MMM d');
       }
     } catch (error) {
-      console.error("[EmotionalGrowthInsights] Date formatting error:", error);
+      console.error("[EmotionalGrowthInsights-DEBUG] Date formatting error:", error);
       return 'Invalid Date';
     }
   };
 
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) {
-      console.log("[EmotionalGrowthInsights-FIXED] No historical insights data available for chart");
+      console.log("[EmotionalGrowthInsights-DEBUG] No historical insights data available for chart");
       return [];
     }
     
-    console.log("[EmotionalGrowthInsights-FIXED] Creating lineChartData from insights:", historicalInsights.length);
+    console.log("[EmotionalGrowthInsights-DEBUG] Creating lineChartData from insights:", historicalInsights.length);
     
     const data = historicalInsights.map(insight => {
       const date = insight.display_date || insight.created_at;
       const formattedDate = formatDateForPeriod(date, selectedPeriod);
       
-      console.log(`[EmotionalGrowthInsights-FIXED] Processing insight:`, {
+      console.log(`[EmotionalGrowthInsights-DEBUG] Processing insight:`, {
         date,
         formattedDate,
         selfAwareness: insight.self_awareness,
@@ -308,7 +314,7 @@ const EmotionalGrowthInsights = ({
       };
     });
     
-    console.log("[EmotionalGrowthInsights-FIXED] Final lineChartData:", data);
+    console.log("[EmotionalGrowthInsights-DEBUG] Final lineChartData:", data);
     return data;
   }, [historicalInsights, selectedPeriod]);
 
@@ -377,7 +383,7 @@ const EmotionalGrowthInsights = ({
   }
 
   const formatDateRange = () => {
-    console.log("[EmotionalGrowthInsights-FIXED] Formatting date range:", {
+    console.log("[EmotionalGrowthInsights-DEBUG] Formatting date range:", {
       startDate: currentWeekStart.toISOString(),
       endDate: weekEndDate.toISOString()
     });
@@ -467,8 +473,9 @@ const EmotionalGrowthInsights = ({
                 <div 
                   className="w-full h-64 sm:h-72" 
                   ref={chartContainerRef}
+                  style={{ minHeight: isMobile ? "380px" : "300px", minWidth: "100%" }}
                 >
-                  <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 380 : 300}>
+                  <ResponsiveContainer width="100%" height="100%">
                     <RadarChart 
                       outerRadius={isMobile ? "65%" : "80%"} 
                       data={radarChartData}
@@ -545,8 +552,12 @@ const EmotionalGrowthInsights = ({
             {historicalLoading ? (
               <div className="w-full h-64 animate-pulse bg-gray-100 rounded"></div>
             ) : lineChartData.length >= 2 ? (
-              <div className="w-full h-72 sm:h-80" ref={chartContainerRef}>
-                <ResponsiveContainer width="100%" height="100%" minHeight={isMobile ? 380 : 300}>
+              <div 
+                className="w-full h-72 sm:h-80" 
+                ref={chartContainerRef}
+                style={{ minHeight: isMobile ? "380px" : "300px", minWidth: "100%" }}
+              >
+                <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={lineChartData}
                     margin={isMobile ? 
@@ -598,7 +609,6 @@ const EmotionalGrowthInsights = ({
                       }}
                       position={isMobile ? { x: 5, y: 75 } : undefined}
                       wrapperStyle={{ zIndex: 100 }}
-                      coordinate={{ x: 100, y: 100 }}
                     />
                     <Legend 
                       height={isMobile ? 80 : 36}
@@ -664,7 +674,7 @@ const EmotionalGrowthInsights = ({
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="w-full min-h-[200px] flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6">
+              <div className="w-full min-h-[300px] flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6">
                 <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
                 <p className="text-slate-600 text-center font-medium mb-2">
                   No data for this week yet
@@ -673,7 +683,6 @@ const EmotionalGrowthInsights = ({
                   Keep tracking {currentChild.nickname}'s emotional growth! Data will appear here as entries are added.
                 </p>
                 <div className="mt-3 text-xs text-slate-400">
-                  {/* Debugging information */}
                   <p>Date range: {format(currentWeekStart, "yyyy-MM-dd")} to {format(weekEndDate, "yyyy-MM-dd")}</p>
                   <p>Data points: {historicalInsights.length}</p>
                   {historicalInsights.length > 0 && 
