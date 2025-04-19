@@ -42,8 +42,8 @@ const Dashboard = () => {
     isCheckingTodayEntry
   } = useJournalEntries(currentChildId);
   
-  const fetchHistoricalInsights = useCallback(async (period: Period) => {
-    return await fetchInsights(period);
+  const fetchHistoricalInsights = useCallback(async (period: Period, startDate?: Date) => {
+    return await fetchInsights(period, startDate);
   }, [fetchInsights]);
 
   useEffect(() => {

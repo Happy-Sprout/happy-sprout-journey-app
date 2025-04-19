@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { warningToast } from "@/components/ui/toast-extensions";
-import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks } from "date-fns";
+import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks, addDays } from "date-fns";
 
 export type EmotionalInsight = {
   id: string;
@@ -369,7 +369,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     );
   };
 
-  const fetchHistoricalInsights = useCallback(async (period: Period = 'weekly') => {
+  const fetchHistoricalInsights = useCallback(async (period: Period = 'weekly', startDate?: Date) => {
     if (!childId) return;
     
     setHistoricalLoading(true);
@@ -386,8 +386,10 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       }
       
       const now = new Date();
-      const weekStart = startOfWeek(now);
+      const weekStart = startDate || startOfWeek(now, { weekStartsOn: 1 });
       const weekEnd = addWeeks(weekStart, 1);
+      
+      console.log(`Fetching data from ${weekStart.toISOString()} to ${weekEnd.toISOString()}`);
       
       let query = supabase
         .from('sel_insights')
@@ -425,7 +427,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         
         if (IS_DEVELOPMENT) {
           console.log("Using sample historical data for development");
-          const sampleHistorical = generateSampleHistoricalData(period, childId);
+          const sampleHistorical = generateSampleHistoricalData(period, childId, weekStart);
           setHistoricalInsights(sampleHistorical);
           setIsFallbackData(true);
         } else {
@@ -438,7 +440,9 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       setConnectionError(true);
       
       if (IS_DEVELOPMENT) {
-        const sampleHistorical = generateSampleHistoricalData(period, childId);
+        const now = new Date();
+        const weekStart = startDate || startOfWeek(now, { weekStartsOn: 1 });
+        const sampleHistorical = generateSampleHistoricalData(period, childId, weekStart);
         setHistoricalInsights(sampleHistorical);
         setIsFallbackData(true);
       } else {
@@ -449,29 +453,49 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     }
   }, [childId]);
 
-  const generateSampleHistoricalData = useCallback((period: Period, childId: string): EmotionalInsight[] => {
+  const generateSampleHistoricalData = useCallback((period: Period, childId: string, startDate?: Date): EmotionalInsight[] => {
     const now = new Date();
+    const weekStart = startDate || startOfWeek(now, { weekStartsOn: 1 });
     const sampleData: EmotionalInsight[] = [];
     
-    const dataPoints = period === 'weekly' ? 14 : period === 'monthly' ? 24 : 30;
-    const intervalDays = period === 'weekly' ? 2 : period === 'monthly' ? 7 : 14;
-    
-    for (let i = 0; i < dataPoints; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - (i * intervalDays));
+    if (period === 'weekly') {
+      for (let i = 0; i < 7; i++) {
+        const date = addDays(weekStart, i);
+        
+        if (date <= now) {
+          sampleData.push({
+            id: `sample-daily-${i}`,
+            child_id: childId,
+            self_awareness: 0.4 + (0.4 * (i / 7)) + (Math.random() * 0.1),
+            self_management: 0.45 + (0.35 * (i / 7)) + (Math.random() * 0.1),
+            social_awareness: 0.5 + (0.3 * (i / 7)) + (Math.random() * 0.1),
+            relationship_skills: 0.4 + (0.35 * (i / 7)) + (Math.random() * 0.1),
+            responsible_decision_making: 0.45 + (0.4 * (i / 7)) + (Math.random() * 0.1),
+            created_at: date.toISOString()
+          });
+        }
+      }
+    } else {
+      const dataPoints = period === 'monthly' ? 24 : 30;
+      const intervalDays = period === 'monthly' ? 7 : 14;
       
-      const progress = i / dataPoints;
-      
-      sampleData.push({
-        id: `sample-historical-${i}`,
-        child_id: childId,
-        self_awareness: 0.4 + (0.4 * (1 - progress)) + (Math.random() * 0.1),
-        self_management: 0.45 + (0.35 * (1 - progress)) + (Math.random() * 0.1),
-        social_awareness: 0.5 + (0.3 * (1 - progress)) + (Math.random() * 0.1),
-        relationship_skills: 0.4 + (0.35 * (1 - progress)) + (Math.random() * 0.1),
-        responsible_decision_making: 0.45 + (0.4 * (1 - progress)) + (Math.random() * 0.1),
-        created_at: date.toISOString()
-      });
+      for (let i = 0; i < dataPoints; i++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - (i * intervalDays));
+        
+        const progress = i / dataPoints;
+        
+        sampleData.push({
+          id: `sample-historical-${i}`,
+          child_id: childId,
+          self_awareness: 0.4 + (0.4 * (1 - progress)) + (Math.random() * 0.1),
+          self_management: 0.45 + (0.35 * (1 - progress)) + (Math.random() * 0.1),
+          social_awareness: 0.5 + (0.3 * (1 - progress)) + (Math.random() * 0.1),
+          relationship_skills: 0.4 + (0.35 * (1 - progress)) + (Math.random() * 0.1),
+          responsible_decision_making: 0.45 + (0.4 * (1 - progress)) + (Math.random() * 0.1),
+          created_at: date.toISOString()
+        });
+      }
     }
     
     return sampleData.sort((a, b) => 

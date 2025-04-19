@@ -94,8 +94,8 @@ const EmotionalGrowthInsights = ({
   hasInsufficientData = false
 }: EmotionalGrowthInsightsProps) => {
   const [selectedTab, setSelectedTab] = useState("compare");
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date()));
+  const [selectedPeriod] = useState<Period>("weekly");
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const isDevelopment = import.meta.env.DEV;
   const [chartWidth, setChartWidth] = useState(0);
   const [chartHeight, setChartHeight] = useState(0);
@@ -131,7 +131,7 @@ const EmotionalGrowthInsights = ({
   }, [isMobile]);
 
   const fetchHistoricalData = useCallback(async () => {
-    if (selectedTab !== "compare" && !previousDataFetchedRef.current) {
+    if (selectedTab === "trends" && !previousDataFetchedRef.current) {
       try {
         await fetchHistoricalInsights(selectedPeriod);
         setConnectionError(false);
@@ -144,11 +144,11 @@ const EmotionalGrowthInsights = ({
   }, [selectedTab, selectedPeriod, fetchHistoricalInsights]);
 
   useEffect(() => {
-    if (selectedTab !== "compare") {
+    if (selectedTab === "trends") {
       previousDataFetchedRef.current = false;
       fetchHistoricalData();
     }
-  }, [selectedTab, selectedPeriod, fetchHistoricalData]);
+  }, [selectedTab, selectedPeriod, fetchHistoricalData, currentWeekStart]);
 
   const radarChartData = useMemo(() => {
     if (!insight) return [];
@@ -220,7 +220,14 @@ const EmotionalGrowthInsights = ({
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) return [];
     
-    return historicalInsights.map(insight => {
+    const weekEnd = addWeeks(currentWeekStart, 1);
+    
+    const weeklyData = historicalInsights.filter(insight => {
+      const insightDate = new Date(insight.created_at);
+      return insightDate >= currentWeekStart && insightDate < weekEnd;
+    });
+    
+    return weeklyData.map(insight => {
       const date = insight.display_date || insight.created_at;
       const formattedDate = formatDateForPeriod(date, selectedPeriod);
       
@@ -235,7 +242,7 @@ const EmotionalGrowthInsights = ({
         dateKey: date
       };
     });
-  }, [historicalInsights, selectedPeriod]);
+  }, [historicalInsights, selectedPeriod, currentWeekStart]);
 
   const getGrowthFeedback = useMemo(() => {
     if (!insight) return null;
@@ -273,14 +280,14 @@ const EmotionalGrowthInsights = ({
   const renderNoDataMessage = useCallback((type: string) => {
     const messages = {
       compare: `${currentChild.nickname}'s emotional insights will appear here after completing journal entries or daily check-ins.`,
-      trends: `Keep tracking ${currentChild.nickname}'s feelings! Growth trends will appear here after a few entries.`
+      trends: `Keep tracking ${currentChild.nickname}'s emotional growth! Data will appear here as entries are added.`
     };
     
     return (
       <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6">
         <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
         <p className="text-slate-600 text-center font-medium mb-2">
-          Start your SEL journey!
+          No data for this week yet
         </p>
         <p className="text-sm text-slate-500 text-center max-w-md">
           {messages[type as keyof typeof messages]}
@@ -579,15 +586,7 @@ const EmotionalGrowthInsights = ({
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6">
-                <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
-                <p className="text-slate-600 text-center font-medium mb-2">
-                  No data for this week yet
-                </p>
-                <p className="text-sm text-slate-500 text-center max-w-md">
-                  Keep tracking {currentChild.nickname}'s emotional growth! Data will appear here as entries are added.
-                </p>
-              </div>
+              renderNoDataMessage("trends")
             )}
           </TabsContent>
         </Tabs>
