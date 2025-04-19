@@ -25,6 +25,10 @@ export type WellnessTrendPoint = {
 interface WellnessTrendChartProps {
   childId: string;
   className?: string;
+  currentWeekStart?: Date;
+  onPrevWeek?: () => void;
+  onNextWeek?: () => void;
+  onResetWeek?: () => void;
 }
 
 const METRIC_COLORS = {
@@ -40,12 +44,36 @@ const METRIC_COLORS = {
 
 const WellnessTrendChart = ({ 
   childId,
-  className 
+  className,
+  currentWeekStart: externalWeekStart,
+  onPrevWeek: externalPrevWeek,
+  onNextWeek: externalNextWeek,
+  onResetWeek: externalResetWeek
 }: WellnessTrendChartProps) => {
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date()));
+  // Use internal state only if external state is not provided
+  const [internalWeekStart, setInternalWeekStart] = useState(() => startOfWeek(new Date()));
   const [data, setData] = useState<WellnessTrendPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Determine which week state to use
+  const currentWeekStart = externalWeekStart || internalWeekStart;
+  
+  // Determine which handlers to use (external if provided, internal otherwise)
+  const handlePreviousWeek = externalPrevWeek || (() => {
+    setInternalWeekStart(prev => addWeeks(prev, -1));
+  });
+
+  const handleNextWeek = externalNextWeek || (() => {
+    const nextWeek = addWeeks(internalWeekStart, 1);
+    if (nextWeek <= new Date()) {
+      setInternalWeekStart(nextWeek);
+    }
+  });
+
+  const handleResetWeek = externalResetWeek || (() => {
+    setInternalWeekStart(startOfWeek(new Date()));
+  });
 
   const formatChartDate = (dateString: string) => {
     try {
@@ -157,17 +185,6 @@ const WellnessTrendChart = ({
       fetchWellnessTrends(currentWeekStart);
     }
   }, [childId, currentWeekStart]);
-
-  const handlePreviousWeek = () => {
-    setCurrentWeekStart(prev => addWeeks(prev, -1));
-  };
-
-  const handleNextWeek = () => {
-    const nextWeek = addWeeks(currentWeekStart, 1);
-    if (nextWeek <= new Date()) {
-      setCurrentWeekStart(nextWeek);
-    }
-  };
 
   if (error) {
     return (
