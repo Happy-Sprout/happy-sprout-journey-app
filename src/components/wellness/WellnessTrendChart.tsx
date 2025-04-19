@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,37 @@ const WellnessTrendChart = ({
       return dateString;
     }
   };
+
+  // Function to deduplicate data points by date
+  const deduplicateDataByDate = useCallback((data: WellnessTrendPoint[]): WellnessTrendPoint[] => {
+    if (!data || data.length === 0) return [];
+    
+    // Create a map to store the latest entry for each date
+    const dateMap = new Map<string, WellnessTrendPoint>();
+    
+    // Sort data by date (newest first) to ensure we get the latest entry
+    // when there are multiple entries for the same date
+    const sortedData = [...data].sort((a, b) => {
+      if (!a.rawDate || !b.rawDate) return 0;
+      return new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime();
+    });
+    
+    // Fill the map with the first (latest) entry for each date
+    sortedData.forEach(point => {
+      if (point.rawDate) {
+        const dateKey = point.rawDate.split('T')[0]; // Extract YYYY-MM-DD part
+        if (!dateMap.has(dateKey)) {
+          dateMap.set(dateKey, point);
+        }
+      }
+    });
+    
+    // Convert map back to array and sort by date (oldest first) for the chart
+    return Array.from(dateMap.values()).sort((a, b) => {
+      if (!a.rawDate || !b.rawDate) return 0;
+      return new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime();
+    });
+  }, []);
 
   const fetchWellnessTrends = async (selectedPeriod: WellnessPeriod) => {
     if (!childId) return;
@@ -110,7 +141,12 @@ const WellnessTrendChart = ({
         };
       });
       
-      setData(formattedData);
+      // Deduplicate data if we're in "all" mode to prevent cluttered charts
+      const processedData = selectedPeriod === "all" 
+        ? deduplicateDataByDate(formattedData) 
+        : formattedData;
+      
+      setData(processedData);
     } catch (err) {
       console.error("Error in fetchWellnessTrends:", err);
       setError("An error occurred while loading wellness trends");
