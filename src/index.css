@@ -54,6 +54,11 @@
   p {
     @apply text-left;
   }
+  
+  /* Video background styling */
+  .video-bg {
+    @apply absolute inset-0 w-full h-full object-cover object-center z-0;
+  }
 
   .sprout-card {
     @apply bg-white rounded-3xl shadow-lg border-2 border-sprout-purple/20 p-6;
