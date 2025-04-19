@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker, DropdownProps } from "react-day-picker";
@@ -58,17 +57,12 @@ function Calendar({
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
         Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
-          const handleValueChange = React.useCallback(
-            (newValue: string) => {
-              // Create a synthetic event-like object that matches what react-day-picker expects
-              const syntheticEvent = {
-                target: { value: newValue }
-              } as React.ChangeEvent<HTMLSelectElement>;
-              
-              onChange?.(syntheticEvent);
-            },
-            [onChange]
-          );
+          const handleValueChange = (newValue: string) => {
+            if (onChange) {
+              const event = { target: { value: newValue } } as React.ChangeEvent<HTMLSelectElement>;
+              onChange(event);
+            }
+          };
           
           return (
             <Select
