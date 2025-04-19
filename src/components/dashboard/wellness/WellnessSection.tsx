@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { List, BarChart2 } from "lucide-react";
 import WellnessRadarChart from "../../wellness/WellnessRadarChart";
@@ -13,6 +12,10 @@ interface WellnessSectionProps {
   todayEntry: JournalEntry | null;
   journalLoading: boolean;
   currentChildId: string;
+  currentWeekStart: Date;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+  onResetWeek: () => void;
 }
 
 const WellnessSection = ({
@@ -21,6 +24,10 @@ const WellnessSection = ({
   todayEntry,
   journalLoading,
   currentChildId,
+  currentWeekStart,
+  onPrevWeek,
+  onNextWeek,
+  onResetWeek,
 }: WellnessSectionProps) => {
   return (
     <div className="mt-8">
@@ -55,6 +62,10 @@ const WellnessSection = ({
         ) : (
           <WellnessTrendChart 
             childId={currentChildId}
+            currentWeekStart={currentWeekStart}
+            onPrevWeek={onPrevWeek}
+            onNextWeek={onNextWeek}
+            onResetWeek={onResetWeek}
           />
         )}
       </div>

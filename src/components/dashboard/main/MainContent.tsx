@@ -1,7 +1,7 @@
 
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
-import { Period } from "@/hooks/useEmotionalInsights";
+import { Period } from "@/types/emotionalInsights";
 import EmotionalGrowthInsights from "../EmotionalGrowthInsights";
 import WellnessSection from "../wellness/WellnessSection";
 import DevelopmentTools from "../DevelopmentTools";
@@ -55,7 +55,7 @@ const MainContent = ({
   return (
     <div className="bg-white rounded-3xl shadow-sm p-6 border border-sprout-purple/10">
       <EmotionalGrowthInsights 
-        currentChild={currentChild} 
+        currentChild={currentChild}
         insight={latestInsight}
         loading={insightLoading}
         fetchHistoricalInsights={fetchHistoricalInsights}
@@ -75,6 +75,10 @@ const MainContent = ({
         todayEntry={todayEntry}
         journalLoading={journalLoading}
         currentChildId={currentChildId}
+        currentWeekStart={currentWeekStart}
+        onPrevWeek={onPrevWeek}
+        onNextWeek={onNextWeek}
+        onResetWeek={onResetWeek}
       />
 
       {isDevelopment && (

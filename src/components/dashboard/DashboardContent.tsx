@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { startOfWeek, addWeeks } from "date-fns";
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
-import { Period } from "@/hooks/useEmotionalInsights";
+import { Period } from "@/types/emotionalInsights";
 import DailyActivities from "./DailyActivities";
 import StatsSidebar from "./stats/StatsSidebar";
 import HeaderIllustration from "./HeaderIllustration";
@@ -26,7 +26,7 @@ interface DashboardContentProps {
   insertSampleData: () => void;
 }
 
-const DashboardContent = ({ 
+const DashboardContent = ({
   currentChild,
   currentChildId,
   latestInsight,
@@ -47,18 +47,15 @@ const DashboardContent = ({
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
 
+  const handlePrevWeek = () => setCurrentWeekStart(w => addWeeks(w, -1));
+  const handleNextWeek = () => setCurrentWeekStart(w => addWeeks(w, 1));
+  const handleResetWeek = () => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+
   useEffect(() => {
     if (currentChildId) {
-      console.log("[DashboardContent] load week:", currentWeekStart);
       fetchHistoricalInsights("weekly", currentWeekStart);
     }
   }, [currentChildId, currentWeekStart, fetchHistoricalInsights]);
-
-  const handlePrevWeek = () => setCurrentWeekStart(w => addWeeks(w, -1));
-  const handleNextWeek = () => setCurrentWeekStart(w => addWeeks(w, 1));
-  const handleResetWeek = () => {
-    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -70,12 +67,10 @@ const DashboardContent = ({
         <div className="flex flex-col lg:flex-row lg:space-x-6">
           <main className="w-full lg:w-3/4 space-y-6">
             <HeaderIllustration />
-            
             <DailyActivities 
               currentChild={currentChild} 
               currentChildId={currentChildId} 
             />
-            
             <MainContent 
               currentChild={currentChild}
               currentChildId={currentChildId}
