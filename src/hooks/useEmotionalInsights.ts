@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +14,7 @@ export type EmotionalInsight = {
   responsible_decision_making: number;
   created_at: string;
   display_date?: string;
-  source_text?: string;
+  source_text: string;
 };
 
 export type SELAreaKey = 'self_awareness' | 'self_management' | 'social_awareness' | 'relationship_skills' | 'responsible_decision_making';
@@ -375,7 +374,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         responsible_decision_making: avgResponsibleDecisionMaking,
         created_at: mostRecentInsight.created_at,
         display_date: dateKey,
-        source_text: '' // Add the missing required source_text property with a default empty string
+        source_text: mostRecentInsight.source_text || ''
       };
     }).sort((a, b) => 
       new Date(a.display_date || a.created_at).getTime() - new Date(b.display_date || b.created_at).getTime()
@@ -583,7 +582,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
               responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
               created_at: date.toISOString(),
               display_date: format(date, 'yyyy-MM-dd'),
-              source_text: '' // Add the missing required source_text property
+              source_text: ''
             };
             
             console.log(`[useEmotionalInsights-DEBUG] Generated sample day ${i}:`, {
@@ -614,7 +613,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
             responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
             created_at: date.toISOString(),
             display_date: format(date, 'yyyy-MM-dd'),
-            source_text: '' // Add the missing required source_text property
+            source_text: ''
           };
           
           console.log(`[useEmotionalInsights-DEBUG] Generated sample day ${i}:`, {
@@ -761,3 +760,5 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     lowestSELArea
   };
 };
+
+export { useEmotionalInsights };
