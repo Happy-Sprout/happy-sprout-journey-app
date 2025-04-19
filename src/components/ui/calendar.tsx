@@ -61,7 +61,11 @@ function Calendar({
           const handleValueChange = React.useCallback(
             (newValue: string) => {
               // Create a synthetic event-like object that matches what react-day-picker expects
-              onChange?.(newValue);
+              const syntheticEvent = {
+                target: { value: newValue }
+              } as React.ChangeEvent<HTMLSelectElement>;
+              
+              onChange?.(syntheticEvent);
             },
             [onChange]
           );
