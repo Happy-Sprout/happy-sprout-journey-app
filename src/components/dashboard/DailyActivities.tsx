@@ -17,18 +17,33 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
   const [journalCompleted, setJournalCompleted] = useState(false);
   const [dailyCheckInCompleted, setDailyCheckInCompleted] = useState(false);
   
-  const { getTodayEntry } = useJournalEntries(currentChildId);
+  const { getTodayEntry, todayEntryLoaded, cachedTodayEntry } = useJournalEntries(currentChildId);
   
+  // Initial check for today's entry
   useEffect(() => {
     const checkTodayJournalEntry = async () => {
       if (currentChildId) {
-        const todayEntry = await getTodayEntry();
-        setJournalCompleted(!!todayEntry);
+        try {
+          console.log("DailyActivities: Checking for today's journal entry");
+          const todayEntry = await getTodayEntry();
+          console.log("DailyActivities: Today's entry check result:", todayEntry);
+          setJournalCompleted(!!todayEntry);
+        } catch (error) {
+          console.error("DailyActivities: Error checking today's entry:", error);
+        }
       }
     };
     
     checkTodayJournalEntry();
   }, [currentChildId, getTodayEntry]);
+  
+  // Use cached entry if available
+  useEffect(() => {
+    if (todayEntryLoaded) {
+      console.log("DailyActivities: Using cached today entry status:", !!cachedTodayEntry);
+      setJournalCompleted(!!cachedTodayEntry);
+    }
+  }, [cachedTodayEntry, todayEntryLoaded]);
   
   useEffect(() => {
     if (currentChild) {

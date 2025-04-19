@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { successToast, warningToast } from "@/components/ui/toast-extensions";
@@ -119,20 +120,21 @@ export const useJournalEntries = (childId: string | undefined) => {
     }
     
     try {
+      // Get today's date in YYYY-MM-DD format, zeroed to start of day
       const todayString = getTodayDateString();
-      const today = parseISO(todayString);
-      const startOfToday = format(startOfDay(today), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-      const endOfToday = format(endOfDay(today), "yyyy-MM-dd'T'23:59:59.999'Z'");
       
-      console.log("Checking for journal entry between:", startOfToday, "and", endOfToday);
-      console.log("Today's date string:", todayString);
+      // Format for SQL query, using UTC midnight to end of day
+      const todayStart = `${todayString}T00:00:00.000Z`;
+      const todayEnd = `${todayString}T23:59:59.999Z`;
+      
+      console.log("Checking for journal entry between:", todayStart, "and", todayEnd);
       
       const { data, error } = await supabase
         .from('journal_entries')
         .select('*')
         .eq('child_id', childId)
-        .gte('created_at', startOfToday)
-        .lte('created_at', endOfToday)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd)
         .order('created_at', { ascending: false })
         .limit(1);
         

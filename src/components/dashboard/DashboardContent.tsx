@@ -9,6 +9,7 @@ import AchievementsSection from "./AchievementsSection";
 import DevelopmentTools from "./DevelopmentTools";
 import HeaderIllustration from "./HeaderIllustration";
 import { Period } from "@/hooks/useEmotionalInsights";
+import DailyActivities from "./DailyActivities";
 
 interface DashboardContentProps {
   currentChild: ChildProfile;
@@ -50,6 +51,11 @@ const DashboardContent = ({
       <HeaderIllustration />
       <WelcomeHeader currentChild={currentChild} />
       <StatsCards currentChild={currentChild} />
+      
+      <DailyActivities 
+        currentChild={currentChild} 
+        currentChildId={currentChildId} 
+      />
       
       <div className="bg-white rounded-3xl shadow-sm p-6 mb-8 border border-sprout-purple/10">
         <EmotionalGrowthInsights 
