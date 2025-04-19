@@ -1,17 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
-import EmotionalGrowthInsights from "./EmotionalGrowthInsights";
-import WellnessRadarChart from "../wellness/WellnessRadarChart";
-import WellnessTrendChart from "../wellness/WellnessTrendChart";
-import AchievementsSection from "./AchievementsSection";
-import DevelopmentTools from "./DevelopmentTools";
-import HeaderIllustration from "./HeaderIllustration";
 import { Period } from "@/hooks/useEmotionalInsights";
 import DailyActivities from "./DailyActivities";
 import StatsSidebar from "./stats/StatsSidebar";
-import { Button } from "@/components/ui/button";
-import { List, BarChart2 } from "lucide-react";
+import HeaderIllustration from "./HeaderIllustration";
+import MainContent from "./main/MainContent";
 import { startOfWeek, addWeeks } from "date-fns";
 
 interface DashboardContentProps {
@@ -32,8 +27,6 @@ interface DashboardContentProps {
   insertSampleData: () => void;
 }
 
-type WellnessViewMode = "radar" | "trend";
-
 const DashboardContent = ({ 
   currentChild,
   currentChildId,
@@ -51,7 +44,6 @@ const DashboardContent = ({
   isDevelopment,
   insertSampleData
 }: DashboardContentProps) => {
-  const [wellnessView, setWellnessView] = useState<WellnessViewMode>("trend");
   const [currentWeekStart, setCurrentWeekStart] = useState(() => 
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
@@ -91,69 +83,27 @@ const DashboardContent = ({
               currentChildId={currentChildId} 
             />
             
-            <div className="bg-white rounded-3xl shadow-sm p-6 border border-sprout-purple/10">
-              <EmotionalGrowthInsights 
-                currentChild={currentChild} 
-                insight={latestInsight}
-                loading={insightLoading}
-                fetchHistoricalInsights={fetchHistoricalInsights}
-                historicalInsights={historicalInsights}
-                historicalLoading={historicalLoading}
-                isFallbackData={isFallbackData}
-                hasInsufficientData={hasInsufficientData}
-                currentWeekStart={currentWeekStart}
-                onPrevWeek={handlePrevWeek}
-                onNextWeek={handleNextWeek}
-                onResetWeek={handleResetToCurrentWeek}
-              />
-              
-              <div className="mt-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Wellness Trends</h3>
-                  <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant={wellnessView === "radar" ? "default" : "outline"}
-                      onClick={() => setWellnessView("radar")}
-                      className="rounded-full text-xs"
-                    >
-                      <List className="h-4 w-4 mr-1" /> Snapshot
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant={wellnessView === "trend" ? "default" : "outline"}
-                      onClick={() => setWellnessView("trend")}
-                      className="rounded-full text-xs"
-                    >
-                      <BarChart2 className="h-4 w-4 mr-1" /> Trends
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="max-w-3xl mx-auto">
-                  {wellnessView === "radar" ? (
-                    <WellnessRadarChart 
-                      journalEntry={todayEntry} 
-                      loading={journalLoading} 
-                    />
-                  ) : (
-                    <WellnessTrendChart 
-                      childId={currentChildId}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {isDevelopment && (
-              <DevelopmentTools 
-                isFallbackData={isFallbackData}
-                connectionError={connectionError}
-                isDbConnected={isDbConnected}
-                isDevelopment={isDevelopment}
-                insertSampleData={insertSampleData}
-              />
-            )}
+            <MainContent 
+              currentChild={currentChild}
+              currentChildId={currentChildId}
+              latestInsight={latestInsight}
+              insightLoading={insightLoading}
+              fetchHistoricalInsights={fetchHistoricalInsights}
+              historicalInsights={historicalInsights}
+              historicalLoading={historicalLoading}
+              isFallbackData={isFallbackData}
+              hasInsufficientData={hasInsufficientData}
+              todayEntry={todayEntry}
+              journalLoading={journalLoading}
+              connectionError={connectionError}
+              isDbConnected={isDbConnected}
+              isDevelopment={isDevelopment}
+              insertSampleData={insertSampleData}
+              currentWeekStart={currentWeekStart}
+              onPrevWeek={handlePrevWeek}
+              onNextWeek={handleNextWeek}
+              onResetWeek={handleResetToCurrentWeek}
+            />
           </main>
 
           <aside className="hidden lg:block w-64 space-y-4">
