@@ -46,12 +46,12 @@ const DashboardContent = ({
   insertSampleData
 }: DashboardContentProps) => {
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6">
       <HeaderIllustration />
       <WelcomeHeader currentChild={currentChild} />
       <StatsCards currentChild={currentChild} />
       
-      <div className="bg-white rounded-3xl shadow-sm p-6 mb-8">
+      <div className="bg-white rounded-3xl shadow-sm p-6 mb-8 border border-sprout-purple/10">
         <EmotionalGrowthInsights 
           currentChild={currentChild} 
           insight={latestInsight}
@@ -63,12 +63,14 @@ const DashboardContent = ({
           hasInsufficientData={hasInsufficientData}
         />
         
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-4">Today's Wellness</h3>
-          <WellnessRadarChart 
-            journalEntry={todayEntry} 
-            loading={journalLoading} 
-          />
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Today's Wellness</h3>
+          <div className="max-w-3xl mx-auto">
+            <WellnessRadarChart 
+              journalEntry={todayEntry} 
+              loading={journalLoading} 
+            />
+          </div>
         </div>
       </div>
 

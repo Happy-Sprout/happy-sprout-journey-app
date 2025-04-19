@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChildProfile } from "@/contexts/UserContext";
 import ReactAvatar from "react-avatar";
@@ -13,13 +14,13 @@ const WelcomeHeader = ({ currentChild }: WelcomeHeaderProps) => {
 
   return (
     <div className="mb-8">
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16 ring-4 ring-white shadow-md">
+      <div className="flex items-center gap-4 justify-center md:justify-start">
+        <Avatar className="h-12 w-12 ring-4 ring-white shadow-md">
           {isInitial ? (
             <div className="w-full h-full rounded-full flex items-center justify-center" style={{ backgroundColor: getAvatarColor(currentChild.avatar) }}>
               <ReactAvatar
                 name={currentChild.nickname}
-                size="64"
+                size="48"
                 round={true}
                 color={getAvatarColor(currentChild.avatar)}
               />
@@ -38,7 +39,7 @@ const WelcomeHeader = ({ currentChild }: WelcomeHeaderProps) => {
         </Avatar>
         <div>
           <p className="text-gray-600 font-medium">Good morning,</p>
-          <h1 className="text-3xl font-bold text-sprout-purple">{currentChild.nickname}!</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-sprout-purple">{currentChild.nickname}!</h1>
         </div>
       </div>
     </div>

@@ -1,9 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Award, TrendingUp, Trophy, Star } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { ChildProfile } from "@/contexts/UserContext";
-import SproutStageIcon from "./SproutStageIcon";
 import { getBadgeInfo } from "@/utils/childUtils";
+import SproutStageIcon from "./SproutStageIcon";
 
 interface StatsCardsProps {
   currentChild: ChildProfile;
@@ -50,18 +48,18 @@ const StatsCards = ({ currentChild }: StatsCardsProps) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-yellow-50 to-orange-50 shadow-sm">
-        <div className="flex flex-col items-center text-center">
+      <div className="p-6 rounded-3xl bg-white shadow-sm border border-sprout-purple/10 h-full">
+        <div className="flex flex-col items-center text-center h-full justify-between">
           <SproutStageIcon 
             streakCount={currentChild.streakCount} 
-            className="mb-2" 
+            className="mb-3 h-12 w-12" 
           />
-          <h3 className="text-sm font-medium text-gray-600">Daily Streak</h3>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{currentChild.streakCount} days</p>
-          <div className="w-full mt-3">
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
+          <h3 className="text-sm font-medium text-gray-800 uppercase tracking-wide">Daily Streak</h3>
+          <p className="text-xl md:text-2xl font-bold text-gray-800 mt-2">{currentChild.streakCount} days</p>
+          <div className="w-full mt-4">
+            <div className="w-full bg-gray-100 rounded-full h-2">
               <div 
-                className="bg-gradient-to-r from-sprout-green to-emerald-400 h-1.5 rounded-full"
+                className="bg-gradient-to-r from-sprout-green to-emerald-400 h-2 rounded-full"
                 style={{ width: `${streakProgress}%` }}
               />
             </div>
@@ -69,21 +67,19 @@ const StatsCards = ({ currentChild }: StatsCardsProps) => {
         </div>
       </div>
 
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm">
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-2">
-            <img 
-              src="/lovable-uploads/75c52b68-2b01-4868-85c4-6a84e59b813f.png"
-              alt="Sprouting Learner"
-              className="h-8 w-8"
-            />
-          </div>
-          <h3 className="text-sm font-medium text-gray-600">Experience Points</h3>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{currentChild.xpPoints} XP</p>
-          <div className="w-full mt-3">
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
+      <div className="p-6 rounded-3xl bg-white shadow-sm border border-sprout-purple/10 h-full">
+        <div className="flex flex-col items-center text-center h-full justify-between">
+          <img 
+            src="/lovable-uploads/75c52b68-2b01-4868-85c4-6a84e59b813f.png"
+            alt="Sprouting Learner"
+            className="h-12 w-12 mb-3"
+          />
+          <h3 className="text-sm font-medium text-gray-800 uppercase tracking-wide">Experience Points</h3>
+          <p className="text-xl md:text-2xl font-bold text-gray-800 mt-2">{currentChild.xpPoints} XP</p>
+          <div className="w-full mt-4">
+            <div className="w-full bg-gray-100 rounded-full h-2">
               <div 
-                className="bg-gradient-to-r from-sprout-green to-emerald-400 h-1.5 rounded-full"
+                className="bg-gradient-to-r from-sprout-green to-emerald-400 h-2 rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -91,23 +87,23 @@ const StatsCards = ({ currentChild }: StatsCardsProps) => {
         </div>
       </div>
 
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-50 to-violet-50 shadow-sm">
-        <div className="flex flex-col items-center text-center">
+      <div className="p-6 rounded-3xl bg-white shadow-sm border border-sprout-purple/10 h-full">
+        <div className="flex flex-col items-center text-center h-full justify-between">
           <img 
             src="/lovable-uploads/82323b4f-cc61-4fcf-903d-43c507bac3cb.png"
             alt="Trophy"
-            className="h-8 w-8 mb-2"
+            className="h-12 w-12 mb-3"
           />
-          <h3 className="text-sm font-medium text-gray-600">Badges Earned</h3>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{badgeCount}</p>
-          <div className="flex flex-wrap justify-center gap-1 mt-3">
+          <h3 className="text-sm font-medium text-gray-800 uppercase tracking-wide">Badges Earned</h3>
+          <p className="text-xl md:text-2xl font-bold text-gray-800 mt-2">{badgeCount}</p>
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
             {badgeCount > 0 ? (
               currentChild.badges.slice(0, 3).map((badge, index) => {
                 const badgeInfo = getBadgeInfo(badge);
                 return (
                   <div 
                     key={index} 
-                    className="w-6 h-6 rounded-full bg-sprout-purple/10 flex items-center justify-center text-sprout-purple"
+                    className="w-8 h-8 rounded-full bg-sprout-purple/10 flex items-center justify-center text-sprout-purple"
                     title={badgeInfo.title}
                   >
                     {badgeInfo.icon}
