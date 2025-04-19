@@ -1,9 +1,51 @@
-import { format, startOfWeek, startOfMonth, isValid } from "date-fns";
+import { format, startOfWeek, startOfMonth, isValid, addDays } from "date-fns";
 import { EmotionalInsight, Period } from "@/types/emotionalInsights";
 
 export const aggregateInsightsByPeriod = (data: EmotionalInsight[], period: Period) => {
   if (!data || data.length === 0) return [];
   
+  // For weekly view, return daily values without aggregation
+  if (period === 'weekly') {
+    const weekStart = startOfWeek(new Date(data[0].created_at), { weekStartsOn: 1 });
+    const dailyData: EmotionalInsight[] = [];
+    
+    // Create array of 7 days
+    for (let i = 0; i < 7; i++) {
+      const currentDate = addDays(weekStart, i);
+      const dateStr = format(currentDate, 'yyyy-MM-dd');
+      
+      // Find insight for this day
+      const dayInsight = data.find(insight => {
+        const insightDate = new Date(insight.created_at);
+        return format(insightDate, 'yyyy-MM-dd') === dateStr;
+      });
+      
+      if (dayInsight) {
+        dailyData.push({
+          ...dayInsight,
+          display_date: format(currentDate, 'EEE') // Mon, Tue, etc.
+        });
+      } else {
+        // Add placeholder with null values for missing days
+        dailyData.push({
+          id: `empty-${dateStr}`,
+          child_id: data[0].child_id,
+          self_awareness: 0,
+          self_management: 0,
+          social_awareness: 0,
+          relationship_skills: 0,
+          responsible_decision_making: 0,
+          created_at: currentDate.toISOString(),
+          display_date: format(currentDate, 'EEE'),
+          source_text: 'No data for this day'
+        });
+      }
+    }
+
+    return dailyData;
+  }
+
+  // For other periods (monthly/all), keep existing aggregation logic
   const groupedData: Record<string, EmotionalInsight[]> = {};
   
   data.forEach(insight => {
