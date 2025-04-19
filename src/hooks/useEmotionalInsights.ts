@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -178,6 +177,10 @@ export const useEmotionalInsights = (childId: string | undefined) => {
   const isFetchingRef = useRef(false);
   const prevChildIdRef = useRef<string | undefined>(undefined);
 
+  useEffect(() => {
+    console.log("[useEmotionalInsights] Hook initialized with childId:", childId);
+  }, []);
+
   const fetchInsights = useCallback(async () => {
     if (!childId || isFetchingRef.current || childId === prevChildIdRef.current) return;
     
@@ -315,12 +318,18 @@ export const useEmotionalInsights = (childId: string | undefined) => {
   const aggregateInsightsByPeriod = (data: EmotionalInsight[], period: Period) => {
     if (!data || data.length === 0) return [];
     
+    console.log("[useEmotionalInsights] Aggregating insights by period:", period);
+    console.log("[useEmotionalInsights] Data to aggregate count:", data.length);
+    
     const groupedData: Record<string, EmotionalInsight[]> = {};
     
     data.forEach(insight => {
       const date = new Date(insight.created_at);
       
-      if (!isValid(date)) return;
+      if (!isValid(date)) {
+        console.log("[useEmotionalInsights] Invalid date found:", insight.created_at);
+        return;
+      }
       
       let groupKey: string;
       
@@ -341,7 +350,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       groupedData[groupKey].push(insight);
     });
     
-    return Object.entries(groupedData).map(([dateKey, insights]) => {
+    const result = Object.entries(groupedData).map(([dateKey, insights]) => {
       const avgSelfAwareness = insights.reduce((sum, insight) => sum + insight.self_awareness, 0) / insights.length;
       const avgSelfManagement = insights.reduce((sum, insight) => sum + insight.self_management, 0) / insights.length;
       const avgSocialAwareness = insights.reduce((sum, insight) => sum + insight.social_awareness, 0) / insights.length;
@@ -368,10 +377,16 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     }).sort((a, b) => 
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
+    
+    console.log("[useEmotionalInsights] Aggregated results:", result);
+    return result;
   };
 
   const fetchHistoricalInsights = useCallback(async (period: Period = 'weekly', startDate?: Date) => {
-    if (!childId) return;
+    if (!childId) {
+      console.log("[useEmotionalInsights] No childId provided for fetchHistoricalInsights");
+      return;
+    }
     
     setHistoricalLoading(true);
     setHasInsufficientData(false);
@@ -381,13 +396,13 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       const targetStartDate = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
       const targetEndDate = endOfWeek(targetStartDate, { weekStartsOn: 1 });
       
-      console.log(`Fetching historical insights for period: ${period}, childId: ${childId}`);
-      console.log(`Date range: ${targetStartDate.toISOString()} to ${targetEndDate.toISOString()}`);
+      console.log(`[useEmotionalInsights] Fetching historical insights for period: ${period}, childId: ${childId}`);
+      console.log(`[useEmotionalInsights] Date range: ${targetStartDate.toISOString()} to ${targetEndDate.toISOString()}`);
       
       const { error: pingError } = await supabase.from('sel_insights').select('id').limit(1);
       
       if (pingError) {
-        console.error("Database connection check failed:", pingError);
+        console.error("[useEmotionalInsights] Database connection check failed:", pingError);
         throw new Error("Database connection failed");
       }
       
@@ -397,6 +412,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         .eq('child_id', childId);
         
       if (period === 'weekly') {
+        // For weekly, we need precise date range
         query = query
           .gte('created_at', targetStartDate.toISOString())
           .lte('created_at', targetEndDate.toISOString());
@@ -407,11 +423,11 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       const { data, error } = await query;
       
       if (error) {
-        console.error("Error fetching historical insights:", error);
+        console.error("[useEmotionalInsights] Error fetching historical insights:", error);
         throw error;
       }
       
-      console.log("Fetched historical data:", data);
+      console.log("[useEmotionalInsights] Fetched historical data:", data);
       
       if (data && data.length >= MIN_DATA_POINTS_FOR_CHART) {
         const sortedData = [...data].sort((a, b) => 
@@ -420,23 +436,23 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         
         const aggregatedData = aggregateInsightsByPeriod(sortedData, period);
         
-        console.log("Aggregated historical data:", aggregatedData);
+        console.log("[useEmotionalInsights] Aggregated historical data:", aggregatedData);
         
         setHistoricalInsights(aggregatedData.length > 0 ? aggregatedData : sortedData);
         setIsFallbackData(false);
         setHasInsufficientData(false);
         setConnectionError(false);
       } else if (data && data.length > 0 && data.length < MIN_DATA_POINTS_FOR_CHART) {
-        console.log(`Found data points but less than required minimum (${data.length} < ${MIN_DATA_POINTS_FOR_CHART})`);
+        console.log(`[useEmotionalInsights] Found data points but less than required minimum (${data.length} < ${MIN_DATA_POINTS_FOR_CHART})`);
         setHistoricalInsights(data);
         setHasInsufficientData(false);
         setIsFallbackData(false);
       } else {
-        console.log(`Insufficient data for ${period} chart (need at least ${MIN_DATA_POINTS_FOR_CHART} points)`);
+        console.log(`[useEmotionalInsights] Insufficient data for ${period} chart (need at least ${MIN_DATA_POINTS_FOR_CHART} points)`);
         setHasInsufficientData(true);
         
         if (IS_DEVELOPMENT) {
-          console.log("Using sample historical data for development");
+          console.log("[useEmotionalInsights] Using sample historical data for development");
           const sampleHistorical = generateSampleHistoricalData(period, childId, targetStartDate);
           setHistoricalInsights(sampleHistorical);
           setIsFallbackData(true);
@@ -445,12 +461,13 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         }
       }
     } catch (error) {
-      console.error("Error in fetchHistoricalInsights:", error);
+      console.error("[useEmotionalInsights] Error in fetchHistoricalInsights:", error);
       setHasInsufficientData(true);
       setConnectionError(true);
       
       if (IS_DEVELOPMENT) {
         const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
+        console.log("[useEmotionalInsights] Generating sample data with weekStart:", weekStart.toISOString());
         const sampleHistorical = generateSampleHistoricalData(period, childId, weekStart);
         setHistoricalInsights(sampleHistorical);
         setIsFallbackData(true);
@@ -468,12 +485,17 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     const sampleData: EmotionalInsight[] = [];
     const currentDate = new Date();
     
+    console.log("[useEmotionalInsights] Generating sample data for period:", period);
+    console.log("[useEmotionalInsights] Sample data weekStart:", weekStart.toISOString());
+    console.log("[useEmotionalInsights] Sample data weekEnd:", weekEnd.toISOString());
+    
     if (period === 'weekly') {
       for (let i = 0; i < 7; i++) {
         const date = addDays(weekStart, i);
         
+        // Only generate data for days up to the current date
         if (!isAfter(date, currentDate)) {
-          sampleData.push({
+          const samplePoint = {
             id: `sample-daily-${i}`,
             child_id: childId,
             self_awareness: 0.4 + (0.4 * (i / 7)) + (Math.random() * 0.1),
@@ -483,7 +505,14 @@ export const useEmotionalInsights = (childId: string | undefined) => {
             responsible_decision_making: 0.45 + (0.4 * (i / 7)) + (Math.random() * 0.1),
             created_at: date.toISOString(),
             display_date: format(date, 'yyyy-MM-dd')
+          };
+          
+          console.log(`[useEmotionalInsights] Generated sample day ${i}:`, {
+            date: date.toISOString(),
+            display_date: format(date, 'yyyy-MM-dd')
           });
+          
+          sampleData.push(samplePoint);
         }
       }
     } else {
@@ -509,9 +538,12 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       }
     }
     
-    return sampleData.sort((a, b) => 
+    const sortedData = sampleData.sort((a, b) => 
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
+    
+    console.log("[useEmotionalInsights] Generated sample data count:", sortedData.length);
+    return sortedData;
   }, []);
 
   const insertSampleData = useCallback(async () => {

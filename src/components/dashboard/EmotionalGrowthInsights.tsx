@@ -1,4 +1,3 @@
-
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,19 +108,30 @@ const EmotionalGrowthInsights = ({
   const weekEndDate = useMemo(() => {
     return endOfWeek(currentWeekStart, { weekStartsOn: 1 });
   }, [currentWeekStart]);
-  
+
+  useEffect(() => {
+    console.log("[EmotionalGrowthInsights] Component mounted");
+    console.log("[EmotionalGrowthInsights] Initial currentWeekStart:", currentWeekStart.toISOString());
+    console.log("[EmotionalGrowthInsights] Initial weekEndDate:", weekEndDate.toISOString());
+    console.log("[EmotionalGrowthInsights] Has insights data:", !!historicalInsights.length);
+  }, []);
+
   const handlePreviousWeek = useCallback(() => {
     setCurrentWeekStart(prevWeekStart => {
-      return subWeeks(prevWeekStart, 1);
+      const newWeekStart = subWeeks(prevWeekStart, 1);
+      console.log("[EmotionalGrowthInsights] Setting previous week start:", newWeekStart.toISOString());
+      return newWeekStart;
     });
   }, []);
-  
+
   const handleNextWeek = useCallback(() => {
     setCurrentWeekStart(prevWeekStart => {
-      return addWeeks(prevWeekStart, 1);
+      const newWeekStart = addWeeks(prevWeekStart, 1);
+      console.log("[EmotionalGrowthInsights] Setting next week start:", newWeekStart.toISOString());
+      return newWeekStart;
     });
   }, []);
-  
+
   useLayoutEffect(() => {
     if (chartContainerRef.current) {
       const updateSize = () => {
@@ -143,11 +153,11 @@ const EmotionalGrowthInsights = ({
   const fetchHistoricalData = useCallback(async () => {
     if (selectedTab === "trends") {
       try {
-        console.log(`Fetching data for week starting: ${currentWeekStart.toISOString()}`);
+        console.log(`[EmotionalGrowthInsights] Fetching data for week starting: ${currentWeekStart.toISOString()}`);
         await fetchHistoricalInsights(selectedPeriod, currentWeekStart);
         setConnectionError(false);
       } catch (error) {
-        console.error("Error fetching historical data:", error);
+        console.error("[EmotionalGrowthInsights] Error fetching historical data:", error);
         setConnectionError(true);
       }
     }
@@ -158,6 +168,15 @@ const EmotionalGrowthInsights = ({
       fetchHistoricalData();
     }
   }, [selectedTab, currentWeekStart, fetchHistoricalData]);
+
+  useEffect(() => {
+    console.log("[EmotionalGrowthInsights] historicalInsights updated:", historicalInsights);
+    console.log("[EmotionalGrowthInsights] insights count:", historicalInsights.length);
+    if (historicalInsights.length > 0) {
+      console.log("[EmotionalGrowthInsights] First insight date:", historicalInsights[0].created_at);
+      console.log("[EmotionalGrowthInsights] Has display_date:", !!historicalInsights[0].display_date);
+    }
+  }, [historicalInsights]);
 
   const radarChartData = useMemo(() => {
     if (!insight) return [];
@@ -221,7 +240,7 @@ const EmotionalGrowthInsights = ({
           return format(date, 'MMM d');
       }
     } catch (error) {
-      console.error("Date formatting error:", error);
+      console.error("[EmotionalGrowthInsights] Date formatting error:", error);
       return 'Invalid Date';
     }
   };
@@ -229,9 +248,18 @@ const EmotionalGrowthInsights = ({
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) return [];
     
-    return historicalInsights.map(insight => {
+    console.log("[EmotionalGrowthInsights] Creating lineChartData from insights:", historicalInsights.length);
+    
+    const data = historicalInsights.map(insight => {
       const date = insight.display_date || insight.created_at;
       const formattedDate = formatDateForPeriod(date, selectedPeriod);
+      
+      console.log(`[EmotionalGrowthInsights] Processing insight:`, {
+        date,
+        formattedDate,
+        selfAwareness: insight.self_awareness,
+        created_at: insight.created_at
+      });
       
       return {
         date: formattedDate,
@@ -244,6 +272,9 @@ const EmotionalGrowthInsights = ({
         dateKey: date
       };
     });
+    
+    console.log("[EmotionalGrowthInsights] Final lineChartData:", data);
+    return data;
   }, [historicalInsights, selectedPeriod]);
 
   const getGrowthFeedback = useMemo(() => {
@@ -310,8 +341,11 @@ const EmotionalGrowthInsights = ({
     );
   }
 
-  // Format the display date range for the selected week
   const formatDateRange = () => {
+    console.log("[EmotionalGrowthInsights] Formatting date range:", {
+      startDate: currentWeekStart.toISOString(),
+      endDate: weekEndDate.toISOString()
+    });
     const startDate = format(currentWeekStart, "MMM d");
     const endDate = format(weekEndDate, "MMM d");
     return `${startDate} - ${endDate}`;

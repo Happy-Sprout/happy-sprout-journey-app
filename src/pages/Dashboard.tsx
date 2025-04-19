@@ -57,7 +57,7 @@ const Dashboard = () => {
           setIsDbConnected(!error);
           
           if (error && isDevelopment) {
-            console.error("Database connection error:", error);
+            console.error("Database connection check failed:", error);
             toast({
               title: "Database connection error",
               description: "Using sample data for development purposes.",
