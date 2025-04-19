@@ -1,4 +1,3 @@
-
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
 import EmotionalGrowthInsights from "./EmotionalGrowthInsights";
@@ -51,7 +50,7 @@ const DashboardContent = ({
   isDevelopment,
   insertSampleData
 }: DashboardContentProps) => {
-  const [wellnessView, setWellnessView] = useState<WellnessViewMode>("trend");
+  const [wellnessView, setWellnessView] = useState<"radar" | "trend">("trend");
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -1,37 +1,48 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Button } from "@/components/ui/button";
-import { format, subDays, subMonths, parseISO } from "date-fns";
+import { format, subDays, parseISO, startOfWeek, addWeeks, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export type WellnessTrendPoint = {
   date: string;
-  rawDate?: string; // For tooltip display
+  rawDate?: string;
   mood: number;
   sleep: number;
   water: number;
   exercise: number;
   mindfulness: number;
+  kindness: number;
+  positivity: number;
+  confidence: number;
 };
-
-export type WellnessPeriod = "weekly" | "monthly" | "all";
 
 interface WellnessTrendChartProps {
   childId: string;
-  period?: WellnessPeriod;
   className?: string;
 }
 
+const METRIC_COLORS = {
+  mood: "#8B5CF6",      // Vivid Purple
+  sleep: "#3B82F6",     // Blue
+  water: "#06B6D4",     // Cyan
+  exercise: "#F97316",   // Orange
+  mindfulness: "#EC4899", // Pink
+  kindness: "#10B981",   // Green
+  positivity: "#FBBF24", // Yellow
+  confidence: "#EF4444", // Red
+};
+
 const WellnessTrendChart = ({ 
   childId,
-  period: initialPeriod = "weekly",
   className 
 }: WellnessTrendChartProps) => {
-  const [period, setPeriod] = useState<WellnessPeriod>(initialPeriod);
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date()));
   const [data, setData] = useState<WellnessTrendPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +50,7 @@ const WellnessTrendChart = ({
   const formatChartDate = (dateString: string) => {
     try {
       const date = parseISO(dateString);
-      return period === "monthly" ? format(date, "MMM d") : format(date, "M/d");
+      return format(date, "EEE");
     } catch (e) {
       console.error("Error formatting date:", e);
       return dateString;
@@ -50,54 +61,38 @@ const WellnessTrendChart = ({
   const deduplicateDataByDate = useCallback((data: WellnessTrendPoint[]): WellnessTrendPoint[] => {
     if (!data || data.length === 0) return [];
     
-    // Create a map to store the latest entry for each date
     const dateMap = new Map<string, WellnessTrendPoint>();
     
-    // Sort data by date (newest first) to ensure we get the latest entry
-    // when there are multiple entries for the same date
     const sortedData = [...data].sort((a, b) => {
       if (!a.rawDate || !b.rawDate) return 0;
       return new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime();
     });
     
-    // Fill the map with the first (latest) entry for each date
     sortedData.forEach(point => {
       if (point.rawDate) {
-        const dateKey = point.rawDate.split('T')[0]; // Extract YYYY-MM-DD part
+        const dateKey = point.rawDate.split('T')[0];
         if (!dateMap.has(dateKey)) {
           dateMap.set(dateKey, point);
         }
       }
     });
     
-    // Convert map back to array and sort by date (oldest first) for the chart
     return Array.from(dateMap.values()).sort((a, b) => {
       if (!a.rawDate || !b.rawDate) return 0;
       return new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime();
     });
   }, []);
 
-  const fetchWellnessTrends = async (selectedPeriod: WellnessPeriod) => {
+  const fetchWellnessTrends = async (weekStart: Date) => {
     if (!childId) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      // Determine date range based on period
-      let startDate;
-      const today = new Date();
-      
-      if (selectedPeriod === "weekly") {
-        startDate = subDays(today, 7);
-      } else if (selectedPeriod === "monthly") {
-        startDate = subMonths(today, 1);
-      } else {
-        // For "all", we'll get all data but limit to last 3 months for performance
-        startDate = subMonths(today, 3);
-      }
-      
-      const formattedStartDate = format(startDate, "yyyy-MM-dd");
+      const weekEnd = addWeeks(weekStart, 1);
+      const formattedStartDate = format(weekStart, "yyyy-MM-dd");
+      const formattedEndDate = format(weekEnd, "yyyy-MM-dd");
       
       const { data: journalEntries, error } = await supabase
         .from('journal_entries')
@@ -107,10 +102,14 @@ const WellnessTrendChart = ({
           sleep,
           water,
           exercise,
-          mindfulness
+          mindfulness,
+          kindness,
+          positivity,
+          confidence
         `)
         .eq('child_id', childId)
         .gte('created_at', formattedStartDate)
+        .lt('created_at', formattedEndDate)
         .order('created_at', { ascending: true });
       
       if (error) {
@@ -126,7 +125,6 @@ const WellnessTrendChart = ({
         return;
       }
 
-      // Format data for chart
       const formattedData: WellnessTrendPoint[] = journalEntries.map(entry => {
         const entryDate = new Date(entry.created_at);
         
@@ -137,15 +135,14 @@ const WellnessTrendChart = ({
           sleep: entry.sleep || 7,
           water: entry.water || 4,
           exercise: entry.exercise || 3,
-          mindfulness: entry.mindfulness || 5
+          mindfulness: entry.mindfulness || 5,
+          kindness: entry.kindness || 5,
+          positivity: entry.positivity || 6,
+          confidence: entry.confidence || 5
         };
       });
       
-      // Deduplicate data if we're in "all" mode to prevent cluttered charts
-      const processedData = selectedPeriod === "all" 
-        ? deduplicateDataByDate(formattedData) 
-        : formattedData;
-      
+      const processedData = deduplicateDataByDate(formattedData);
       setData(processedData);
     } catch (err) {
       console.error("Error in fetchWellnessTrends:", err);
@@ -157,12 +154,19 @@ const WellnessTrendChart = ({
 
   useEffect(() => {
     if (childId) {
-      fetchWellnessTrends(period);
+      fetchWellnessTrends(currentWeekStart);
     }
-  }, [childId, period]);
+  }, [childId, currentWeekStart]);
 
-  const handlePeriodChange = (newPeriod: WellnessPeriod) => {
-    setPeriod(newPeriod);
+  const handlePreviousWeek = () => {
+    setCurrentWeekStart(prev => addWeeks(prev, -1));
+  };
+
+  const handleNextWeek = () => {
+    const nextWeek = addWeeks(currentWeekStart, 1);
+    if (nextWeek <= new Date()) {
+      setCurrentWeekStart(nextWeek);
+    }
   };
 
   if (error) {
@@ -173,7 +177,7 @@ const WellnessTrendChart = ({
             <p>{error}</p>
             <Button 
               variant="outline" 
-              onClick={() => fetchWellnessTrends(period)}
+              onClick={() => fetchWellnessTrends(currentWeekStart)}
               className="mt-4"
             >
               Try Again
@@ -189,30 +193,28 @@ const WellnessTrendChart = ({
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
           <div className="text-lg font-medium">Wellness Trends</div>
-          <div className="flex space-x-2">
+          <div className="flex items-center gap-2">
             <Button
               size="sm"
-              variant={period === "weekly" ? "default" : "outline"}
-              onClick={() => handlePeriodChange("weekly")}
-              className="rounded-full text-xs"
+              variant="outline"
+              onClick={handlePreviousWeek}
+              className="rounded-full"
             >
-              Weekly
+              <ChevronLeft className="h-4 w-4" />
+              Prev Week
             </Button>
+            <span className="text-sm font-medium">
+              {format(currentWeekStart, "MMM d")} - {format(addWeeks(currentWeekStart, 1), "MMM d")}
+            </span>
             <Button
               size="sm"
-              variant={period === "monthly" ? "default" : "outline"}
-              onClick={() => handlePeriodChange("monthly")}
-              className="rounded-full text-xs"
+              variant="outline"
+              onClick={handleNextWeek}
+              disabled={addWeeks(currentWeekStart, 1) > new Date()}
+              className="rounded-full"
             >
-              Monthly
-            </Button>
-            <Button
-              size="sm"
-              variant={period === "all" ? "default" : "outline"}
-              onClick={() => handlePeriodChange("all")}
-              className="rounded-full text-xs"
-            >
-              All Time
+              Next Week
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -223,14 +225,14 @@ const WellnessTrendChart = ({
           </div>
         ) : data.length === 0 ? (
           <div className="flex justify-center items-center h-64 text-gray-500">
-            <p>No wellness data available for this time period.</p>
+            <p>No wellness data available for this week.</p>
           </div>
         ) : (
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart
+              <BarChart
                 data={data}
-                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
@@ -245,44 +247,15 @@ const WellnessTrendChart = ({
                   }}
                 />
                 <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="mood"
-                  stroke="#9b87f5"
-                  name="Mood"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="sleep"
-                  stroke="#3b82f6"
-                  name="Sleep"
-                  strokeWidth={2}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="water"
-                  stroke="#06b6d4"
-                  name="Water"
-                  strokeWidth={2}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="exercise"
-                  stroke="#f59e0b"
-                  name="Exercise"
-                  strokeWidth={2}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="mindfulness"
-                  stroke="#ec4899"
-                  name="Mindfulness"
-                  strokeWidth={2}
-                />
-              </LineChart>
+                <Bar dataKey="mood" stackId="a" fill={METRIC_COLORS.mood} name="Mood" />
+                <Bar dataKey="sleep" stackId="a" fill={METRIC_COLORS.sleep} name="Sleep" />
+                <Bar dataKey="water" stackId="a" fill={METRIC_COLORS.water} name="Water" />
+                <Bar dataKey="exercise" stackId="a" fill={METRIC_COLORS.exercise} name="Exercise" />
+                <Bar dataKey="mindfulness" stackId="a" fill={METRIC_COLORS.mindfulness} name="Mindfulness" />
+                <Bar dataKey="kindness" stackId="a" fill={METRIC_COLORS.kindness} name="Kindness" />
+                <Bar dataKey="positivity" stackId="a" fill={METRIC_COLORS.positivity} name="Positivity" />
+                <Bar dataKey="confidence" stackId="a" fill={METRIC_COLORS.confidence} name="Confidence" />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         )}
