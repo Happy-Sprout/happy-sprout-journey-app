@@ -763,5 +763,3 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     lowestSELArea
   };
 };
-
-export { useEmotionalInsights };
