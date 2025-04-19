@@ -11,6 +11,7 @@ export const useJournalEntries = (childId: string | undefined) => {
   const [loading, setLoading] = useState(false);
   const [todayEntryLoaded, setTodayEntryLoaded] = useState(false);
   const [cachedTodayEntry, setCachedTodayEntry] = useState<JournalEntry | null>(null);
+  const [isCheckingTodayEntry, setIsCheckingTodayEntry] = useState(true);
 
   const formatDateString = useCallback((date: Date | string): string => {
     if (typeof date === 'string') {
@@ -30,6 +31,7 @@ export const useJournalEntries = (childId: string | undefined) => {
 
   useEffect(() => {
     if (childId) {
+      setIsCheckingTodayEntry(true);
       fetchJournalEntries();
     }
   }, [childId]);
@@ -102,12 +104,14 @@ export const useJournalEntries = (childId: string | undefined) => {
         setCachedTodayEntry(null);
         setTodayEntryLoaded(true);
       }
+      setIsCheckingTodayEntry(false);
     } catch (error) {
       console.error("Error in fetchJournalEntries:", error);
       warningToast({
         title: "Error",
         description: "Failed to fetch journal entries. Please try again."
       });
+      setIsCheckingTodayEntry(false);
     }
   };
 
@@ -119,6 +123,7 @@ export const useJournalEntries = (childId: string | undefined) => {
       return cachedTodayEntry;
     }
     
+    setIsCheckingTodayEntry(true);
     try {
       // Get today's date in YYYY-MM-DD format, zeroed to start of day
       const todayString = getTodayDateString();
@@ -140,6 +145,7 @@ export const useJournalEntries = (childId: string | undefined) => {
         
       if (error) {
         console.error("Error checking for today's entry:", error);
+        setIsCheckingTodayEntry(false);
         return null;
       }
       
@@ -167,15 +173,18 @@ export const useJournalEntries = (childId: string | undefined) => {
         
         setCachedTodayEntry(todayEntry);
         setTodayEntryLoaded(true);
+        setIsCheckingTodayEntry(false);
         
         return todayEntry;
       }
       
       setTodayEntryLoaded(true);
       setCachedTodayEntry(null);
+      setIsCheckingTodayEntry(false);
       return null;
     } catch (error) {
       console.error("Error checking for today's entry:", error);
+      setIsCheckingTodayEntry(false);
       return null;
     }
   }, [childId, cachedTodayEntry, todayEntryLoaded, formatDateString, getTodayDateString]);
@@ -333,7 +342,11 @@ export const useJournalEntries = (childId: string | undefined) => {
             console.error("Error awarding XP:", xpError);
           }
           
+          // Optimistically update local state
           setJournalEntries(prevEntries => [newEntry, ...prevEntries]);
+          setCachedTodayEntry(newEntry);
+          setTodayEntryLoaded(true);
+          
           savedEntry = newEntry;
           
           successToast({
@@ -382,6 +395,7 @@ export const useJournalEntries = (childId: string | undefined) => {
     getTodayEntry,
     todayEntryLoaded,
     cachedTodayEntry,
-    getTodayDateString
+    getTodayDateString,
+    isCheckingTodayEntry
   };
 };

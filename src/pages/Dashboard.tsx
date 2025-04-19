@@ -18,8 +18,6 @@ const Dashboard = () => {
   const currentChild = getCurrentChild();
   const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [todayEntry, setTodayEntry] = useState<JournalEntry | null>(null);
-  const [journalLoading, setJournalLoading] = useState(true);
   const isDevelopment = import.meta.env.DEV;
   const { toast } = useToast();
   
@@ -40,41 +38,14 @@ const Dashboard = () => {
   const { 
     getTodayEntry, 
     todayEntryLoaded, 
-    cachedTodayEntry 
+    cachedTodayEntry,
+    isCheckingTodayEntry
   } = useJournalEntries(currentChildId);
   
   const fetchHistoricalInsights = useCallback(async (period: Period) => {
     return await fetchInsights(period);
   }, [fetchInsights]);
-  
-  useEffect(() => {
-    const fetchTodayEntry = async () => {
-      if (currentChildId) {
-        setJournalLoading(true);
-        try {
-          console.log("Dashboard: Fetching today's journal entry for childId:", currentChildId);
-          const entry = await getTodayEntry();
-          console.log("Dashboard: Retrieved today's entry:", entry);
-          setTodayEntry(entry);
-        } catch (error) {
-          console.error("Dashboard: Error fetching today's journal entry:", error);
-        } finally {
-          setJournalLoading(false);
-        }
-      }
-    };
-    
-    fetchTodayEntry();
-  }, [currentChildId, getTodayEntry]);
-  
-  useEffect(() => {
-    if (cachedTodayEntry && todayEntryLoaded) {
-      console.log("Dashboard: Using cached today entry:", cachedTodayEntry);
-      setTodayEntry(cachedTodayEntry);
-      setJournalLoading(false);
-    }
-  }, [cachedTodayEntry, todayEntryLoaded]);
-  
+
   useEffect(() => {
     let isMounted = true;
     const checkDbConnection = async () => {
@@ -163,8 +134,8 @@ const Dashboard = () => {
                     historicalLoading={historicalLoading}
                     isFallbackData={isFallbackData}
                     hasInsufficientData={hasInsufficientData}
-                    todayEntry={todayEntry}
-                    journalLoading={journalLoading}
+                    todayEntry={cachedTodayEntry}
+                    journalLoading={isCheckingTodayEntry}
                     connectionError={connectionError}
                     isDbConnected={isDbConnected}
                     isDevelopment={isDevelopment}

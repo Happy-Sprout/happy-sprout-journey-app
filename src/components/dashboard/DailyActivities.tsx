@@ -1,10 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, CalendarDays, Check, Star } from "lucide-react";
+import { BookOpen, CalendarDays, Check } from "lucide-react";
 import { ChildProfile } from "@/types/childProfile";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface DailyActivitiesProps {
   currentChild: ChildProfile;
@@ -13,37 +15,21 @@ interface DailyActivitiesProps {
 
 const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps) => {
   const navigate = useNavigate();
-  const [journalCompleted, setJournalCompleted] = useState(false);
   const [dailyCheckInCompleted, setDailyCheckInCompleted] = useState(false);
+  const [checkingDailyStatus, setCheckingDailyStatus] = useState(true);
   
-  const { getTodayEntry, todayEntryLoaded, cachedTodayEntry } = useJournalEntries(currentChildId);
+  const { 
+    getTodayEntry, 
+    todayEntryLoaded, 
+    cachedTodayEntry,
+    isCheckingTodayEntry 
+  } = useJournalEntries(currentChildId);
   
-  useEffect(() => {
-    const checkTodayJournalEntry = async () => {
-      if (currentChildId) {
-        try {
-          console.log("DailyActivities: Checking for today's journal entry");
-          const todayEntry = await getTodayEntry();
-          console.log("DailyActivities: Today's entry check result:", todayEntry);
-          setJournalCompleted(!!todayEntry);
-        } catch (error) {
-          console.error("DailyActivities: Error checking today's entry:", error);
-        }
-      }
-    };
-    
-    checkTodayJournalEntry();
-  }, [currentChildId, getTodayEntry]);
-  
-  useEffect(() => {
-    if (todayEntryLoaded) {
-      console.log("DailyActivities: Using cached today entry status:", !!cachedTodayEntry);
-      setJournalCompleted(!!cachedTodayEntry);
-    }
-  }, [cachedTodayEntry, todayEntryLoaded]);
+  const journalCompleted = todayEntryLoaded && !!cachedTodayEntry;
   
   useEffect(() => {
     if (currentChild) {
+      setCheckingDailyStatus(true);
       const isToday = (date) => {
         if (!date) return false;
         const checkInDate = new Date(date);
@@ -62,6 +48,7 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
       });
       
       setDailyCheckInCompleted(isCompleted);
+      setCheckingDailyStatus(false);
     }
   }, [currentChild]);
 
@@ -84,13 +71,20 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
                   : "Share how you're feeling today!"}
               </p>
             </div>
-            <Button 
-              className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
-              onClick={() => navigate("/daily-check-in")}
-              disabled={dailyCheckInCompleted}
-            >
-              {dailyCheckInCompleted ? 'Completed' : 'Start'}
-            </Button>
+            {checkingDailyStatus ? (
+              <div className="sm:ml-auto flex items-center space-x-2">
+                <LoadingSpinner size="sm" />
+                <span className="text-sm text-gray-500">Checking...</span>
+              </div>
+            ) : (
+              <Button 
+                className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
+                onClick={() => navigate("/daily-check-in")}
+                disabled={dailyCheckInCompleted}
+              >
+                {dailyCheckInCompleted ? 'Completed' : 'Start'}
+              </Button>
+            )}
           </div>
           
           <div className={`flex flex-col sm:flex-row items-start sm:items-center p-3 ${journalCompleted ? 'bg-sprout-green/10' : 'bg-sprout-purple/10'} rounded-lg`}>
@@ -105,13 +99,20 @@ const DailyActivities = ({ currentChild, currentChildId }: DailyActivitiesProps)
                   : "Write about your day and thoughts"}
               </p>
             </div>
-            <Button 
-              className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
-              onClick={() => navigate("/journal")}
-              disabled={journalCompleted}
-            >
-              {journalCompleted ? 'Completed' : 'Start'}
-            </Button>
+            {isCheckingTodayEntry ? (
+              <div className="sm:ml-auto flex items-center space-x-2">
+                <LoadingSpinner size="sm" />
+                <span className="text-sm text-gray-500">Checking...</span>
+              </div>
+            ) : (
+              <Button 
+                className="sm:ml-auto bg-sprout-purple text-white hover:bg-sprout-purple/90 rounded-full mt-2 sm:mt-0"
+                onClick={() => navigate("/journal")}
+                disabled={journalCompleted}
+              >
+                {journalCompleted ? 'Completed' : 'Start'}
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
