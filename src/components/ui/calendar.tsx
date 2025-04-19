@@ -58,12 +58,18 @@ function Calendar({
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
         Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
+          const handleValueChange = React.useCallback(
+            (newValue: string) => {
+              // Create a synthetic event-like object that matches what react-day-picker expects
+              onChange?.(newValue);
+            },
+            [onChange]
+          );
+          
           return (
             <Select
               value={value?.toString()}
-              onValueChange={(value) => {
-                onChange?.(value);
-              }}
+              onValueChange={handleValueChange}
             >
               <SelectTrigger className="h-7 rounded-md border border-input px-2 py-1 text-xs shadow-sm focus:ring-1">
                 <SelectValue>{value}</SelectValue>
