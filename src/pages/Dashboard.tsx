@@ -1,4 +1,3 @@
-
 import { useUser } from "@/contexts/UserContext";
 import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
@@ -18,6 +17,7 @@ import { Beaker } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { JournalEntry } from "@/types/journal";
+import HeaderIllustration from "@/components/dashboard/HeaderIllustration";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
@@ -29,10 +29,8 @@ const Dashboard = () => {
   const isDevelopment = import.meta.env.DEV;
   const { toast } = useToast();
   
-  // Memoize child ID to prevent unnecessary re-renders of useEmotionalInsights
   const stableChildId = useCallback(() => currentChildId, [currentChildId]);
 
-  // Use the stable child ID reference for the emotional insights hook
   const { 
     latestInsight, 
     loading: insightLoading,
@@ -51,7 +49,6 @@ const Dashboard = () => {
     cachedTodayEntry 
   } = useJournalEntries(currentChildId);
   
-  // Fetch today's journal entry when component mounts or child changes
   useEffect(() => {
     const fetchTodayEntry = async () => {
       if (currentChildId) {
@@ -72,7 +69,6 @@ const Dashboard = () => {
     fetchTodayEntry();
   }, [currentChildId, getTodayEntry]);
   
-  // Use cached entry value if available
   useEffect(() => {
     if (cachedTodayEntry && todayEntryLoaded) {
       console.log("Dashboard: Using cached today entry:", cachedTodayEntry);
@@ -81,7 +77,6 @@ const Dashboard = () => {
     }
   }, [cachedTodayEntry, todayEntryLoaded]);
   
-  // Add additional log to check date consistency
   useEffect(() => {
     const todayString = new Date().toISOString().split('T')[0];
     console.log("Dashboard: Today's ISO date string:", todayString);
@@ -91,7 +86,6 @@ const Dashboard = () => {
     }
   }, [todayEntry]);
   
-  // Check database connection only once on mount or when in development mode
   useEffect(() => {
     let isMounted = true;
     const checkDbConnection = async () => {
@@ -125,23 +119,20 @@ const Dashboard = () => {
     };
   }, [isDevelopment, toast]);
   
-  // Add a timeout to ensure loading state doesn't get stuck
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // Show loading for max 2 seconds
+    }, 2000);
     
     return () => clearTimeout(timer);
   }, []);
 
-  // Once we have child profiles data or timeout occurs, stop loading
   useEffect(() => {
     if (childProfiles.length > 0 || !currentChildId) {
       setIsLoading(false);
     }
   }, [childProfiles, currentChildId]);
 
-  // Handle offline mode or connection errors with sample data in development
   useEffect(() => {
     if ((connectionError || isDbConnected === false) && isDevelopment) {
       toast({
@@ -175,13 +166,12 @@ const Dashboard = () => {
                 )}
                 
                 {currentChild && (
-                  <>
+                  <div className="max-w-4xl mx-auto">
+                    <HeaderIllustration />
                     <WelcomeHeader currentChild={currentChild} />
-                    
                     <StatsCards currentChild={currentChild} />
                     
-                    {/* Emotional Growth Insights now appears before Achievements */}
-                    {currentChild && (
+                    <div className="bg-white rounded-3xl shadow-sm p-6 mb-8">
                       <EmotionalGrowthInsights 
                         currentChild={currentChild} 
                         insight={latestInsight}
@@ -192,25 +182,21 @@ const Dashboard = () => {
                         isFallbackData={isFallbackData}
                         hasInsufficientData={hasInsufficientData}
                       />
-                    )}
-                    
-                    {/* Wellness Radar Chart Integration */}
-                    {currentChild && (
-                      <div className="mb-8 mt-6">
-                        <h2 className="text-xl font-semibold mb-4">Today's Wellness</h2>
+                      
+                      <div className="mt-6">
+                        <h3 className="text-lg font-semibold mb-4">Today's Wellness</h3>
                         <WellnessRadarChart 
                           journalEntry={todayEntry} 
                           loading={journalLoading} 
                         />
                       </div>
-                    )}
+                    </div>
 
                     <AchievementsSection 
                       currentChild={currentChild}
                       currentChildId={currentChildId!}
                     />
                     
-                    {/* Sample data generation button for development */}
                     {((isFallbackData || connectionError || isDbConnected === false) && isDevelopment) && (
                       <div className="mb-8 flex justify-center">
                         <Button 
@@ -224,7 +210,7 @@ const Dashboard = () => {
                         </Button>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
               </>
             )}

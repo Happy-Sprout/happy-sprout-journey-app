@@ -1,7 +1,6 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Award, TrendingUp, Trophy } from "lucide-react";
+import { Award, TrendingUp, Trophy, Star } from "lucide-react";
 import { ChildProfile } from "@/contexts/UserContext";
 import { getBadgeInfo } from "@/utils/childUtils";
 
@@ -47,76 +46,71 @@ const StatsCards = ({ currentChild }: StatsCardsProps) => {
   }
   
   const streakProgress = Math.min(Math.floor((currentChild.streakCount / streakProgressTarget) * 100), 100);
-  
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Daily Streak</CardTitle>
-          <div className="h-4 w-4 rounded-full bg-sprout-orange text-white flex items-center justify-center">
-            <Award className="h-3 w-3" />
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-yellow-50 to-orange-50 shadow-sm">
+        <div className="flex flex-col items-center text-center">
+          <Award className="h-8 w-8 text-sprout-orange mb-2" />
+          <h3 className="text-sm font-medium text-gray-600">Daily Streak</h3>
+          <p className="text-2xl font-bold text-gray-800 mt-1">{currentChild.streakCount} days</p>
+          <div className="w-full mt-3">
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div 
+                className="bg-gradient-to-r from-sprout-orange to-sprout-yellow h-1.5 rounded-full"
+                style={{ width: `${streakProgress}%` }}
+              />
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{currentChild.streakCount} days</div>
-          <p className="text-xs text-muted-foreground">
-            {currentChild.streakCount >= 15 
-              ? "Amazing consistency!" 
-              : currentChild.streakCount >= 7 
-                ? `${15 - currentChild.streakCount} days until half-month badge` 
-                : currentChild.streakCount >= 3 
-                  ? `${7 - currentChild.streakCount} days until week badge` 
-                  : `${3 - currentChild.streakCount} days until 3-day badge`}
-          </p>
-          <Progress value={streakProgress} className="h-2 mt-3" />
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Experience Points</CardTitle>
-          <div className="h-4 w-4 rounded-full bg-sprout-green text-white flex items-center justify-center">
-            <TrendingUp className="h-3 w-3" />
+        </div>
+      </div>
+
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm">
+        <div className="flex flex-col items-center text-center">
+          <Star className="h-8 w-8 text-sprout-green mb-2" />
+          <h3 className="text-sm font-medium text-gray-600">Experience Points</h3>
+          <p className="text-2xl font-bold text-gray-800 mt-1">{currentChild.xpPoints} XP</p>
+          <div className="w-full mt-3">
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div 
+                className="bg-gradient-to-r from-sprout-green to-emerald-400 h-1.5 rounded-full"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{currentChild.xpPoints} XP</div>
-          <p className="text-xs text-muted-foreground">Level {level} - {level === 1 ? "Growing Seedling" : level === 2 ? "Sprouting Learner" : level === 3 ? "Budding Explorer" : "Thriving Champion"}</p>
-          <Progress value={progress} className="h-2 mt-3" />
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Badges Earned</CardTitle>
-          <div className="h-4 w-4 rounded-full bg-sprout-purple text-white flex items-center justify-center">
-            <Trophy className="h-3 w-3" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{badgeCount}</div>
-          <p className="text-xs text-muted-foreground">Keep going to earn more!</p>
-          <div className="flex flex-wrap mt-3 gap-1">
+        </div>
+      </div>
+
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-50 to-violet-50 shadow-sm">
+        <div className="flex flex-col items-center text-center">
+          <Trophy className="h-8 w-8 text-sprout-purple mb-2" />
+          <h3 className="text-sm font-medium text-gray-600">Badges Earned</h3>
+          <p className="text-2xl font-bold text-gray-800 mt-1">{badgeCount}</p>
+          <div className="flex flex-wrap justify-center gap-1 mt-3">
             {badgeCount > 0 ? (
-              currentChild.badges.slice(0, 5).map((badge, index) => {
+              currentChild.badges.slice(0, 3).map((badge, index) => {
                 const badgeInfo = getBadgeInfo(badge);
                 return (
-                  <div key={index} className="flex items-center justify-center w-8 h-8 rounded-full bg-sprout-yellow/10 text-sprout-orange" title={badgeInfo.title}>
-                    <span>{badgeInfo.icon}</span>
+                  <div 
+                    key={index} 
+                    className="w-6 h-6 rounded-full bg-sprout-purple/10 flex items-center justify-center text-sprout-purple"
+                    title={badgeInfo.title}
+                  >
+                    {badgeInfo.icon}
                   </div>
                 );
               })
             ) : (
-              <div className="text-sm text-gray-500">No badges yet</div>
+              <p className="text-sm text-gray-500">No badges yet</p>
             )}
-            {badgeCount > 5 && (
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-sprout-purple/10 text-sprout-purple" title="More badges">
-                <span>+{badgeCount - 5}</span>
+            {badgeCount > 3 && (
+              <div className="w-6 h-6 rounded-full bg-sprout-purple/10 flex items-center justify-center text-sprout-purple">
+                +{badgeCount - 3}
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
