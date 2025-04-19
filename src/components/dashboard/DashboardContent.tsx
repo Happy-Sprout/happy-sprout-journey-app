@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
@@ -11,7 +10,6 @@ import HeaderIllustration from "./HeaderIllustration";
 import { Period } from "@/hooks/useEmotionalInsights";
 import DailyActivities from "./DailyActivities";
 import StatsSidebar from "./stats/StatsSidebar";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { List, BarChart2 } from "lucide-react";
 import { startOfWeek, addWeeks } from "date-fns";
@@ -53,12 +51,11 @@ const DashboardContent = ({
   isDevelopment,
   insertSampleData
 }: DashboardContentProps) => {
-  const [wellnessView, setWellnessView] = useState<"radar" | "trend">("trend");
+  const [wellnessView, setWellnessView] = useState<WellnessViewMode>("trend");
   const [currentWeekStart, setCurrentWeekStart] = useState(() => 
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
 
-  // Effect to fetch historical insights when the dashboard loads or when child/week changes
   useEffect(() => {
     if (currentChildId) {
       console.log("[DashboardContent-DEBUG] Fetching historical insights on mount/child change");
@@ -66,7 +63,6 @@ const DashboardContent = ({
     }
   }, [currentChildId, currentWeekStart, fetchHistoricalInsights]);
 
-  // Helper functions for week navigation that will be passed to EmotionalGrowthInsights
   const handlePrevWeek = () => {
     setCurrentWeekStart(prev => addWeeks(prev, -1));
   };
