@@ -452,7 +452,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
             const randomDate = addDays(targetStartDate, dayOffset);
             
             if (!isAfter(randomDate, new Date())) {
-              const samplePoint = {
+              const samplePoint: EmotionalInsight = {
                 id: `sample-day-${i}`,
                 child_id: childId,
                 self_awareness: 0.4 + (Math.random() * 0.2),
@@ -461,7 +461,8 @@ export const useEmotionalInsights = (childId: string | undefined) => {
                 relationship_skills: 0.4 + (Math.random() * 0.2),
                 responsible_decision_making: 0.45 + (Math.random() * 0.2),
                 created_at: randomDate.toISOString(),
-                display_date: format(randomDate, 'yyyy-MM-dd')
+                display_date: format(randomDate, 'yyyy-MM-dd'),
+                source_text: `Sample data point for ${format(randomDate, 'yyyy-MM-dd')}`
               };
               
               combinedData.push(samplePoint);
@@ -556,7 +557,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     } finally {
       setHistoricalLoading(false);
     }
-  }, [childId]);
+  }, [childId, toast, generateSampleHistoricalData, fetchInsights]);
 
   const generateSampleHistoricalData = useCallback((period: Period, childId: string, startDate?: Date): EmotionalInsight[] => {
     const weekStart = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -588,11 +589,6 @@ export const useEmotionalInsights = (childId: string | undefined) => {
               source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
             };
             
-            console.log(`[useEmotionalInsights-DEBUG] Generated sample day ${i}:`, {
-              date: date.toISOString(),
-              display_date: format(date, 'yyyy-MM-dd')
-            });
-            
             sampleData.push(samplePoint);
           }
         }
@@ -619,22 +615,14 @@ export const useEmotionalInsights = (childId: string | undefined) => {
             source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
           };
           
-          console.log(`[useEmotionalInsights-DEBUG] Generated sample day ${i}:`, {
-            date: date.toISOString(),
-            display_date: format(date, 'yyyy-MM-dd')
-          });
-          
           sampleData.push(samplePoint);
         }
       }
     }
     
-    const sortedData = sampleData.sort((a, b) => 
+    return sampleData.sort((a, b) => 
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
-    
-    console.log("[useEmotionalInsights-DEBUG] Generated sample data count:", sortedData.length);
-    return sortedData;
   }, []);
 
   const insertSampleData = useCallback(async () => {
