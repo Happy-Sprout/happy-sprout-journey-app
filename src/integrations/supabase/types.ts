@@ -382,6 +382,30 @@ export type Database = {
           },
         ]
       }
+      daily_inspirations: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          quote: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          quote: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          quote?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_questions: {
         Row: {
           active: boolean | null
