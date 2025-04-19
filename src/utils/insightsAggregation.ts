@@ -58,10 +58,7 @@ export const aggregateInsightsByPeriod = (data: EmotionalInsight[], period: Peri
     
     let groupKey: string;
     
-    if (period === 'weekly') {
-      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-      groupKey = format(weekStart, 'yyyy-MM-dd');
-    } else if (period === 'monthly') {
+    if (period === 'monthly') {
       const monthStart = startOfMonth(date);
       groupKey = format(monthStart, 'yyyy-MM');
     } else {
