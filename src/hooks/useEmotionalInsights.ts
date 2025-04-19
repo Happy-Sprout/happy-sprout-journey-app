@@ -477,9 +477,10 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     } else {
       const dataPoints = period === 'monthly' ? 24 : 30;
       const intervalDays = period === 'monthly' ? 7 : 14;
+      const currentDate = new Date(); // Fixed: Properly define the current date
       
       for (let i = 0; i < dataPoints; i++) {
-        const date = new Date(now);
+        const date = new Date(currentDate);
         date.setDate(date.getDate() - (i * intervalDays));
         
         const progress = i / dataPoints;
