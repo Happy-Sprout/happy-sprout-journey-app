@@ -16,6 +16,7 @@ export interface DatePickerFieldProps {
   maxDate?: Date;
   minDate?: Date;
   error?: string;
+  placeholder?: string;
 }
 
 const DatePickerField = ({
@@ -26,6 +27,7 @@ const DatePickerField = ({
   maxDate,
   minDate,
   error,
+  placeholder = "Pick a date",
 }: DatePickerFieldProps) => {
   const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
   
@@ -40,7 +42,7 @@ const DatePickerField = ({
   const handleSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
     if (selectedDate) {
-      onChange(selectedDate.toISOString());
+      onChange(selectedDate.toISOString().split('T')[0]); // ISO format YYYY-MM-DD
     } else {
       onChange('');
     }
@@ -63,7 +65,7 @@ const DatePickerField = ({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, 'PPP') : <span>Pick a date</span>}
+            {date ? format(date, 'MMMM d, yyyy') : <span>{placeholder}</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -76,6 +78,10 @@ const DatePickerField = ({
               (minDate ? date < minDate : false)
             }
             initialFocus
+            captionLayout="dropdown-buttons"
+            fromYear={1990}
+            toYear={new Date().getFullYear()}
+            className="pointer-events-auto"
           />
         </PopoverContent>
       </Popover>
