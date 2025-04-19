@@ -1,4 +1,3 @@
-
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,7 @@ import {
   Legend
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, parseISO, isValid, startOfWeek, addWeeks, subWeeks } from "date-fns";
+import { format, parseISO, isValid, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon } from "lucide-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { 
@@ -29,7 +28,6 @@ import {
 import { Tooltip as UITooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { EmotionalInsight, Period } from "@/hooks/useEmotionalInsights";
 import { ChildProfile } from "@/hooks/useChildren";
-import { Badge } from "@/components/ui/badge";
 import { useLayoutEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -97,7 +95,9 @@ const EmotionalGrowthInsights = ({
 }: EmotionalGrowthInsightsProps) => {
   const [selectedTab, setSelectedTab] = useState("compare");
   const [selectedPeriod] = useState<Period>("weekly");
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => 
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
   const isDevelopment = import.meta.env.DEV;
   const [chartWidth, setChartWidth] = useState(0);
   const [chartHeight, setChartHeight] = useState(0);
@@ -105,12 +105,23 @@ const EmotionalGrowthInsights = ({
   const [connectionError, setConnectionError] = useState(false);
   const isMobile = useIsMobile();
   
+  const weekEndDate = useMemo(() => {
+    const endDate = addWeeks(currentWeekStart, 1);
+    return subWeeks(endDate, 0);
+  }, [currentWeekStart]);
+  
   const handlePreviousWeek = useCallback(() => {
-    setCurrentWeekStart(prevWeekStart => subWeeks(prevWeekStart, 1));
+    setCurrentWeekStart(prevWeekStart => {
+      const newStart = subWeeks(prevWeekStart, 1);
+      return newStart;
+    });
   }, []);
   
   const handleNextWeek = useCallback(() => {
-    setCurrentWeekStart(prevWeekStart => addWeeks(prevWeekStart, 1));
+    setCurrentWeekStart(prevWeekStart => {
+      const newStart = addWeeks(prevWeekStart, 1);
+      return newStart;
+    });
   }, []);
   
   useLayoutEffect(() => {
@@ -220,8 +231,6 @@ const EmotionalGrowthInsights = ({
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) return [];
     
-    // Always use the data returned by the fetchHistoricalInsights call
-    // The date filtering happens in the backend or in the hook
     return historicalInsights.map(insight => {
       const date = insight.display_date || insight.created_at;
       const formattedDate = formatDateForPeriod(date, selectedPeriod);
@@ -444,13 +453,13 @@ const EmotionalGrowthInsights = ({
                   Prev Week
                 </Button>
                 <span className="text-sm font-medium">
-                  {format(currentWeekStart, "MMM d")} - {format(addWeeks(currentWeekStart, 1), "MMM d")}
+                  {format(currentWeekStart, "MMM d")} - {format(weekEndDate, "MMM d")}
                 </span>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={handleNextWeek}
-                  disabled={addWeeks(currentWeekStart, 1) > new Date()}
+                  disabled={weekEndDate > new Date()}
                   className="rounded-full"
                 >
                   Next Week

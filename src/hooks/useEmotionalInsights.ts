@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { warningToast } from "@/components/ui/toast-extensions";
-import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks, addDays, isAfter, isBefore, endOfWeek } from "date-fns";
+import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks, addDays, isAfter, isBefore, endOfWeek, subDays } from "date-fns";
 
 export type EmotionalInsight = {
   id: string;
@@ -376,12 +377,14 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     setHasInsufficientData(false);
     
     try {
+      // Use provided start date or default to current week
       const targetStartDate = startDate || startOfWeek(new Date(), { weekStartsOn: 1 });
       const targetEndDate = endOfWeek(targetStartDate, { weekStartsOn: 1 });
       
       console.log(`Fetching historical insights for period: ${period}, childId: ${childId}`);
       console.log(`Date range: ${targetStartDate.toISOString()} to ${targetEndDate.toISOString()}`);
       
+      // Check database connection
       const { error: pingError } = await supabase.from('sel_insights').select('id').limit(1);
       
       if (pingError) {
@@ -389,6 +392,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         throw new Error("Database connection failed");
       }
       
+      // Build query with proper date range
       let query = supabase
         .from('sel_insights')
         .select('*')
@@ -415,10 +419,16 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         
         console.log("Aggregated historical data:", aggregatedData);
         
-        setHistoricalInsights(aggregatedData);
+        setHistoricalInsights(aggregatedData.length > 0 ? aggregatedData : sortedData);
         setIsFallbackData(false);
         setHasInsufficientData(false);
         setConnectionError(false);
+      } else if (data && data.length > 0 && data.length < MIN_DATA_POINTS_FOR_CHART) {
+        // If we have data but not enough for the chart, still display it
+        console.log(`Found data points but less than required minimum (${data.length} < ${MIN_DATA_POINTS_FOR_CHART})`);
+        setHistoricalInsights(data);
+        setHasInsufficientData(false);
+        setIsFallbackData(false);
       } else {
         console.log(`Insufficient data for ${period} chart (need at least ${MIN_DATA_POINTS_FOR_CHART} points)`);
         setHasInsufficientData(true);
@@ -457,9 +467,11 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     const sampleData: EmotionalInsight[] = [];
     
     if (period === 'weekly') {
+      // Generate daily data points for the week
       for (let i = 0; i < 7; i++) {
         const date = addDays(weekStart, i);
         
+        // Only add data points up to the current date
         if (!isAfter(date, new Date())) {
           sampleData.push({
             id: `sample-daily-${i}`,
@@ -475,9 +487,10 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         }
       }
     } else {
+      // Generate sample historical data for longer periods
       const dataPoints = period === 'monthly' ? 24 : 30;
       const intervalDays = period === 'monthly' ? 7 : 14;
-      const currentDate = new Date(); // Fixed: Properly define the current date
+      const currentDate = new Date(); // Properly define the current date
       
       for (let i = 0; i < dataPoints; i++) {
         const date = new Date(currentDate);

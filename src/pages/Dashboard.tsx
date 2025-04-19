@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -40,8 +41,10 @@ const Dashboard = () => {
     isCheckingTodayEntry
   } = useJournalEntries(currentChildId);
   
+  // Ensure the date is properly passed to fetchHistoricalInsights
   const fetchHistoricalInsights = useCallback(async (period: Period, startDate?: Date) => {
     console.log(`Dashboard fetching insights for period: ${period}, date: ${startDate?.toISOString()}`);
+    // Make sure we pass the actual startDate to the hook
     return await fetchInsights(period, startDate);
   }, [fetchInsights]);
 
