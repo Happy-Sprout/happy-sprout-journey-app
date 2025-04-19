@@ -33,7 +33,8 @@ const sampleInsightsData: EmotionalInsight[] = [
     social_awareness: 0.60,
     relationship_skills: 0.55,
     responsible_decision_making: 0.68,
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    source_text: 'Sample insight data 1'
   },
   {
     id: 'sample-2',
@@ -43,7 +44,8 @@ const sampleInsightsData: EmotionalInsight[] = [
     social_awareness: 0.62,
     relationship_skills: 0.58,
     responsible_decision_making: 0.70,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    source_text: 'Sample insight data 2'
   },
   {
     id: 'sample-3',
@@ -53,7 +55,8 @@ const sampleInsightsData: EmotionalInsight[] = [
     social_awareness: 0.65,
     relationship_skills: 0.60,
     responsible_decision_making: 0.73,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    source_text: 'Sample insight data 3'
   }
 ];
 
@@ -582,7 +585,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
               responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
               created_at: date.toISOString(),
               display_date: format(date, 'yyyy-MM-dd'),
-              source_text: ''
+              source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
             };
             
             console.log(`[useEmotionalInsights-DEBUG] Generated sample day ${i}:`, {
@@ -613,7 +616,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
             responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
             created_at: date.toISOString(),
             display_date: format(date, 'yyyy-MM-dd'),
-            source_text: ''
+            source_text: `Sample data for ${format(date, 'yyyy-MM-dd')}`
           };
           
           console.log(`[useEmotionalInsights-DEBUG] Generated sample day ${i}:`, {
