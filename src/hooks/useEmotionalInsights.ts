@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -644,7 +645,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     } finally {
       setHistoricalLoading(false);
     }
-  }, [childId, toast, generateSampleHistoricalData, fetchInsights]);
+  }, [childId, toast]);
 
   const insertSampleData = useCallback(async () => {
     if (!childId || !IS_DEVELOPMENT) return;
@@ -713,7 +714,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         className: "bg-red-50 border-red-200 text-red-800",
       });
     }
-  }, [childId, toast, generateSampleHistoricalData, fetchInsights]);
+  }, [childId, toast, fetchInsights]);
 
   const analyzeEntry = useCallback(async (journalText?: string, checkInText?: string) => {
     if (!childId) return null;
@@ -754,4 +755,21 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       console.error("Error in analyzeEntry:", error);
       return null;
     }
-  }, [childId, fetchInsights
+  }, [childId, fetchInsights]);
+  
+  return {
+    latestInsight,
+    insights,
+    loading,
+    fetchInsights,
+    historicalInsights,
+    historicalLoading,
+    fetchHistoricalInsights,
+    hasInsufficientData,
+    isFallbackData,
+    connectionError,
+    lowestSELArea,
+    analyzeEntry,
+    insertSampleData
+  };
+};
