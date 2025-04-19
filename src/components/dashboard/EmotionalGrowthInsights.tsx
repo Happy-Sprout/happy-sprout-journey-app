@@ -76,7 +76,7 @@ interface EmotionalGrowthInsightsProps {
   currentChild: ChildProfile;
   insight: EmotionalInsight | null;
   loading?: boolean;
-  fetchHistoricalInsights: (period: Period) => Promise<void>;
+  fetchHistoricalInsights: (period: Period, startDate?: Date) => Promise<void>;
   historicalInsights: EmotionalInsight[];
   historicalLoading: boolean;
   isFallbackData?: boolean;
@@ -104,13 +104,13 @@ const EmotionalGrowthInsights = ({
   const previousDataFetchedRef = useRef<boolean>(false);
   const isMobile = useIsMobile();
   
-  const handlePreviousWeek = () => {
+  const handlePreviousWeek = useCallback(() => {
     setCurrentWeekStart(prevWeekStart => subWeeks(prevWeekStart, 1));
-  };
+  }, []);
   
-  const handleNextWeek = () => {
+  const handleNextWeek = useCallback(() => {
     setCurrentWeekStart(prevWeekStart => addWeeks(prevWeekStart, 1));
-  };
+  }, []);
   
   useLayoutEffect(() => {
     if (chartContainerRef.current) {
@@ -131,24 +131,22 @@ const EmotionalGrowthInsights = ({
   }, [isMobile]);
 
   const fetchHistoricalData = useCallback(async () => {
-    if (selectedTab === "trends" && !previousDataFetchedRef.current) {
+    if (selectedTab === "trends") {
       try {
-        await fetchHistoricalInsights(selectedPeriod);
+        await fetchHistoricalInsights(selectedPeriod, currentWeekStart);
         setConnectionError(false);
-        previousDataFetchedRef.current = true;
       } catch (error) {
         console.error("Error fetching historical data:", error);
         setConnectionError(true);
       }
     }
-  }, [selectedTab, selectedPeriod, fetchHistoricalInsights]);
+  }, [selectedTab, selectedPeriod, fetchHistoricalInsights, currentWeekStart]);
 
   useEffect(() => {
     if (selectedTab === "trends") {
-      previousDataFetchedRef.current = false;
       fetchHistoricalData();
     }
-  }, [selectedTab, selectedPeriod, fetchHistoricalData, currentWeekStart]);
+  }, [selectedTab, currentWeekStart, fetchHistoricalData]);
 
   const radarChartData = useMemo(() => {
     if (!insight) return [];
@@ -220,14 +218,7 @@ const EmotionalGrowthInsights = ({
   const lineChartData = useMemo(() => {
     if (!historicalInsights || historicalInsights.length === 0) return [];
     
-    const weekEnd = addWeeks(currentWeekStart, 1);
-    
-    const weeklyData = historicalInsights.filter(insight => {
-      const insightDate = new Date(insight.created_at);
-      return insightDate >= currentWeekStart && insightDate < weekEnd;
-    });
-    
-    return weeklyData.map(insight => {
+    return historicalInsights.map(insight => {
       const date = insight.display_date || insight.created_at;
       const formattedDate = formatDateForPeriod(date, selectedPeriod);
       
@@ -242,7 +233,7 @@ const EmotionalGrowthInsights = ({
         dateKey: date
       };
     });
-  }, [historicalInsights, selectedPeriod, currentWeekStart]);
+  }, [historicalInsights, selectedPeriod]);
 
   const getGrowthFeedback = useMemo(() => {
     if (!insight) return null;
