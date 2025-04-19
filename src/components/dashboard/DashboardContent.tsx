@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { startOfWeek, addWeeks } from "date-fns";
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
 import { Period } from "@/hooks/useEmotionalInsights";
@@ -7,7 +8,6 @@ import DailyActivities from "./DailyActivities";
 import StatsSidebar from "./stats/StatsSidebar";
 import HeaderIllustration from "./HeaderIllustration";
 import MainContent from "./main/MainContent";
-import { startOfWeek, addWeeks } from "date-fns";
 
 interface DashboardContentProps {
   currentChild: ChildProfile;
