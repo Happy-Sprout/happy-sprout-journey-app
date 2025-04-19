@@ -29,7 +29,6 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
     fetchComparisonData
   } = useAssessment();
 
-  // Call fetchComparisonData when the component mounts
   useEffect(() => {
     fetchComparisonData();
   }, [fetchComparisonData]);
@@ -137,7 +136,6 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
       post: item.post,
     }));
 
-    // Calculate overall change
     const preScores = Object.values(comparisonData.preAssessment!.scores);
     const postScores = Object.values(comparisonData.postAssessment!.scores);
     
@@ -148,12 +146,10 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
       ? (postAverage > 0 ? 100 : 0)
       : Math.round(((postAverage - preAverage) / preAverage) * 100);
 
-    // Calculate other metrics (keep existing calculations)
     const averagePre = Math.round(chartData.reduce((acc, item) => acc + item.pre, 0) / chartData.length);
     const averagePost = Math.round(chartData.reduce((acc, item) => acc + item.post, 0) / chartData.length);
     const averageChange = averagePost - averagePre;
 
-    // Find biggest growth and strongest skill
     const growthData = chartData.map(item => ({
       dimension: item.dimension,
       change: item.post - item.pre,
@@ -175,7 +171,6 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Overall Change Card */}
           <Card className="md:col-span-1">
             <CardHeader>
               <CardTitle className="text-purple-700">Overall Growth</CardTitle>
@@ -194,7 +189,6 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
             </CardContent>
           </Card>
 
-          {/* Main Chart Card */}
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="text-purple-700">SEL Assessment Progress</CardTitle>
@@ -251,20 +245,20 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
                     return (
                       <tr key={index} className="border-b">
                         <td className="py-2">{item.dimension}</td>
-                        <td className="text-center">{item.pre}</td>
-                        <td className="text-center">{item.post}</td>
+                        <td className="text-center">{item.pre}%</td>
+                        <td className="text-center">{item.post}%</td>
                         <td className={`text-center ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {change > 0 ? '+' : ''}{change}
+                          {change > 0 ? '+' : ''}{change}%
                         </td>
                       </tr>
                     );
                   })}
                   <tr className="bg-gray-50 font-medium">
                     <td className="py-2">Average</td>
-                    <td className="text-center">{averagePre}</td>
-                    <td className="text-center">{averagePost}</td>
+                    <td className="text-center">{averagePre}%</td>
+                    <td className="text-center">{averagePost}%</td>
                     <td className={`text-center ${averageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {averageChange > 0 ? '+' : ''}{averageChange}
+                      {averageChange > 0 ? '+' : ''}{averageChange}%
                     </td>
                   </tr>
                 </tbody>
@@ -306,7 +300,6 @@ const AssessmentComparison: React.FC<AssessmentComparisonProps> = ({
     );
   }
 
-  // Handle disabled status or any other cases
   return (
     <Alert>
       <Info className="h-4 w-4" />
