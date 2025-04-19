@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { warningToast } from "@/components/ui/toast-extensions";
-import { format, parseISO, startOfWeek, startOfMonth, isValid } from "date-fns";
+import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks } from "date-fns";
 
 export type EmotionalInsight = {
   id: string;
@@ -385,28 +385,17 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         throw new Error("Database connection failed");
       }
       
-      let startDate: string | null = null;
       const now = new Date();
-      
-      if (period === 'weekly') {
-        const fourWeeksAgo = new Date();
-        fourWeeksAgo.setDate(now.getDate() - 28);
-        startDate = fourWeeksAgo.toISOString();
-      } else if (period === 'monthly') {
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(now.getMonth() - 6);
-        startDate = sixMonthsAgo.toISOString();
-      }
+      const weekStart = startOfWeek(now);
+      const weekEnd = addWeeks(weekStart, 1);
       
       let query = supabase
         .from('sel_insights')
         .select('*')
         .eq('child_id', childId)
+        .gte('created_at', weekStart.toISOString())
+        .lt('created_at', weekEnd.toISOString())
         .order('created_at', { ascending: true });
-      
-      if (startDate && period !== 'all') {
-        query = query.gte('created_at', startDate);
-      }
       
       const { data, error } = await query;
       

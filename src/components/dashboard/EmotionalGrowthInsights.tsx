@@ -17,7 +17,7 @@ import {
   Legend
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, parseISO, isValid } from "date-fns";
+import { format, parseISO, isValid, startOfWeek, addWeeks } from "date-fns";
 import { Brain, Heart, Users, MessageCircle, Lightbulb, AlertTriangle, BookOpen, DatabaseIcon } from "lucide-react";
 import { 
   HoverCard,
@@ -30,6 +30,7 @@ import { ChildProfile } from "@/hooks/useChildren";
 import { Badge } from "@/components/ui/badge";
 import { useLayoutEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button, ChevronLeft, ChevronRight } from "@/components/ui/button";
 
 const SEL_DESCRIPTIONS = {
   self_awareness: "Understanding one's emotions, personal goals, and values.",
@@ -94,6 +95,7 @@ const EmotionalGrowthInsights = ({
 }: EmotionalGrowthInsightsProps) => {
   const [selectedTab, setSelectedTab] = useState("compare");
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("weekly");
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date()));
   const isDevelopment = import.meta.env.DEV;
   const [chartWidth, setChartWidth] = useState(0);
   const [chartHeight, setChartHeight] = useState(0);
@@ -420,30 +422,30 @@ const EmotionalGrowthInsights = ({
           </TabsContent>
           
           <TabsContent value="trends">
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-start sm:items-center mb-3">
-              <div className="text-sm font-medium text-slate-700">View period:</div>
-              <div className="flex flex-wrap gap-2">
-                <Badge 
-                  variant={selectedPeriod === "weekly" ? "default" : "outline"} 
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedPeriod("weekly")}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-center mb-3">
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handlePreviousWeek}
+                  className="rounded-full"
                 >
-                  Weekly
-                </Badge>
-                <Badge 
-                  variant={selectedPeriod === "monthly" ? "default" : "outline"} 
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedPeriod("monthly")}
+                  <ChevronLeft className="h-4 w-4" />
+                  Prev Week
+                </Button>
+                <span className="text-sm font-medium">
+                  {format(currentWeekStart, "MMM d")} - {format(addWeeks(currentWeekStart, 1), "MMM d")}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleNextWeek}
+                  disabled={addWeeks(currentWeekStart, 1) > new Date()}
+                  className="rounded-full"
                 >
-                  Monthly
-                </Badge>
-                <Badge 
-                  variant={selectedPeriod === "all" ? "default" : "outline"} 
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedPeriod("all")}
-                >
-                  All Time
-                </Badge>
+                  Next Week
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
             
@@ -569,7 +571,15 @@ const EmotionalGrowthInsights = ({
                 </ResponsiveContainer>
               </div>
             ) : (
-              renderNoDataMessage("trends")
+              <div className="w-full h-64 flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6">
+                <BookOpen className="h-12 w-12 text-slate-300 mb-4" />
+                <p className="text-slate-600 text-center font-medium mb-2">
+                  No data for this week yet
+                </p>
+                <p className="text-sm text-slate-500 text-center max-w-md">
+                  Keep tracking {currentChild.nickname}'s emotional growth! Data will appear here as entries are added.
+                </p>
+              </div>
             )}
           </TabsContent>
         </Tabs>
