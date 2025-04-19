@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { warningToast } from "@/components/ui/toast-extensions";
-import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks, addDays, isAfter, isBefore, endOfWeek, subDays } from "date-fns";
+import { format, parseISO, startOfWeek, startOfMonth, isValid, addWeeks, addDays, isAfter, isBefore, endOfWeek, subDays, endOfMonth } from "date-fns";
 
 export type EmotionalInsight = {
   id: string;
@@ -14,6 +15,7 @@ export type EmotionalInsight = {
   responsible_decision_making: number;
   created_at: string;
   display_date?: string;
+  source_text?: string;
 };
 
 export type SELAreaKey = 'self_awareness' | 'self_management' | 'social_awareness' | 'relationship_skills' | 'responsible_decision_making';
@@ -372,7 +374,8 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         relationship_skills: avgRelationshipSkills,
         responsible_decision_making: avgResponsibleDecisionMaking,
         created_at: mostRecentInsight.created_at,
-        display_date: dateKey
+        display_date: dateKey,
+        source_text: '' // Add the missing required source_text property with a default empty string
       };
     }).sort((a, b) => 
       new Date(a.display_date || a.created_at).getTime() - new Date(b.display_date || b.created_at).getTime()
@@ -570,7 +573,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
           
           if (!isAfter(date, currentDate)) {
             const dayProgress = i / 6;
-            const samplePoint = {
+            const samplePoint: EmotionalInsight = {
               id: `sample-daily-${i}`,
               child_id: childId,
               self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
@@ -579,7 +582,8 @@ export const useEmotionalInsights = (childId: string | undefined) => {
               relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
               responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
               created_at: date.toISOString(),
-              display_date: format(date, 'yyyy-MM-dd')
+              display_date: format(date, 'yyyy-MM-dd'),
+              source_text: '' // Add the missing required source_text property
             };
             
             console.log(`[useEmotionalInsights-DEBUG] Generated sample day ${i}:`, {
@@ -600,7 +604,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
         
         if (!isAfter(date, currentDate)) {
           const dayProgress = i / 30;
-          const samplePoint = {
+          const samplePoint: EmotionalInsight = {
             id: `sample-daily-${i}`,
             child_id: childId,
             self_awareness: 0.4 + (0.4 * dayProgress) + (Math.random() * 0.1),
@@ -609,7 +613,8 @@ export const useEmotionalInsights = (childId: string | undefined) => {
             relationship_skills: 0.4 + (0.35 * dayProgress) + (Math.random() * 0.1),
             responsible_decision_making: 0.45 + (0.4 * dayProgress) + (Math.random() * 0.1),
             created_at: date.toISOString(),
-            display_date: format(date, 'yyyy-MM-dd')
+            display_date: format(date, 'yyyy-MM-dd'),
+            source_text: '' // Add the missing required source_text property
           };
           
           console.log(`[useEmotionalInsights-DEBUG] Generated sample day ${i}:`, {
