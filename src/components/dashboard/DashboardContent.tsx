@@ -1,13 +1,15 @@
+
 import { useState, useEffect } from "react";
 import { startOfWeek, addWeeks } from "date-fns";
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
 import { Period } from "@/types/emotionalInsights";
-import DailyActivities from "./DailyActivities";
-import StatsSidebar from "./stats/StatsSidebar";
-import HeaderIllustration from "./HeaderIllustration";
-import MainContent from "./main/MainContent";
 import VideosSection from "../videos/VideosSection";
+
+// Import required components from separate files to prevent "Cannot find name" errors
+import EmotionalGrowthInsights from "./EmotionalGrowthInsights";
+import WellnessSection from "./wellness/WellnessSection";
+import DevelopmentTools from "./DevelopmentTools";
 
 interface DashboardContentProps {
   currentChild: ChildProfile;

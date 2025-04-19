@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
@@ -10,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLoading from "@/components/dashboard/DashboardLoading";
 import DashboardContent from "@/components/dashboard/DashboardContent";
+import { startOfWeek, addWeeks, subWeeks } from "date-fns";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
@@ -18,6 +20,11 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const isDevelopment = import.meta.env.DEV;
   const { toast } = useToast();
+  
+  // Add week management state
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => 
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
   
   console.log("[Dashboard-DEBUG] Current child ID:", currentChildId);
   console.log("[Dashboard-DEBUG] Current child:", currentChild);
@@ -61,6 +68,19 @@ const Dashboard = () => {
     
     return await fetchHistoricalInsights(period, startDate);
   }, [fetchHistoricalInsights]);
+
+  // Add week navigation handlers
+  const handlePrevWeek = useCallback(() => {
+    setCurrentWeekStart(prevDate => subWeeks(prevDate, 1));
+  }, []);
+
+  const handleNextWeek = useCallback(() => {
+    setCurrentWeekStart(prevDate => addWeeks(prevDate, 1));
+  }, []);
+
+  const handleResetWeek = useCallback(() => {
+    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -156,6 +176,10 @@ const Dashboard = () => {
                     isDbConnected={isDbConnected}
                     isDevelopment={isDevelopment}
                     insertSampleData={insertSampleData}
+                    currentWeekStart={currentWeekStart}
+                    onPrevWeek={handlePrevWeek}
+                    onNextWeek={handleNextWeek}
+                    onResetWeek={handleResetWeek}
                   />
                 )}
               </>

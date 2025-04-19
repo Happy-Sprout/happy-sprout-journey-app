@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
-type VideoRecord = {
+// Define explicit interface for video records
+interface VideoRecord {
   id: string;
   filename: string;
   url: string;
   created_at: string;
-};
+}
 
 export default function VideoList() {
   const [videos, setVideos] = useState<VideoRecord[]>([]);
@@ -17,12 +18,18 @@ export default function VideoList() {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const { data } = await supabase
-          .from<VideoRecord>("videos")
+        // Use proper type casting with Supabase query
+        const { data, error } = await supabase
+          .from("videos")
           .select("*")
           .order("created_at", { ascending: false });
 
-        setVideos(data || []);
+        if (error) {
+          console.error("Error fetching videos:", error);
+          setVideos([]);
+        } else {
+          setVideos(data as VideoRecord[] || []);
+        }
       } finally {
         setLoading(false);
       }

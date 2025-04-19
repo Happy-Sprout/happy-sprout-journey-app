@@ -30,20 +30,22 @@ export default function VideoUploadForm() {
         throw uploadError;
       }
 
-      // Get URL
-      const { data: { publicUrl }, error: urlError } = supabase.storage
+      // Get URL - Fixed API call to use correct method
+      const { data: urlData } = supabase.storage
         .from("videos")
         .getPublicUrl(path);
 
-      if (urlError || !publicUrl) {
+      if (!urlData?.publicUrl) {
         throw new Error("Could not retrieve video URL");
       }
 
-      // Insert record
-      const { error: dbError } = await supabase.from("videos").insert({
-        filename: file.name,
-        url: publicUrl
-      });
+      // Insert record - Fixed API call
+      const { error: dbError } = await supabase
+        .from("videos")
+        .insert({
+          filename: file.name,
+          url: urlData.publicUrl
+        });
 
       if (dbError) {
         throw dbError;
