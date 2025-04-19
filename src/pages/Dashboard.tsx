@@ -1,23 +1,17 @@
-import { useUser } from "@/contexts/UserContext";
+
 import { useState, useEffect, useCallback } from "react";
+import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import NoActiveChildPrompt from "@/components/dashboard/NoActiveChildPrompt";
 import ChildProfileSelector from "@/components/dashboard/ChildProfileSelector";
-import WelcomeHeader from "@/components/dashboard/WelcomeHeader";
-import StatsCards from "@/components/dashboard/StatsCards";
-import AchievementsSection from "@/components/dashboard/AchievementsSection";
 import WelcomePrompt from "@/components/dashboard/WelcomePrompt";
-import EmotionalGrowthInsights from "@/components/dashboard/EmotionalGrowthInsights";
-import WellnessRadarChart from "@/components/wellness/WellnessRadarChart";
 import { useEmotionalInsights } from "@/hooks/useEmotionalInsights";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Button } from "@/components/ui/button";
-import { Beaker } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { JournalEntry } from "@/types/journal";
-import HeaderIllustration from "@/components/dashboard/HeaderIllustration";
+import DashboardLoading from "@/components/dashboard/DashboardLoading";
+import DashboardContent from "@/components/dashboard/DashboardContent";
 
 const Dashboard = () => {
   const { childProfiles, getCurrentChild, currentChildId } = useUser();
@@ -76,15 +70,6 @@ const Dashboard = () => {
       setJournalLoading(false);
     }
   }, [cachedTodayEntry, todayEntryLoaded]);
-  
-  useEffect(() => {
-    const todayString = new Date().toISOString().split('T')[0];
-    console.log("Dashboard: Today's ISO date string:", todayString);
-    if (todayEntry) {
-      console.log("Dashboard: Today's entry date:", todayEntry.date);
-      console.log("Dashboard: Date match?", todayEntry.date === todayString);
-    }
-  }, [todayEntry]);
   
   useEffect(() => {
     let isMounted = true;
@@ -148,9 +133,7 @@ const Dashboard = () => {
     <Layout requireAuth>
       <div className="container mx-auto px-4">
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <LoadingSpinner message="Loading your dashboard..." />
-          </div>
+          <DashboardLoading />
         ) : (
           <>
             {childProfiles.length === 0 ? (
@@ -166,51 +149,23 @@ const Dashboard = () => {
                 )}
                 
                 {currentChild && (
-                  <div className="max-w-4xl mx-auto">
-                    <HeaderIllustration />
-                    <WelcomeHeader currentChild={currentChild} />
-                    <StatsCards currentChild={currentChild} />
-                    
-                    <div className="bg-white rounded-3xl shadow-sm p-6 mb-8">
-                      <EmotionalGrowthInsights 
-                        currentChild={currentChild} 
-                        insight={latestInsight}
-                        loading={insightLoading}
-                        fetchHistoricalInsights={fetchHistoricalInsights}
-                        historicalInsights={historicalInsights}
-                        historicalLoading={historicalLoading}
-                        isFallbackData={isFallbackData}
-                        hasInsufficientData={hasInsufficientData}
-                      />
-                      
-                      <div className="mt-6">
-                        <h3 className="text-lg font-semibold mb-4">Today's Wellness</h3>
-                        <WellnessRadarChart 
-                          journalEntry={todayEntry} 
-                          loading={journalLoading} 
-                        />
-                      </div>
-                    </div>
-
-                    <AchievementsSection 
-                      currentChild={currentChild}
-                      currentChildId={currentChildId!}
-                    />
-                    
-                    {((isFallbackData || connectionError || isDbConnected === false) && isDevelopment) && (
-                      <div className="mb-8 flex justify-center">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={insertSampleData}
-                          className="flex items-center gap-1 text-sm text-muted-foreground"
-                        >
-                          <Beaker className="h-4 w-4" />
-                          Generate Sample Emotional Data
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  <DashboardContent 
+                    currentChild={currentChild}
+                    currentChildId={currentChildId!}
+                    latestInsight={latestInsight}
+                    insightLoading={insightLoading}
+                    fetchHistoricalInsights={fetchHistoricalInsights}
+                    historicalInsights={historicalInsights}
+                    historicalLoading={historicalLoading}
+                    isFallbackData={isFallbackData}
+                    hasInsufficientData={hasInsufficientData}
+                    todayEntry={todayEntry}
+                    journalLoading={journalLoading}
+                    connectionError={connectionError}
+                    isDbConnected={isDbConnected}
+                    isDevelopment={isDevelopment}
+                    insertSampleData={insertSampleData}
+                  />
                 )}
               </>
             )}
