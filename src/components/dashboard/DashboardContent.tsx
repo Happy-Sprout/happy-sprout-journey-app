@@ -1,13 +1,18 @@
+
 import { ChildProfile } from "@/types/childProfile";
 import { JournalEntry } from "@/types/journal";
 import EmotionalGrowthInsights from "./EmotionalGrowthInsights";
 import WellnessRadarChart from "../wellness/WellnessRadarChart";
+import WellnessTrendChart from "../wellness/WellnessTrendChart";
 import AchievementsSection from "./AchievementsSection";
 import DevelopmentTools from "./DevelopmentTools";
 import HeaderIllustration from "./HeaderIllustration";
 import { Period } from "@/hooks/useEmotionalInsights";
 import DailyActivities from "./DailyActivities";
 import StatsSidebar from "./stats/StatsSidebar";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { List, BarChart2 } from "lucide-react";
 
 interface DashboardContentProps {
   currentChild: ChildProfile;
@@ -27,6 +32,8 @@ interface DashboardContentProps {
   insertSampleData: () => void;
 }
 
+type WellnessViewMode = "radar" | "trend";
+
 const DashboardContent = ({ 
   currentChild,
   currentChildId,
@@ -44,6 +51,8 @@ const DashboardContent = ({
   isDevelopment,
   insertSampleData
 }: DashboardContentProps) => {
+  const [wellnessView, setWellnessView] = useState<WellnessViewMode>("trend");
+
   return (
     <div className="min-h-screen flex flex-col">
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
@@ -73,12 +82,39 @@ const DashboardContent = ({
               />
               
               <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Today's Wellness</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Wellness Trends</h3>
+                  <div className="flex space-x-2">
+                    <Button 
+                      size="sm" 
+                      variant={wellnessView === "radar" ? "default" : "outline"}
+                      onClick={() => setWellnessView("radar")}
+                      className="rounded-full text-xs"
+                    >
+                      <List className="h-4 w-4 mr-1" /> Snapshot
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant={wellnessView === "trend" ? "default" : "outline"}
+                      onClick={() => setWellnessView("trend")}
+                      className="rounded-full text-xs"
+                    >
+                      <BarChart2 className="h-4 w-4 mr-1" /> Trends
+                    </Button>
+                  </div>
+                </div>
+                
                 <div className="max-w-3xl mx-auto">
-                  <WellnessRadarChart 
-                    journalEntry={todayEntry} 
-                    loading={journalLoading} 
-                  />
+                  {wellnessView === "radar" ? (
+                    <WellnessRadarChart 
+                      journalEntry={todayEntry} 
+                      loading={journalLoading} 
+                    />
+                  ) : (
+                    <WellnessTrendChart 
+                      childId={currentChildId}
+                    />
+                  )}
                 </div>
               </div>
             </div>
