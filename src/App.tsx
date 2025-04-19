@@ -9,8 +9,6 @@ import NotFound from "@/pages/NotFound";
 import Journal from "@/pages/Journal";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
-import Activities from "@/pages/Activities";
-import StreakCorrection from "./pages/admin/StreakCorrection";
 import SELAssessment from "@/pages/SELAssessment";
 import Assessment from "@/pages/Assessment";
 
@@ -54,7 +52,6 @@ const App = () => {
               
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/activities" element={<Activities />} />
               <Route path="/daily-check-in" element={<DailyCheckIn />} />
               <Route path="/journal" element={<Journal />} />
               <Route path="/sel-assessment" element={<SELAssessment />} />

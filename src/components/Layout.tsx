@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, User, Calendar, LogOut, Menu, ClipboardList, LayoutGrid } from "lucide-react";
+import { Home, User, LogOut, Menu, ClipboardList, LayoutGrid } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,12 +29,9 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
 
   const currentChild = getCurrentChild?.();
   
-  console.log('Layout render - Current child:', currentChild?.nickname);
-
   const navItems = [
     { name: "Home", path: "/dashboard", icon: <Home className="mr-2 h-4 w-4" /> },
     { name: "Profile", path: "/profile", icon: <User className="mr-2 h-4 w-4" /> },
-    { name: "Activities", path: "/activities", icon: <LayoutGrid className="mr-2 h-4 w-4" /> },
     { name: "Assessment", path: "/assessment", icon: <ClipboardList className="mr-2 h-4 w-4" /> }
   ];
 
