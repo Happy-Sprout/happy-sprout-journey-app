@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -220,7 +219,7 @@ const ParentInfoTab = () => {
         onSubmit={saveParentProfile}
         onCancel={handleCancelEdit}
         isSubmitting={isSubmitting}
-        isEditing={true}
+        isEditing={editParentMode}
       />
     );
   }, [isLoading, editParentMode, parentInfo, handleStartEdit, parentForm, saveParentProfile, handleCancelEdit, isSubmitting]);

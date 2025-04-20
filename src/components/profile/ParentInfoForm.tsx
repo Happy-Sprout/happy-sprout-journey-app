@@ -1,11 +1,9 @@
-
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import * as z from "zod";
 import { memo, useCallback, useEffect, useRef } from "react";
 
 interface ParentInfoFormProps {
@@ -13,10 +11,10 @@ interface ParentInfoFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
-  isEditing?: boolean; // Added isEditing prop
+  isEditing: boolean; // Made required by removing ?
 }
 
-const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false, isEditing = true }: ParentInfoFormProps) => {
+const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false, isEditing }: ParentInfoFormProps) => {
   const submittedOnce = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const componentMounted = useRef(true);
@@ -63,7 +61,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
     }
   }, [onCancel, isSubmitting]);
 
-  console.log("ParentInfoForm render - isEditing:", isEditing, "isSubmitting:", isSubmitting);
+  console.log("Form render - isSubmitting:", isSubmitting, "isEditing:", isEditing);
 
   return (
     <Form {...parentForm}>

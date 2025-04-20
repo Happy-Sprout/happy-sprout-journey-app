@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ParentInfo } from "@/types/parentInfo";
@@ -12,12 +11,10 @@ interface ParentInfoViewProps {
   onEdit: () => void;
 }
 
-// Use memo to prevent unnecessary re-renders
 const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
-  // Added safety check to prevent rendering with invalid data
   if (!parentInfo || !parentInfo.id) {
     return (
       <div className="text-center py-4">
@@ -27,7 +24,6 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
   }
   
   const handleChangePassword = useCallback((e: React.MouseEvent) => {
-    // Prevent any default behavior
     e.preventDefault();
     e.stopPropagation();
     
@@ -40,6 +36,7 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
   const handleEdit = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("ParentInfoView - edit button clicked");
     onEdit();
   }, [onEdit]);
   
