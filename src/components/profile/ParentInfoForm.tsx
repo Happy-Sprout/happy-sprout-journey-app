@@ -23,12 +23,16 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
   // Reset submission state when component mounts or isSubmitting changes
   useEffect(() => {
     if (!isSubmitting) {
+      console.log("ParentInfoForm - Resetting submittedOnce flag due to isSubmitting change");
       submittedOnce.current = false;
     }
   }, [isSubmitting]);
 
   // Add cleanup when component unmounts
   useEffect(() => {
+    componentMounted.current = true;
+    console.log("ParentInfoForm component mounted");
+    
     return () => {
       console.log("ParentInfoForm component is unmounting");
       componentMounted.current = false;
@@ -36,7 +40,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
   }, []);
 
   const handleFormSubmit = useCallback((data: any) => {
-    console.log("ParentInfoForm - Form submitted with data:", data);
+    console.log("🔔 ParentInfoForm - Form submitted with data:", data, "isEditing:", isEditing, "isSubmitting:", isSubmitting);
     
     if (submittedOnce.current || isSubmitting) {
       console.log("Preventing duplicate form submission");
@@ -45,14 +49,16 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
     
     // Mark as submitted to prevent duplicate submissions
     submittedOnce.current = true;
+    console.log("Setting submittedOnce flag to true");
     
     // Only submit if component is still mounted
     if (componentMounted.current) {
+      console.log("Component is mounted, calling onSubmit");
       onSubmit(data);
     } else {
       console.log("Not submitting because component is unmounted");
     }
-  }, [onSubmit, isSubmitting]);
+  }, [onSubmit, isSubmitting, isEditing]);
 
   const handleCancel = useCallback((e) => {
     console.log("ParentInfoForm - Cancel button clicked");
@@ -68,7 +74,10 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
     <Form {...parentForm}>
       <form 
         ref={formRef}
-        onSubmit={parentForm.handleSubmit(handleFormSubmit)}
+        onSubmit={(e) => {
+          console.log("🔵 Raw form submit event triggered");
+          parentForm.handleSubmit(handleFormSubmit)(e);
+        }}
         className="space-y-6"
       >
         {isEditing && (
@@ -183,6 +192,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
               type="submit" 
               className="sprout-button"
               disabled={isSubmitting}
+              onClick={() => console.log("Save button clicked")}
             >
               {isSubmitting ? (
                 <>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +41,7 @@ const ParentInfoTab = () => {
   // Set up cleanup when component unmounts
   useEffect(() => {
     componentMounted.current = true;
+    console.log("ParentInfoTab component mounted");
     
     return () => {
       console.log("ParentInfoTab component unmounting");
@@ -76,7 +78,7 @@ const ParentInfoTab = () => {
   }, [editParentMode, parentInfo, parentForm]);
 
   const saveParentProfile = useCallback(async (data: z.infer<typeof parentProfileSchema>) => {
-    console.log("saveParentProfile called with data:", data);
+    console.log("🛠️ saveParentProfile START with data:", data);
     
     // Prevent submission if component is unmounted
     if (!componentMounted.current) {
@@ -95,16 +97,17 @@ const ParentInfoTab = () => {
           ...parentInfo,
           ...data,
         };
-        console.log("Calling updateParentInfo with:", updatedInfo);
+        console.log("⬆️ Calling updateParentInfo with:", updatedInfo);
         const success = await updateParentInfo(updatedInfo);
         
-        console.log("Update result:", success);
+        console.log("⬇️ updateParentInfo returned:", success);
         
         if (success && componentMounted.current) {
           toast({
             title: "Profile Updated",
             description: "Your profile has been successfully updated.",
           });
+          console.log("Profile updated successfully, exiting edit mode");
           setEditParentMode(false);
         } else if (componentMounted.current) {
           toast({
@@ -122,8 +125,10 @@ const ParentInfoTab = () => {
           relationship: data.relationship || "Parent",
           emergencyContact: data.emergencyContact || "",
         };
-        console.log("Calling setParentInfo with:", newParentInfo);
+        console.log("⬆️ Calling setParentInfo with:", newParentInfo);
         const success = await setParentInfo(newParentInfo);
+        
+        console.log("⬇️ setParentInfo returned:", success);
         
         if (success && componentMounted.current) {
           toast({
@@ -151,7 +156,7 @@ const ParentInfoTab = () => {
     } finally {
       // Reset submitting state if still mounted
       if (componentMounted.current) {
-        console.log("Resetting isSubmitting to false");
+        console.log("🔄 Resetting isSubmitting to false");
         setIsSubmitting(false);
       }
     }
