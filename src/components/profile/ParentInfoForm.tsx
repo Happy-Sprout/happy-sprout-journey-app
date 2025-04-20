@@ -1,3 +1,4 @@
+
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,12 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
         onSubmit={parentForm.handleSubmit(handleFormSubmit)}
         className="space-y-6"
       >
+        {isEditing && (
+          <div className="bg-sprout-cream/50 p-3 rounded-md mb-4 border border-sprout-orange/20">
+            <p className="text-sm text-sprout-orange font-medium">You are now in edit mode. Make your changes and click "Save Profile" when done.</p>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={parentForm.control}
@@ -82,7 +89,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                     placeholder="Enter your full name" 
                     {...field} 
                     disabled={isSubmitting || !isEditing}
-                    className={`${isEditing ? "bg-white" : "bg-gray-100"}`}
+                    className={`${isEditing ? "bg-white border-sprout-purple/30 focus:border-sprout-purple" : "bg-gray-100"}`}
                   />
                 </FormControl>
                 <FormMessage />
@@ -102,7 +109,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                     type="email" 
                     {...field} 
                     disabled={isSubmitting || !isEditing}
-                    className={`${isEditing ? "bg-white" : "bg-gray-100"}`}
+                    className={`${isEditing ? "bg-white border-sprout-purple/30 focus:border-sprout-purple" : "bg-gray-100"}`}
                   />
                 </FormControl>
                 <FormMessage />
@@ -123,7 +130,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                   disabled={isSubmitting || !isEditing}
                 >
                   <FormControl>
-                    <SelectTrigger className={`${isEditing ? "bg-white" : "bg-gray-100"}`}>
+                    <SelectTrigger className={`${isEditing ? "bg-white border-sprout-purple/30 focus:border-sprout-purple" : "bg-gray-100"}`}>
                       <SelectValue placeholder="Select relationship" />
                     </SelectTrigger>
                   </FormControl>
@@ -150,7 +157,7 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
                     placeholder="Enter emergency contact" 
                     {...field} 
                     disabled={isSubmitting || !isEditing}
-                    className={`${isEditing ? "bg-white" : "bg-gray-100"}`}
+                    className={`${isEditing ? "bg-white border-sprout-purple/30 focus:border-sprout-purple" : "bg-gray-100"}`}
                   />
                 </FormControl>
                 <FormDescription className="text-left">
