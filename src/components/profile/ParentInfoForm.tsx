@@ -12,10 +12,13 @@ interface ParentInfoFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
-  isEditing: boolean; // Made required by removing ?
+  isEditing: boolean; // Required prop
 }
 
-const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = false, isEditing }: ParentInfoFormProps) => {
+const ParentInfoForm = memo((props: ParentInfoFormProps) => {
+  console.log("👉 ParentInfoForm props:", props);
+  const { parentForm, onSubmit, onCancel, isSubmitting = false, isEditing } = props;
+  
   const submittedOnce = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   const componentMounted = useRef(true);
@@ -68,6 +71,8 @@ const ParentInfoForm = memo(({ parentForm, onSubmit, onCancel, isSubmitting = fa
     }
   }, [onCancel, isSubmitting]);
 
+  // Log actual disabled state of inputs to debug
+  console.log("📝 Actual input disabled state:", isSubmitting || !isEditing);
   console.log("Form render - isSubmitting:", isSubmitting, "isEditing:", isEditing);
 
   return (
