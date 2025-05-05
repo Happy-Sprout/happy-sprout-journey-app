@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 type ActivityLogItem = {
   id: string;
@@ -33,12 +34,12 @@ const RecentUserActivity = () => {
       try {
         setIsLoading(true);
         
-        // Fetch recent activity logs
+        // Fetch recent activity logs with an increased limit to ensure comprehensive data
         const { data, error: logsError } = await supabase
           .from('user_activity_logs')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(20); // Increased from 10 to 20 to show more activity
           
         if (logsError) throw logsError;
         
@@ -56,7 +57,7 @@ const RecentUserActivity = () => {
               .from('parents')
               .select('name')
               .eq('id', log.user_id)
-              .single();
+              .maybeSingle(); // Changed from single to maybeSingle to handle cases where the parent might not exist
               
             if (parentData?.name) {
               userName = parentData.name;
@@ -66,10 +67,22 @@ const RecentUserActivity = () => {
               .from('children')
               .select('nickname')
               .eq('id', log.user_id)
-              .single();
+              .maybeSingle(); // Changed from single to maybeSingle
               
             if (childData?.nickname) {
               userName = childData.nickname;
+            }
+          } else if (log.user_type === 'admin') {
+            const { data: adminData } = await supabase
+              .from('admin_users')
+              .select('name')
+              .eq('id', log.user_id)
+              .maybeSingle();
+              
+            if (adminData?.name) {
+              userName = adminData.name + " (Admin)";
+            } else {
+              userName = "Admin User";
             }
           }
           
@@ -98,6 +111,22 @@ const RecentUserActivity = () => {
       .join(' ');
   };
 
+  const getActionBadgeColor = (actionType: string) => {
+    if (actionType.includes('login')) {
+      return 'bg-blue-100 text-blue-800';
+    } else if (actionType.includes('check_in')) {
+      return 'bg-green-100 text-green-800';
+    } else if (actionType.includes('journal')) {
+      return 'bg-purple-100 text-purple-800';
+    } else if (actionType.includes('assessment')) {
+      return 'bg-amber-100 text-amber-800';
+    } else if (actionType.includes('profile')) {
+      return 'bg-indigo-100 text-indigo-800';
+    } else {
+      return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (error) {
     return (
       <Card>
@@ -114,7 +143,7 @@ const RecentUserActivity = () => {
       <CardHeader>
         <CardTitle>Recent User Activity</CardTitle>
         <CardDescription>
-          Most recent actions performed by users
+          Most recent actions performed by all users across the platform
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -127,7 +156,7 @@ const RecentUserActivity = () => {
             ))}
           </div>
         ) : (
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -151,12 +180,18 @@ const RecentUserActivity = () => {
                       <TableCell className="font-medium">{log.user_name}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          log.user_type === 'parent' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                          log.user_type === 'parent' ? 'bg-blue-100 text-blue-800' : 
+                          log.user_type === 'admin' ? 'bg-amber-100 text-amber-800' :
+                          'bg-green-100 text-green-800'
                         }`}>
                           {log.user_type}
                         </span>
                       </TableCell>
-                      <TableCell>{formatActionType(log.action_type)}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${getActionBadgeColor(log.action_type)}`}>
+                          {formatActionType(log.action_type)}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         {log.action_details ? (
                           <span className="text-xs text-muted-foreground">
@@ -171,7 +206,7 @@ const RecentUserActivity = () => {
                           <span className="text-xs text-muted-foreground">No details</span>
                         )}
                       </TableCell>
-                      <TableCell>{format(new Date(log.created_at), "MMM d, yyyy h:mm a")}</TableCell>
+                      <TableCell className="whitespace-nowrap">{format(new Date(log.created_at), "MMM d, yyyy h:mm a")}</TableCell>
                     </TableRow>
                   ))
                 )}
