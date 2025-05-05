@@ -44,11 +44,13 @@ const RecentUserActivity = () => {
         }
         
         // Call the secure admin edge function with the auth token
+        // Fix: Remove 'query' and use the 'params' property instead
         const response = await supabase.functions.invoke('admin-recent-activity', {
           headers: {
             Authorization: `Bearer ${session.access_token}`
           },
-          query: { limit: '20' }
+          // Using URL params for the limit instead of the 'query' property
+          params: { limit: '20' }
         });
         
         if (response.error) {

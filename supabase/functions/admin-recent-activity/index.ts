@@ -54,7 +54,7 @@ serve(async (req) => {
     }
     
     // User is verified as admin, proceed to fetch activity logs
-    // Get query limit from request, default to 20
+    // Get query limit from URL params
     const url = new URL(req.url);
     const limit = parseInt(url.searchParams.get('limit') || '20');
     
