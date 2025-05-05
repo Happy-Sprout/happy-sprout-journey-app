@@ -133,7 +133,7 @@ const UserActivityChart = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart 
                     data={activityData}
-                    margin={{ top: 10, right: 20, left: 0, bottom: 40 }}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 50 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis 
@@ -142,9 +142,11 @@ const UserActivityChart = () => {
                       axisLine={false}
                       padding={{ left: 10, right: 10 }}
                       tick={{ fontSize: 11 }}
-                      angle={-30}
+                      angle={-45}
                       textAnchor="end"
                       height={60}
+                      interval={1}
+                      dy={10}
                     />
                     <YAxis 
                       tickLine={false}
@@ -180,8 +182,8 @@ const UserActivityChart = () => {
                       dot={{ r: 3 }}
                       activeDot={{ r: 5 }}
                     />
-                    <ChartLegend>
-                      <ChartLegendContent />
+                    <ChartLegend verticalAlign="top">
+                      <ChartLegendContent verticalAlign="top" />
                     </ChartLegend>
                   </LineChart>
                 </ResponsiveContainer>
