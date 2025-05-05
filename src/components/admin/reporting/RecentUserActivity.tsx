@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
 type ActivityLogItem = {
@@ -34,6 +34,7 @@ const RecentUserActivity = () => {
     async function fetchRecentActivity() {
       try {
         setIsLoading(true);
+        setError(null);
         
         // Get the current user's session to retrieve the auth token
         const { data: { session } } = await supabase.auth.getSession();
@@ -42,23 +43,27 @@ const RecentUserActivity = () => {
           throw new Error("No active session found");
         }
         
+        console.log("Fetching activity logs with auth token");
+        
         // Call the secure admin edge function with the auth token
-        // Fix: Use a URL with querystring for passing the limit parameter
-        const functionUrl = `admin-recent-activity?limit=20`;
-        const response = await supabase.functions.invoke(functionUrl, {
+        const response = await supabase.functions.invoke("admin-recent-activity", {
           headers: {
             Authorization: `Bearer ${session.access_token}`
           }
         });
         
         if (response.error) {
-          throw new Error(`Failed to fetch activity logs: ${response.error.message}`);
+          console.error("Edge function error:", response.error);
+          throw new Error(`Failed to fetch activity logs: ${response.error.message || response.error}`);
         }
         
         if (!response.data) {
+          console.log("No data returned from edge function");
           setActivityLogs([]);
           return;
         }
+        
+        console.log("Received activity logs:", response.data.length);
         
         // Set the activity logs with user names already included from the edge function
         setActivityLogs(response.data);

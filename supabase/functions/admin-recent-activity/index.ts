@@ -18,8 +18,8 @@ serve(async (req) => {
     console.log("Admin recent activity function called");
     
     // Create a Supabase client with the service role key
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error("Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -55,8 +55,16 @@ serve(async (req) => {
       );
     }
     
-    // Check if the user is an admin using the is_admin function
-    const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_admin');
+    // Get user ID for admin check
+    const userId = user.id;
+    console.log("User authenticated, checking admin status for user:", userId);
+    
+    // Check if the user is an admin by querying the admin_users table directly
+    const { data: adminData, error: adminCheckError } = await supabase
+      .from('admin_users')
+      .select('id')
+      .eq('auth_id', userId)
+      .maybeSingle();
     
     if (adminCheckError) {
       console.error("Admin check error:", adminCheckError);
@@ -66,7 +74,7 @@ serve(async (req) => {
       );
     }
     
-    if (!isAdmin) {
+    if (!adminData) {
       console.error("Access denied: User is not an admin");
       return new Response(
         JSON.stringify({ error: 'Access denied: Admin privileges required' }),
