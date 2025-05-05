@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 type ActivityLogItem = {
   id: string;
@@ -28,81 +29,54 @@ const RecentUserActivity = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activityLogs, setActivityLogs] = useState<ActivityLogItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchRecentActivity() {
       try {
         setIsLoading(true);
         
-        // Fetch recent activity logs with an increased limit to ensure comprehensive data
-        const { data, error: logsError } = await supabase
-          .from('user_activity_logs')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20); // Increased from 10 to 20 to show more activity
-          
-        if (logsError) throw logsError;
+        // Get the current user's session to retrieve the auth token
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (!data) {
+        if (!session) {
+          throw new Error("No active session found");
+        }
+        
+        // Call the secure admin edge function with the auth token
+        const response = await supabase.functions.invoke('admin-recent-activity', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          },
+          query: { limit: '20' }
+        });
+        
+        if (response.error) {
+          throw new Error(`Failed to fetch activity logs: ${response.error.message}`);
+        }
+        
+        if (!response.data) {
           setActivityLogs([]);
           return;
         }
         
-        // Get user/child names for each log
-        const logsWithNames = await Promise.all(data.map(async (log) => {
-          let userName = "Unknown";
-          
-          if (log.user_type === 'parent') {
-            const { data: parentData } = await supabase
-              .from('parents')
-              .select('name')
-              .eq('id', log.user_id)
-              .maybeSingle(); // Changed from single to maybeSingle to handle cases where the parent might not exist
-              
-            if (parentData?.name) {
-              userName = parentData.name;
-            }
-          } else if (log.user_type === 'child') {
-            const { data: childData } = await supabase
-              .from('children')
-              .select('nickname')
-              .eq('id', log.user_id)
-              .maybeSingle(); // Changed from single to maybeSingle
-              
-            if (childData?.nickname) {
-              userName = childData.nickname;
-            }
-          } else if (log.user_type === 'admin') {
-            const { data: adminData } = await supabase
-              .from('admin_users')
-              .select('name')
-              .eq('id', log.user_id)
-              .maybeSingle();
-              
-            if (adminData?.name) {
-              userName = adminData.name + " (Admin)";
-            } else {
-              userName = "Admin User";
-            }
-          }
-          
-          return {
-            ...log,
-            user_name: userName
-          };
-        }));
-        
-        setActivityLogs(logsWithNames);
+        // Set the activity logs with user names already included from the edge function
+        setActivityLogs(response.data);
       } catch (error) {
         console.error("Error fetching recent activity:", error);
         setError("Failed to load recent activity");
+        toast({
+          title: "Error fetching activity data",
+          description: error instanceof Error ? error.message : "Unknown error occurred",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     }
     
     fetchRecentActivity();
-  }, []);
+  }, [toast]);
 
   const formatActionType = (type: string) => {
     return type
