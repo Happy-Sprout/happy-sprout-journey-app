@@ -1,6 +1,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import UserActivityStats from "@/components/admin/reporting/UserActivityStats";
+import UserActivityChart from "@/components/admin/reporting/UserActivityChart";
+import RecentUserActivity from "@/components/admin/reporting/RecentUserActivity";
 
 const ReportingAnalytics = () => {
   return (
@@ -19,20 +22,10 @@ const ReportingAnalytics = () => {
           <TabsTrigger value="assessment-progress">Assessment Progress</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="user-activity">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Activity</CardTitle>
-              <CardDescription>
-                Track user engagement and activity
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center py-8 text-muted-foreground">
-                User activity reporting interface will be implemented here.
-              </p>
-            </CardContent>
-          </Card>
+        <TabsContent value="user-activity" className="space-y-6">
+          <UserActivityStats />
+          <UserActivityChart />
+          <RecentUserActivity />
         </TabsContent>
         
         <TabsContent value="emotional-trends">
