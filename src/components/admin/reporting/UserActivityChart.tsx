@@ -127,23 +127,28 @@ const UserActivityChart = () => {
             <Skeleton className="h-full w-full" />
           </div>
         ) : (
-          <div className="h-80">
+          <div className="h-80 w-full">
             <ChartContainer config={chartConfig}>
-              {/* Fix: Wrap multiple child elements in a single fragment */}
               <>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={activityData}>
+                <ResponsiveContainer width="100%" height="85%">
+                  <LineChart 
+                    data={activityData}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis 
                       dataKey="date" 
                       tickLine={false}
                       axisLine={false}
                       padding={{ left: 10, right: 10 }}
+                      tick={{ fontSize: 12 }}
                     />
                     <YAxis 
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) => `${value}`}
+                      tick={{ fontSize: 12 }}
+                      width={25}
                     />
                     <ChartTooltip 
                       content={<ChartTooltipContent />}
@@ -174,9 +179,11 @@ const UserActivityChart = () => {
                     />
                   </LineChart>
                 </ResponsiveContainer>
-                <ChartLegend>
-                  <ChartLegendContent />
-                </ChartLegend>
+                <div className="h-[15%] flex items-center justify-center">
+                  <ChartLegend>
+                    <ChartLegendContent />
+                  </ChartLegend>
+                </div>
               </>
             </ChartContainer>
           </div>
