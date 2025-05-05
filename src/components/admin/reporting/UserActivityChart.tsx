@@ -129,52 +129,55 @@ const UserActivityChart = () => {
         ) : (
           <div className="h-80">
             <ChartContainer config={chartConfig}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={activityData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    tickLine={false}
-                    axisLine={false}
-                    padding={{ left: 10, right: 10 }}
-                  />
-                  <YAxis 
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${value}`}
-                  />
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="logins"
-                    stroke={chartConfig.logins.color}
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 5 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="journalEntries"
-                    stroke={chartConfig.journalEntries.color}
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 5 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="checkIns"
-                    stroke={chartConfig.checkIns.color}
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 5 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-              <ChartLegend>
-                <ChartLegendContent />
-              </ChartLegend>
+              {/* Fix: Wrap multiple child elements in a single fragment */}
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={activityData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis 
+                      dataKey="date" 
+                      tickLine={false}
+                      axisLine={false}
+                      padding={{ left: 10, right: 10 }}
+                    />
+                    <YAxis 
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `${value}`}
+                    />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="logins"
+                      stroke={chartConfig.logins.color}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="journalEntries"
+                      stroke={chartConfig.journalEntries.color}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="checkIns"
+                      stroke={chartConfig.checkIns.color}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+                <ChartLegend>
+                  <ChartLegendContent />
+                </ChartLegend>
+              </>
             </ChartContainer>
           </div>
         )}
