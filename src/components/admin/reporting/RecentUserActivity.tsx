@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -44,13 +43,12 @@ const RecentUserActivity = () => {
         }
         
         // Call the secure admin edge function with the auth token
-        // Fix: Remove 'query' and use the 'params' property instead
-        const response = await supabase.functions.invoke('admin-recent-activity', {
+        // Fix: Use a URL with querystring for passing the limit parameter
+        const functionUrl = `admin-recent-activity?limit=20`;
+        const response = await supabase.functions.invoke(functionUrl, {
           headers: {
             Authorization: `Bearer ${session.access_token}`
-          },
-          // Using URL params for the limit instead of the 'query' property
-          params: { limit: '20' }
+          }
         });
         
         if (response.error) {
