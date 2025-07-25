@@ -15,47 +15,72 @@ const AdminDashboard = () => {
     flaggedEntries: 0
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
-        // Fetch parent count
-        const { count: parentCount, error: parentError } = await supabase
-          .from('parents')
-          .select('*', { count: 'exact', head: true });
-          
-        if (parentError) throw parentError;
+        // Use Promise.allSettled to handle partial failures gracefully
+        const [parentResult, childrenResult, journalResult, flaggedResult] = await Promise.allSettled([
+          supabase.from('parents').select('*', { count: 'exact', head: true }),
+          supabase.from('children').select('*', { count: 'exact', head: true }),
+          supabase.from('journal_entries').select('*', { count: 'exact', head: true }),
+          supabase.from('journal_monitoring').select('*', { count: 'exact', head: true })
+        ]);
         
-        // Fetch children count
-        const { count: childrenCount, error: childrenError } = await supabase
-          .from('children')
-          .select('*', { count: 'exact', head: true });
-          
-        if (childrenError) throw childrenError;
+        const newStats = {
+          totalUsers: 0,
+          totalChildren: 0,
+          journalEntries: 0,
+          flaggedEntries: 0
+        };
         
-        // Fetch journal entries count
-        const { count: journalCount, error: journalError } = await supabase
-          .from('journal_entries')
-          .select('*', { count: 'exact', head: true });
-          
-        if (journalError) throw journalError;
+        let hasErrors = false;
+        const errors: string[] = [];
         
-        // Fetch flagged entries count
-        const { count: flaggedCount, error: flaggedError } = await supabase
-          .from('journal_monitoring')
-          .select('*', { count: 'exact', head: true });
-          
-        if (flaggedError) throw flaggedError;
+        if (parentResult.status === 'fulfilled' && !parentResult.value.error) {
+          newStats.totalUsers = parentResult.value.count || 0;
+        } else {
+          hasErrors = true;
+          errors.push('Failed to fetch parent count');
+          console.error('Parent count error:', parentResult.status === 'fulfilled' ? parentResult.value.error : parentResult.reason);
+        }
         
-        setStats({
-          totalUsers: parentCount || 0,
-          totalChildren: childrenCount || 0,
-          journalEntries: journalCount || 0,
-          flaggedEntries: flaggedCount || 0
-        });
+        if (childrenResult.status === 'fulfilled' && !childrenResult.value.error) {
+          newStats.totalChildren = childrenResult.value.count || 0;
+        } else {
+          hasErrors = true;
+          errors.push('Failed to fetch children count');
+          console.error('Children count error:', childrenResult.status === 'fulfilled' ? childrenResult.value.error : childrenResult.reason);
+        }
+        
+        if (journalResult.status === 'fulfilled' && !journalResult.value.error) {
+          newStats.journalEntries = journalResult.value.count || 0;
+        } else {
+          hasErrors = true;
+          errors.push('Failed to fetch journal entries count');
+          console.error('Journal count error:', journalResult.status === 'fulfilled' ? journalResult.value.error : journalResult.reason);
+        }
+        
+        if (flaggedResult.status === 'fulfilled' && !flaggedResult.value.error) {
+          newStats.flaggedEntries = flaggedResult.value.count || 0;
+        } else {
+          hasErrors = true;
+          errors.push('Failed to fetch flagged entries count');
+          console.error('Flagged count error:', flaggedResult.status === 'fulfilled' ? flaggedResult.value.error : flaggedResult.reason);
+        }
+        
+        setStats(newStats);
+        
+        if (hasErrors) {
+          setError(`Some statistics could not be loaded: ${errors.join(', ')}`);
+        }
       } catch (error) {
-        console.error("Error fetching admin stats:", error);
+        console.error("Unexpected error fetching admin stats:", error);
+        setError("An unexpected error occurred while loading dashboard statistics.");
       } finally {
         setLoading(false);
       }
@@ -105,6 +130,24 @@ const AdminDashboard = () => {
       </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {error && (
+          <div className="col-span-full">
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="flex">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Error Loading Dashboard Data
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{error}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {loading ? (
           // Loading skeleton for cards
           Array(4).fill(0).map((_, i) => (
