@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
 import { warningToast, successToast } from "@/components/ui/toast-extensions";
-import { supabase } from "@/integrations/supabase/client";
 
 // Import utility functions
 import { 
@@ -101,17 +100,18 @@ const DailyCheckIn = () => {
     }
   };
   
-  const completeCheckIn = () => {
-    if (currentChildId) {
+  const completeCheckIn = async () => {
+    if (!currentChildId) {
+      warningToast({
+        title: "Error",
+        description: "No child profile selected. Please select a profile first."
+      });
+      return;
+    }
+
+    try {
       const currentDate = new Date().toISOString();
       console.log("Marking daily check-in as complete with date:", currentDate);
-      
-      markDailyCheckInComplete(currentChildId, currentDate);
-      
-      successToast({
-        title: "Check-in Complete!",
-        description: "Great job sharing how you feel today! You earned 10 XP!"
-      });
       
       console.log("Check-in data:", {
         childId: currentChildId,
@@ -121,41 +121,17 @@ const DailyCheckIn = () => {
         anxiety,
         scenarioAnswer,
       });
+
+      // Single call to markDailyCheckInComplete handles all database operations
+      await markDailyCheckInComplete(currentChildId, currentDate);
       
-      try {
-        supabase
-          .from('user_activity_logs')
-          .insert([{
-            user_id: currentChildId,
-            user_type: 'child',
-            action_type: 'daily_checkin_completed',
-            action_details: {
-              date: currentDate,
-              mood: selectedFeeling || mood,
-              xp_earned: 10
-            }
-          }]);
-          
-        supabase
-          .from('child_progress')
-          .select('xp_points')
-          .eq('child_id', currentChildId)
-          .single()
-          .then(({ data }) => {
-            if (data) {
-              const currentXP = data.xp_points || 0;
-              supabase
-                .from('child_progress')
-                .update({ xp_points: currentXP + 10 })
-                .eq('child_id', currentChildId);
-            }
-          });
-      } catch (error) {
-        console.error("Error logging activity:", error);
-      }
+      successToast({
+        title: "Check-in Complete!",
+        description: "Great job sharing how you feel today! You earned 10 XP!"
+      });
       
       // Update local state to show completion immediately
-      if (childProfiles.length > 0 && currentChildId) {
+      if (childProfiles.length > 0) {
         const updatedProfiles = childProfiles.map(profile => {
           if (profile.id === currentChildId) {
             return {
@@ -171,6 +147,12 @@ const DailyCheckIn = () => {
       
       setStep(totalSteps + 1);
       setAlreadyCompletedToday(true);
+    } catch (error) {
+      console.error("Error completing daily check-in:", error);
+      warningToast({
+        title: "Check-in Failed",
+        description: "There was an error saving your check-in. Please try again."
+      });
     }
   };
   
