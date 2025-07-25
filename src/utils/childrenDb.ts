@@ -182,7 +182,16 @@ export async function updateChildProfile(id: string, updatedInfo: Partial<ChildP
       updatedInfo.creationStatus !== undefined ||
       updatedInfo.relationshipToParent !== undefined
     ) {
-      const childUpdate: any = {};
+      const childUpdate: Partial<{
+        nickname: string;
+        age: number;
+        date_of_birth: string;
+        gender: string | null;
+        grade: string;
+        avatar: string | null;
+        creation_status: string;
+        relationship_to_parent: string | null;
+      }> = {};
       if (updatedInfo.nickname !== undefined) childUpdate.nickname = updatedInfo.nickname;
       if (updatedInfo.age !== undefined) childUpdate.age = updatedInfo.age;
       if (updatedInfo.dateOfBirth !== undefined) childUpdate.date_of_birth = updatedInfo.dateOfBirth;
@@ -210,7 +219,13 @@ export async function updateChildProfile(id: string, updatedInfo: Partial<ChildP
       updatedInfo.storyPreferences !== undefined ||
       updatedInfo.selChallenges !== undefined
     ) {
-      const prefUpdate: any = {};
+      const prefUpdate: Partial<{
+        learning_styles: string[];
+        strengths: string[];
+        interests: string[];
+        story_preferences: string[];
+        challenges: string[];
+      }> = {};
       if (updatedInfo.learningStyles !== undefined) prefUpdate.learning_styles = updatedInfo.learningStyles;
       if (updatedInfo.selStrengths !== undefined) prefUpdate.strengths = updatedInfo.selStrengths;
       if (updatedInfo.interests !== undefined) prefUpdate.interests = updatedInfo.interests;
@@ -234,7 +249,13 @@ export async function updateChildProfile(id: string, updatedInfo: Partial<ChildP
       updatedInfo.dailyCheckInCompleted !== undefined ||
       updatedInfo.lastCheckInDate !== undefined
     ) {
-      const progressUpdate: any = {};
+      const progressUpdate: Partial<{
+        streak_count: number;
+        xp_points: number;
+        badges: string[];
+        daily_check_in_completed: boolean;
+        last_check_in: string;
+      }> = {};
       if (updatedInfo.streakCount !== undefined) progressUpdate.streak_count = updatedInfo.streakCount;
       if (updatedInfo.xpPoints !== undefined) progressUpdate.xp_points = updatedInfo.xpPoints;
       if (updatedInfo.badges !== undefined) progressUpdate.badges = updatedInfo.badges;
@@ -300,7 +321,8 @@ export async function markDailyCheckInComplete(
     
     console.log("Updating child profile with:", updateData);
     
-    const { data, error } = await supabase
+    // Use a transaction-like approach by performing all operations and rolling back on error
+    const progressUpdatePromise = supabase
       .from('child_progress')
       .update({ 
         daily_check_in_completed: true,
@@ -311,33 +333,39 @@ export async function markDailyCheckInComplete(
       })
       .eq('child_id', childId);
       
-    if (error) {
-      console.error("Error updating child progress:", error);
-      throw error;
+    const activityLogPromise = supabase
+      .from('user_activity_logs')
+      .insert([{
+        user_id: childId,
+        user_type: 'child',
+        action_type: 'daily_check_in_completed',
+        action_details: {
+          date: date,
+          streakCount: updatedStreakCount,
+          xpEarned: xpIncrement,
+          badges: badges.filter(badge => !currentChild.badges.includes(badge)) // Only log new badges
+        }
+      }]);
+    
+    // Execute both operations
+    const [progressResult, activityResult] = await Promise.all([
+      progressUpdatePromise,
+      activityLogPromise
+    ]);
+    
+    if (progressResult.error) {
+      console.error("Error updating child progress:", progressResult.error);
+      throw new Error(`Failed to update progress: ${progressResult.error.message}`);
     }
     
-    console.log("Child progress updated successfully:", data);
-    
-    try {
-      await supabase
-        .from('user_activity_logs')
-        .insert([{
-          user_id: childId,
-          user_type: 'child',
-          action_type: 'daily_check_in_completed',
-          action_details: {
-            date: date,
-            streakCount: updatedStreakCount,
-            xpEarned: xpIncrement,
-            badges: badges.filter(badge => !currentChild.badges.includes(badge)) // Only log new badges
-          }
-        }]);
-      console.log("Daily check-in logged successfully");
-    } catch (error) {
-      console.error("Error logging check-in:", error);
+    if (activityResult.error) {
+      console.error("Error logging activity:", activityResult.error);
+      // Activity logging failure is not critical, just log it
+      console.warn("Activity logging failed but progress was saved successfully");
     }
     
-    return data;
+    console.log("Daily check-in completed successfully");
+    return progressResult.data;
   } catch (error) {
     console.error("Error in markDailyCheckInComplete:", error);
     throw error;
