@@ -62,44 +62,70 @@ const JournalMonitoring = () => {
   const fetchFlaggedEntries = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First get journal monitoring records
+      const { data: monitoringData, error: monitoringError } = await supabase
         .from('journal_monitoring')
-        .select(`
-          *,
-          journal_entry:journal_entries(title, content, created_at),
-          child:children(nickname, age, parent_id),
-          parent:children(parents(name, email))
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (monitoringError) throw monitoringError;
       
-      if (data) {
-        const formattedData: JournalFlag[] = data.map(item => {
-          let journalEntry = null;
-          if (item.journal_entry && !('error' in item.journal_entry)) {
-            journalEntry = item.journal_entry;
-          }
+      if (monitoringData && monitoringData.length > 0) {
+        // Get journal entries separately
+        const entryIds = monitoringData.map(item => item.entry_id);
+        const { data: journalData, error: journalError } = await supabase
+          .from('journal_entries')
+          .select('id, title, content, created_at, child_id')
+          .in('id', entryIds);
 
-          let child = null;
-          if (item.child && !('error' in item.child)) {
-            child = item.child;
-          }
+        if (journalError) throw journalError;
 
-          let parent = null;
-          if (item.parent && !('error' in item.parent) && item.parent.parents) {
-            parent = item.parent.parents;
-          }
+        // Get children data
+        const childIds = journalData?.map(entry => entry.child_id).filter(Boolean) || [];
+        const { data: childrenData, error: childrenError } = await supabase
+          .from('children')
+          .select('id, nickname, age, parent_id')
+          .in('id', childIds);
+
+        if (childrenError) throw childrenError;
+
+        // Get parent data
+        const parentIds = childrenData?.map(child => child.parent_id).filter(Boolean) || [];
+        const { data: parentsData, error: parentsError } = await supabase
+          .from('parents')
+          .select('id, name, email')
+          .in('id', parentIds);
+
+        if (parentsError) throw parentsError;
+
+        // Combine the data
+        const formattedData: JournalFlag[] = monitoringData.map(item => {
+          const journalEntry = journalData?.find(entry => entry.id === item.entry_id);
+          const child = childrenData?.find(c => c.id === journalEntry?.child_id);
+          const parent = parentsData?.find(p => p.id === child?.parent_id);
 
           return {
             ...item,
-            journal_entry: journalEntry,
-            child: child,
-            parent: parent
+            journal_entry: journalEntry ? {
+              title: journalEntry.title,
+              content: journalEntry.content,
+              created_at: journalEntry.created_at
+            } : null,
+            child: child ? {
+              nickname: child.nickname,
+              age: child.age,
+              parent_id: child.parent_id
+            } : null,
+            parent: parent ? {
+              name: parent.name,
+              email: parent.email
+            } : null
           };
         });
-        
+
         setFlags(formattedData);
+      } else {
+        setFlags([]);
       }
     } catch (error) {
       console.error("Error fetching flagged entries:", error);

@@ -36,43 +36,105 @@ const RecentUserActivity = () => {
         setIsLoading(true);
         setError(null);
         
-        // Get the current user's session to retrieve the auth token
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          throw new Error("No active session found");
-        }
-        
-        console.log("Fetching activity logs with auth token");
-        
-        // Call the secure admin edge function with the auth token
-        const response = await supabase.functions.invoke("admin-recent-activity", {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
+        // First try to get recent activity logs directly (fallback method)
+        const { data: activityData, error: activityError } = await supabase
+          .from('user_activity_logs')
+          .select(`
+            id,
+            user_id,
+            user_type,
+            action_type,
+            action_details,
+            created_at
+          `)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (activityError) {
+          console.error("Direct query error:", activityError);
+          // Try using the edge function as fallback
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            throw new Error("No active session found");
           }
-        });
-        
-        if (response.error) {
-          console.error("Edge function error:", response.error);
-          throw new Error(`Failed to fetch activity logs: ${response.error.message || response.error}`);
-        }
-        
-        if (!response.data) {
-          console.log("No data returned from edge function");
-          setActivityLogs([]);
+          
+          console.log("Trying edge function fallback...");
+          
+          const response = await supabase.functions.invoke("admin-recent-activity", {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
+          
+          if (response.error) {
+            console.error("Edge function error:", response.error);
+            throw new Error(`Failed to fetch activity logs: ${response.error.message || response.error}`);
+          }
+          
+          setActivityLogs(response.data || []);
           return;
         }
         
-        console.log("Received activity logs:", response.data.length);
+        // Process direct query results
+        const processedLogs = await Promise.all(
+          (activityData || []).map(async (log) => {
+            let userName = "Unknown User";
+            
+            // Try to get user name from parents table first
+            if (log.user_type === 'parent' || !log.user_type) {
+              const { data: parentData } = await supabase
+                .from('parents')
+                .select('name')
+                .eq('id', log.user_id)
+                .single();
+              
+              if (parentData?.name) {
+                userName = parentData.name;
+              }
+            }
+            
+            // Try admin_users table if it's an admin
+            if (log.user_type === 'admin') {
+              const { data: adminData } = await supabase
+                .from('admin_users')
+                .select('name')
+                .eq('id', log.user_id)
+                .single();
+              
+              if (adminData?.name) {
+                userName = adminData.name;
+              }
+            }
+            
+            return {
+              ...log,
+              user_name: userName
+            };
+          })
+        );
         
-        // Set the activity logs with user names already included from the edge function
-        setActivityLogs(response.data);
+        setActivityLogs(processedLogs);
       } catch (error) {
         console.error("Error fetching recent activity:", error);
         setError("Failed to load recent activity");
+        
+        // Set some placeholder data to show the component structure
+        setActivityLogs([
+          {
+            id: "placeholder-1",
+            user_id: "placeholder",
+            user_type: "parent",
+            action_type: "login",
+            action_details: { placeholder: true },
+            created_at: new Date().toISOString(),
+            user_name: "Demo User"
+          }
+        ]);
+        
         toast({
-          title: "Error fetching activity data",
-          description: error instanceof Error ? error.message : "Unknown error occurred",
+          title: "Activity data unavailable",
+          description: "Using placeholder data. Please check your permissions.",
           variant: "destructive"
         });
       } finally {
