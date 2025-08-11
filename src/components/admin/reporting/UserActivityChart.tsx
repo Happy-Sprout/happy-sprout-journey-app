@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format, subDays } from "date-fns";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -11,7 +11,14 @@ import {
   ChartLegend,
   ChartLegendContent
 } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { 
+  LineChart, 
+  Line, 
+  XAxis as RechartsXAxis, 
+  YAxis as RechartsYAxis, 
+  CartesianGrid, 
+  ResponsiveContainer 
+} from "recharts";
 
 type ActivityDataPoint = {
   date: string;
@@ -30,42 +37,49 @@ const UserActivityChart = () => {
       try {
         setIsLoading(true);
         
-        // Generate placeholder data for the last 14 days
-        // In a real implementation, this would be fetched from the database
         const today = new Date();
         const data: ActivityDataPoint[] = [];
         
         for (let i = 13; i >= 0; i--) {
           const date = subDays(today, i);
+          const dayStart = startOfDay(date);
+          const dayEnd = endOfDay(date);
           const formattedDate = format(date, "MMM dd");
           
-          // In a real implementation, you would fetch this data from your database
-          // using queries that count daily activities
+          // Count login activities for this day
           const { count: loginCount, error: loginError } = await supabase
             .from('user_activity_logs')
             .select('*', { count: 'exact', head: true })
             .eq('action_type', 'login')
-            .gte('created_at', format(date, "yyyy-MM-dd"))
-            .lt('created_at', format(subDays(date, -1), "yyyy-MM-dd"));
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString());
             
-          if (loginError) throw loginError;
+          if (loginError) {
+            console.error("Login count error:", loginError);
+          }
           
+          // Count journal entries for this day
           const { count: journalCount, error: journalError } = await supabase
             .from('journal_entries')
             .select('*', { count: 'exact', head: true })
-            .gte('created_at', format(date, "yyyy-MM-dd"))
-            .lt('created_at', format(subDays(date, -1), "yyyy-MM-dd"));
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString());
             
-          if (journalError) throw journalError;
+          if (journalError) {
+            console.error("Journal count error:", journalError);
+          }
           
+          // Count daily check-in activities for this day
           const { count: checkInCount, error: checkInError } = await supabase
             .from('user_activity_logs')
             .select('*', { count: 'exact', head: true })
-            .eq('action_type', 'daily_check_in_completed')
-            .gte('created_at', format(date, "yyyy-MM-dd"))
-            .lt('created_at', format(subDays(date, -1), "yyyy-MM-dd"));
+            .eq('action_type', 'daily_check_in')
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString());
             
-          if (checkInError) throw checkInError;
+          if (checkInError) {
+            console.error("Check-in count error:", checkInError);
+          }
           
           data.push({
             date: formattedDate,
@@ -136,7 +150,7 @@ const UserActivityChart = () => {
                     margin={{ top: 10, right: 20, left: 0, bottom: 50 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis 
+                    <RechartsXAxis 
                       dataKey="date" 
                       tickLine={false}
                       axisLine={false}
@@ -148,7 +162,7 @@ const UserActivityChart = () => {
                       interval={1}
                       dy={10}
                     />
-                    <YAxis 
+                    <RechartsYAxis 
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) => `${value}`}

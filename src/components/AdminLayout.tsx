@@ -14,7 +14,8 @@ import {
   Settings, 
   LogOut, 
   Home,
-  Menu
+  Menu,
+  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,6 +30,7 @@ const menuItems = [
   { name: "Assessments", path: "/admin/assessments", icon: <ClipboardList className="h-5 w-5" /> },
   { name: "Gamification", path: "/admin/gamification", icon: <Trophy className="h-5 w-5" /> },
   { name: "Notifications", path: "/admin/notifications", icon: <Bell className="h-5 w-5" /> },
+  { name: "AI Insights", path: "/admin/emotional-insights-processing", icon: <Brain className="h-5 w-5" /> },
   { name: "Reports", path: "/admin/reports", icon: <BarChart className="h-5 w-5" /> },
   { name: "Settings", path: "/admin/settings", icon: <Settings className="h-5 w-5" /> },
 ];
