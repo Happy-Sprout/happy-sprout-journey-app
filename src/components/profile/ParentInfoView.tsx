@@ -15,14 +15,6 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
-  if (!parentInfo || !parentInfo.id) {
-    return (
-      <div className="text-center py-4">
-        <p className="text-gray-500">Could not display parent information. Please try again.</p>
-      </div>
-    );
-  }
-  
   const handleChangePassword = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -39,6 +31,14 @@ const ParentInfoView = React.memo(({ parentInfo, onEdit }: ParentInfoViewProps) 
     console.log("ParentInfoView - edit button clicked");
     onEdit();
   }, [onEdit]);
+  
+  if (!parentInfo || !parentInfo.id) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-gray-500">Could not display parent information. Please try again.</p>
+      </div>
+    );
+  }
   
   return (
     <div className="bg-white rounded-lg p-4 sm:p-6 border border-gray-100 shadow-sm w-full max-w-full overflow-hidden">

@@ -35,23 +35,23 @@ const getRadarChartData = (insight: EmotionalInsight | null, isMobile: boolean) 
   return [
     { 
       skill: isMobile ? "Self-Aware" : "Self-Awareness", 
-      value: insight.self_awareness 
+      value: Math.round(insight.self_awareness * 100)
     },
     { 
       skill: isMobile ? "Self-Manage" : "Self-Management", 
-      value: insight.self_management
+      value: Math.round(insight.self_management * 100)
     },
     { 
       skill: isMobile ? "Social" : "Social Awareness", 
-      value: insight.social_awareness
+      value: Math.round(insight.social_awareness * 100)
     },
     { 
       skill: isMobile ? "Relations" : "Relationship Skills", 
-      value: insight.relationship_skills
+      value: Math.round(insight.relationship_skills * 100)
     },
     { 
       skill: isMobile ? "Decisions" : "Decision Making", 
-      value: insight.responsible_decision_making
+      value: Math.round(insight.responsible_decision_making * 100)
     }
   ];
 };

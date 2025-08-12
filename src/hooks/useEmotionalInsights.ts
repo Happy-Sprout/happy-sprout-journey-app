@@ -32,10 +32,6 @@ export const useEmotionalInsights = (childId: string | undefined) => {
   const isFetchingRef = useRef(false);
   const prevChildIdRef = useRef<string | undefined>(undefined);
 
-  useEffect(() => {
-    console.log("[useEmotionalInsights-DEBUG] Hook initialized with childId:", childId);
-  }, []);
-
   const fetchInsights = useCallback(async () => {
     if (!childId || isFetchingRef.current || childId === prevChildIdRef.current) return;
     
@@ -117,7 +113,12 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [childId, toast]);
+  }, [childId]);
+
+  useEffect(() => {
+    console.log("[useEmotionalInsights-DEBUG] Hook initialized with childId:", childId);
+    fetchInsights();
+  }, [childId, fetchInsights]);
 
   useEffect(() => {
     if (childId && childId !== prevChildIdRef.current) {
@@ -357,7 +358,7 @@ export const useEmotionalInsights = (childId: string | undefined) => {
     } finally {
       setHistoricalLoading(false);
     }
-  }, [childId, toast]);
+  }, [childId]);
 
   const insertSampleData = useCallback(async () => {
     if (!childId || !IS_DEVELOPMENT) return;
@@ -436,17 +437,60 @@ export const useEmotionalInsights = (childId: string | undefined) => {
       console.log("Journal text sample:", journalText?.substring(0, 50));
       console.log("Check-in text sample:", checkInText?.substring(0, 50));
       
+      // Combine all text for analysis
+      const fullText = ((journalText || '') + ' ' + (checkInText || '')).toLowerCase();
+      
+      // Analyze text for emotional indicators
+      const analyzeText = (text: string) => {
+        // Positive emotional indicators
+        const positiveWords = ['happy', 'great', 'good', 'wonderful', 'excited', 'proud', 'grateful', 'thankful', 'amazing', 'awesome', 'love', 'enjoy', 'fun', 'successful', 'accomplished', 'confident', 'peaceful', 'calm', 'hopeful', 'optimistic'];
+        const selfAwarenessWords = ['feel', 'emotion', 'understand', 'realize', 'notice', 'aware', 'recognize', 'reflect', 'think', 'mindful'];
+        const managementWords = ['calm', 'control', 'manage', 'handled', 'cope', 'dealt', 'breathe', 'focus', 'patient', 'regulated'];
+        const socialWords = ['friend', 'family', 'understand', 'empathy', 'help', 'support', 'care', 'listen', 'kind', 'compassion'];
+        const relationshipWords = ['shared', 'talked', 'communicate', 'together', 'team', 'cooperate', 'compromise', 'respect', 'trust', 'connect'];
+        const decisionWords = ['decided', 'choice', 'right', 'wrong', 'responsible', 'consequence', 'plan', 'goal', 'solve', 'problem'];
+        
+        // Challenge indicators (negative sentiment)
+        const challengeWords = ['difficult', 'hard', 'sad', 'angry', 'frustrated', 'worried', 'stressed', 'upset', 'disappointed', 'confused'];
+        
+        // Count word matches
+        const countMatches = (words: string[]) => words.filter(word => text.includes(word)).length;
+        
+        const positiveCount = countMatches(positiveWords);
+        const challengeCount = countMatches(challengeWords);
+        const selfAwareCount = countMatches(selfAwarenessWords);
+        const managementCount = countMatches(managementWords);
+        const socialCount = countMatches(socialWords);
+        const relationshipCount = countMatches(relationshipWords);
+        const decisionCount = countMatches(decisionWords);
+        
+        // Calculate base sentiment (0.5 to 1.0 range)
+        const sentimentBonus = Math.max(0, (positiveCount - challengeCount) * 0.05);
+        const baseSentiment = 0.65 + sentimentBonus;
+        
+        // Calculate specific scores with some randomness for variety
+        const randomVariation = () => (Math.random() - 0.5) * 0.1; // -0.05 to +0.05
+        
+        return {
+          self_awareness: Math.min(0.95, Math.max(0.4, baseSentiment + (selfAwareCount * 0.03) + randomVariation())),
+          self_management: Math.min(0.95, Math.max(0.4, baseSentiment + (managementCount * 0.03) + randomVariation())),
+          social_awareness: Math.min(0.95, Math.max(0.4, baseSentiment + (socialCount * 0.03) + randomVariation())),
+          relationship_skills: Math.min(0.95, Math.max(0.4, baseSentiment + (relationshipCount * 0.03) + randomVariation())),
+          responsible_decision_making: Math.min(0.95, Math.max(0.4, baseSentiment + (decisionCount * 0.03) + randomVariation()))
+        };
+      };
+      
+      const scores = analyzeText(fullText);
+      
       const newInsight = {
         id: `generated-${Date.now()}`,
         child_id: childId,
-        self_awareness: Math.random() * 0.3 + 0.6,
-        self_management: Math.random() * 0.3 + 0.6,
-        social_awareness: Math.random() * 0.3 + 0.6,
-        relationship_skills: Math.random() * 0.3 + 0.6,
-        responsible_decision_making: Math.random() * 0.3 + 0.6,
+        ...scores,
         created_at: new Date().toISOString(),
         source_text: (journalText || '') + ' ' + (checkInText || '')
       };
+
+      console.log("Generated insight scores:", scores);
 
       const { data, error } = await supabase
         .from('sel_insights')

@@ -44,6 +44,14 @@ const ParentInfoForm = memo((props: ParentInfoFormProps) => {
 
   const handleFormSubmit = useCallback((data: any) => {
     console.log("🔔 ParentInfoForm - Form submitted with data:", data, "isEditing:", isEditing, "isSubmitting:", isSubmitting);
+    console.log("🔍 Form validation state:", parentForm.formState.isValid, "errors:", parentForm.formState.errors);
+    
+    // Validate the form before submitting
+    if (!parentForm.formState.isValid) {
+      console.log("Form is not valid, triggering validation");
+      parentForm.trigger(); // Trigger validation to show errors
+      return;
+    }
     
     if (submittedOnce.current || isSubmitting) {
       console.log("Preventing duplicate form submission");
@@ -57,11 +65,16 @@ const ParentInfoForm = memo((props: ParentInfoFormProps) => {
     // Only submit if component is still mounted
     if (componentMounted.current) {
       console.log("Component is mounted, calling onSubmit");
-      onSubmit(data);
+      try {
+        onSubmit(data);
+      } catch (error) {
+        console.error("Error in onSubmit:", error);
+        submittedOnce.current = false; // Reset flag if submission fails
+      }
     } else {
       console.log("Not submitting because component is unmounted");
     }
-  }, [onSubmit, isSubmitting, isEditing]);
+  }, [onSubmit, isSubmitting, isEditing, parentForm]);
 
   const handleCancel = useCallback((e) => {
     console.log("ParentInfoForm - Cancel button clicked");
@@ -72,8 +85,13 @@ const ParentInfoForm = memo((props: ParentInfoFormProps) => {
   }, [onCancel, isSubmitting]);
 
   // Log actual disabled state of inputs to debug
-  console.log("📝 Actual input disabled state:", isSubmitting || !isEditing);
-  console.log("Form render - isSubmitting:", isSubmitting, "isEditing:", isEditing);
+  console.log("📝 Form render state:", {
+    isSubmitting,
+    isEditing,
+    inputsDisabled: isSubmitting || !isEditing,
+    formValues: parentForm.getValues(),
+    timestamp: new Date().toISOString()
+  });
 
   return (
     <Form {...parentForm}>
@@ -87,7 +105,13 @@ const ParentInfoForm = memo((props: ParentInfoFormProps) => {
       >
         {isEditing && (
           <div className="bg-sprout-cream/50 p-3 rounded-md mb-4 border border-sprout-orange/20">
-            <p className="text-sm text-sprout-orange font-medium">You are now in edit mode. Make your changes and click "Save Profile" when done.</p>
+            <p className="text-sm text-sprout-orange font-medium">
+              You are now in edit mode. Make your changes and click "Save Profile" when done.
+            </p>
+            <p className="text-xs text-gray-600 mt-1">
+              Debug: isEditing={isEditing.toString()}, isSubmitting={isSubmitting.toString()}, 
+              inputs should be {isSubmitting || !isEditing ? 'DISABLED' : 'ENABLED'}
+            </p>
           </div>
         )}
         
@@ -95,20 +119,41 @@ const ParentInfoForm = memo((props: ParentInfoFormProps) => {
           <FormField
             control={parentForm.control}
             name="name"
-            render={({ field }) => (
-              <FormItem className="text-left">
-                <FormLabel className="text-left">Full Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Enter your full name" 
-                    {...field} 
-                    disabled={isSubmitting || !isEditing}
-                    className={`${isEditing ? "bg-white border-sprout-purple/30 focus:border-sprout-purple" : "bg-gray-100"}`}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const fieldDisabled = isSubmitting || !isEditing;
+              console.log("📝 Name field render:", { 
+                isSubmitting, 
+                isEditing, 
+                fieldDisabled, 
+                fieldValue: field.value 
+              });
+              
+              return (
+                <FormItem className="text-left">
+                  <FormLabel className="text-left">Full Name</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter your full name" 
+                      {...field} 
+                      disabled={fieldDisabled}
+                      onChange={(e) => {
+                        console.log("Input onChange:", e.target.value);
+                        field.onChange(e);
+                      }}
+                      onFocus={() => console.log("Input focused")}
+                      onBlur={() => console.log("Input blurred")}
+                      className={`${isEditing ? "bg-white border-sprout-purple/30 focus:border-sprout-purple" : "bg-gray-100"} ${fieldDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-text'}`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  {process.env.NODE_ENV === 'development' && (
+                    <p className="text-xs text-blue-600">
+                      Debug: disabled={fieldDisabled.toString()}, value="{field.value}"
+                    </p>
+                  )}
+                </FormItem>
+              );
+            }}
           />
           
           <FormField

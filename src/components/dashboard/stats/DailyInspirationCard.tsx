@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Heart, Lightbulb, Quote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/hooks/useUser";
 import { useToast } from "@/hooks/use-toast";
@@ -46,23 +48,82 @@ const DailyInspirationCard = () => {
   }, [user?.id, toast]);
 
   return (
-    <Card className="p-3">
-      <div className="flex flex-col items-center text-center">
-        <img 
-          src="/lovable-uploads/8553a77a-7c02-4fac-81e0-9a434e82ad19.png"
-          alt="Daily Inspiration"
-          className="h-8 w-8 mb-2"
-        />
-        <h3 className="text-sm font-medium text-gray-800 uppercase tracking-wide">Daily Inspiration</h3>
-        {isLoading ? (
-          <div className="mt-3 flex justify-center">
-            <LoadingSpinner size={20} />
-          </div>
-        ) : (
-          <p className="text-sm text-gray-600 mt-3 italic">"{quote}"</p>
-        )}
-      </div>
-    </Card>
+    <motion.div
+      whileHover={{ scale: 1.02, y: -2 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <Card className="p-4 bg-gradient-to-br from-pink-50 to-rose-100 border-pink-200 hover:shadow-lg transition-all duration-300">
+        <div className="flex flex-col items-center text-center">
+          <motion.div
+            animate={{ 
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0]
+            }}
+            transition={{ 
+              duration: 4, 
+              repeat: Infinity, 
+              ease: "easeInOut"
+            }}
+            className="mb-3 relative"
+          >
+            <div className="bg-gradient-to-br from-pink-500 to-rose-500 p-2 rounded-full">
+              <Heart className="h-6 w-6 text-white" />
+            </div>
+            <motion.div
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              className="absolute -top-1 -right-1"
+            >
+              <Lightbulb className="h-4 w-4 text-yellow-500" />
+            </motion.div>
+          </motion.div>
+          
+          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
+            <Quote className="inline h-3 w-3 mr-1 text-pink-500" />
+            Daily Inspiration
+          </h3>
+          
+          {isLoading ? (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex justify-center items-center py-4"
+            >
+              <LoadingSpinner size={24} />
+              <span className="ml-2 text-sm text-gray-500">Loading inspiration...</span>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="relative"
+            >
+              <Quote className="absolute -top-2 -left-2 h-4 w-4 text-pink-300" />
+              <motion.p 
+                className="text-sm text-gray-700 font-medium italic leading-relaxed px-4 py-2 bg-white/60 rounded-lg"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {quote}
+              </motion.p>
+              <Quote className="absolute -bottom-2 -right-2 h-4 w-4 text-pink-300 rotate-180" />
+            </motion.div>
+          )}
+          
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="mt-3 flex space-x-1"
+          >
+            <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+            <div className="w-2 h-2 bg-rose-400 rounded-full"></div>
+            <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+          </motion.div>
+        </div>
+      </Card>
+    </motion.div>
   );
 };
 

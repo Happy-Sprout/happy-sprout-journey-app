@@ -64,9 +64,10 @@ const Login = () => {
       console.log("Login attempt with:", email);
       await loginWithEmail(email, password);
       // Navigation is handled by the useEffect hook
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error in component:", error);
-      setError(error.message || "Login failed. Please check your credentials.");
+      const errorMessage = error instanceof Error ? error.message : "Login failed. Please check your credentials.";
+      setError(errorMessage);
       setLoading(false);
     }
   };
@@ -105,11 +106,12 @@ const Login = () => {
         title: "Password Reset Email Sent",
         description: "Check your email for a link to reset your password.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Password reset error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Could not send password reset email. Please try again.";
       toast({
         title: "Password Reset Failed",
-        description: error.message || "Could not send password reset email. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

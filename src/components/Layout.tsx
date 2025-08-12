@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, User, LogOut, Menu, ClipboardList, LayoutGrid } from "lucide-react";
+import { Home, User, LogOut, Menu, ClipboardList, LayoutGrid, BarChart3 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,6 +31,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   
   const navItems = [
     { name: "Home", path: "/dashboard", icon: <Home className="mr-2 h-4 w-4" /> },
+    { name: "Analytics", path: "/parent-analytics", icon: <BarChart3 className="mr-2 h-4 w-4" /> },
     { name: "Profile", path: "/profile", icon: <User className="mr-2 h-4 w-4" /> },
     { name: "Assessment", path: "/assessment", icon: <ClipboardList className="mr-2 h-4 w-4" /> }
   ];
@@ -73,7 +74,7 @@ const Layout = ({ children, requireAuth = false, hideNav = false }: LayoutProps)
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-sprout-cream" style={{ backgroundColor: '#FFF5E0', minHeight: '100vh' }}>
       {isLoggedIn && !hideNav && (
         <>
           <div className="md:hidden flex items-center justify-between p-4 bg-white shadow-sm sticky top-0 z-10">
