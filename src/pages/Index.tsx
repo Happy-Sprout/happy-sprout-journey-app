@@ -4,27 +4,10 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import { useUser } from "@/hooks/useUser";
-import { useState, useEffect } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useUser();
-  const [pageReady, setPageReady] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPageReady(true);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!pageReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <Layout hideNav>
@@ -130,4 +113,3 @@ const Index = () => {
 };
 
 export default Index;
-

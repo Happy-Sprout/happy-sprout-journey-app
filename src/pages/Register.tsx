@@ -71,18 +71,16 @@ const Register = () => {
       });
       
       navigate("/login");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup error:", error);
       
-      if (error.message) {
-        if (error.message.includes("already registered")) {
-          setError("This email is already registered. Please log in instead.");
-          setTimeout(() => navigate("/login"), 3000);
-        } else {
-          setError(error.message || "Could not create your account. Please try again.");
-        }
+      const errorMessage = error instanceof Error ? error.message : "Could not create your account. Please try again.";
+      
+      if (errorMessage.includes("already registered")) {
+        setError("This email is already registered. Please log in instead.");
+        setTimeout(() => navigate("/login"), 3000);
       } else {
-        setError("Could not create your account. Please try again.");
+        setError(errorMessage);
       }
     } finally {
       setIsLoading(false);

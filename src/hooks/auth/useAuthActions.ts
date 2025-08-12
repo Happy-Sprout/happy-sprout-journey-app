@@ -61,12 +61,13 @@ export const useAuthActions = (
       // If we reach here without a session, throw a generic error
       throw new Error("No session returned after login");
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
       
+      const errorMessage = error instanceof Error ? error.message : "Please check your email and password";
       toast({
         title: "Login failed",
-        description: error.message || "Please check your email and password",
+        description: errorMessage,
         variant: "destructive"
       });
       throw error;
@@ -142,9 +143,9 @@ export const useAuthActions = (
       }
       
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup error:", error);
-      let errorMessage = error.message || "Could not create your account. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "Could not create your account. Please try again.";
       
       toast({
         title: "Registration failed",
@@ -165,11 +166,12 @@ export const useAuthActions = (
         title: "Logged out",
         description: "You have been successfully logged out."
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Logout error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Could not log out. Please try again.";
       toast({
         title: "Logout failed",
-        description: error.message || "Could not log out. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     }

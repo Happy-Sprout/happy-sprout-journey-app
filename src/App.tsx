@@ -19,6 +19,8 @@ const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const DailyCheckIn = lazy(() => import("@/pages/DailyCheckIn"));
 const CreateProfile = lazy(() => import("@/pages/CreateProfile"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
+const ParentDashboard = lazy(() => import("@/pages/ParentDashboard"));
+const ParentProfileTest = lazy(() => import("@/pages/ParentProfileTest"));
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const UserManagement = lazy(() => import("@/pages/admin/UserManagement"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
@@ -42,6 +44,8 @@ const LoadingFallback = () => (
 );
 
 const App = () => {
+  console.log("[APP-DEBUG] App component rendering");
+  
   return (
     <Router>
       <UserProvider>
@@ -54,40 +58,42 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/parent-analytics" element={<ParentDashboard />} />
+              <Route path="/parent-profile-test" element={<ParentProfileTest />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/daily-check-in" element={<DailyCheckIn />} />
-              <Route path="/journal" element={<Journal />} />
-              <Route path="/sel-assessment" element={<SELAssessment />} />
-              <Route path="/assessment" element={<Assessment />} />
-              <Route path="/create-profile" element={<CreateProfile />} />
-              <Route path="/edit-profile/:id" element={<EditProfile />} />
-              <Route path="/seed-data" element={<SeedDataPage />} />
-              
-              <Route path="/admin" element={
-                <AdminProtectedRoute>
-                  <AdminLayout />
-                </AdminProtectedRoute>
-              }>
-                <Route index element={<AdminDashboard />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="content" element={<ContentManagement />} />
-                <Route path="reports" element={<ReportingAnalytics />} />
-                <Route path="journal-monitoring" element={<JournalMonitoring />} />
-                <Route path="assessments" element={<AssessmentManagement />} />
-                <Route path="gamification" element={<GamificationManagement />} />
-                <Route path="notifications" element={<NotificationsManagement />} />
-                <Route path="settings" element={<SettingsManagement />} />
-                <Route path="emotional-insights-processing" element={<EmotionalInsightsProcessing />} />
-                <Route path="streak-correction" element={<StreakCorrection />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-          <Toaster />
-        </AdminProvider>
-      </UserProvider>
-    </Router>
+            <Route path="/journal" element={<Journal />} />
+            <Route path="/sel-assessment" element={<SELAssessment />} />
+            <Route path="/assessment" element={<Assessment />} />
+            <Route path="/create-profile" element={<CreateProfile />} />
+            <Route path="/edit-profile/:id" element={<EditProfile />} />
+            <Route path="/seed-data" element={<SeedDataPage />} />
+            
+            <Route path="/admin" element={
+              <AdminProtectedRoute>
+                <AdminLayout />
+              </AdminProtectedRoute>
+            }>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="content" element={<ContentManagement />} />
+              <Route path="reports" element={<ReportingAnalytics />} />
+              <Route path="journal-monitoring" element={<JournalMonitoring />} />
+              <Route path="assessments" element={<AssessmentManagement />} />
+              <Route path="gamification" element={<GamificationManagement />} />
+              <Route path="notifications" element={<NotificationsManagement />} />
+              <Route path="settings" element={<SettingsManagement />} />
+              <Route path="emotional-insights-processing" element={<EmotionalInsightsProcessing />} />
+              <Route path="streak-correction" element={<StreakCorrection />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+        <Toaster />
+      </AdminProvider>
+    </UserProvider>
+  </Router>
   );
 };
 

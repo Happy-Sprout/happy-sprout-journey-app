@@ -58,14 +58,16 @@ const DashboardContent = ({
   }, [currentChildId, currentWeekStart, fetchHistoricalInsights]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-br from-sprout-cream via-white to-sprout-cream/30">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
+        {/* Mobile Stats */}
         <div className="lg:hidden mb-6">
           <StatsSidebar currentChild={currentChild} />
         </div>
 
-        <div className="flex flex-col lg:flex-row lg:space-x-6">
-          <main className="w-full lg:w-3/4 space-y-6">
+        <div className="flex flex-col lg:flex-row lg:space-x-8">
+          {/* Main Content */}
+          <main className="w-full lg:w-3/4 space-y-8">
             <HeaderIllustration />
             <DailyActivities 
               currentChild={currentChild} 
@@ -94,8 +96,11 @@ const DashboardContent = ({
             />
           </main>
 
-          <aside className="hidden lg:block w-64 space-y-4">
-            <StatsSidebar currentChild={currentChild} />
+          {/* Desktop Stats Sidebar */}
+          <aside className="hidden lg:block w-72 space-y-6">
+            <div className="sticky top-6">
+              <StatsSidebar currentChild={currentChild} />
+            </div>
           </aside>
         </div>
       </div>
